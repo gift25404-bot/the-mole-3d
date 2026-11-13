@@ -85,6 +85,15 @@ io.on('connection', socket=>{
     const message=String(payload.message).trim().slice(0,180);
     io.to(code).emit('chat:message',{name:p.name,message,at:Date.now()});
   });
+  socket.on('chat:private',payload=>{
+    const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
+    const target=room?.players.get(String(payload?.to||''));
+    const message=String(payload?.message||'').trim().slice(0,180);
+    if(!p||!target||!message)return;
+    const packet={from:p.name,to:target.name,message,at:Date.now()};
+    io.to(target.id).emit('chat:private',packet);
+    socket.emit('chat:private',packet);
+  });
   socket.on('round:vote',payload=>{
     const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
     const target=String(payload?.target||'');
