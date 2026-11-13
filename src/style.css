@@ -76,3 +76,6 @@ canvas{display:block;position:absolute;inset:0;z-index:0}.topbar{position:absolu
 .confirm-look{width:100%;padding:13px;background:#b88d53;border:1px solid #d5ad6b;color:#111;font:700 10px 'DM Mono';letter-spacing:1.3px;cursor:pointer}
 @media(max-width:560px){.avatar-card{padding:16px}.look-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.look-option{padding:9px 5px}}
 @media(max-height:560px){.avatar-card{padding:12px}.look-option{padding:6px}.look-preview{height:43px}.look-preview:before{height:24px}.look-option small{font-size:8px}}
+
+/* Keep the account gate truly hidden after the demo flow advances. */
+.auth-screen.hidden{display:none!important}
