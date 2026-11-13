@@ -439,7 +439,7 @@ function toggleFlashlight(){
 document.querySelector('#flashlight').onclick=toggleFlashlight;
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
-const serverUrl=import.meta.env.VITE_SERVER_URL||'https://mole-multiplayer-server.up.railway.app';
+const serverUrl=import.meta.env.VITE_SERVER_URL||'https://mole-multiplayer-server-production.up.railway.app';
 const socket=io(serverUrl,{autoConnect:true,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null,onlineRoundState=null,onlinePromptKey='';
 const remoteAvatars=new Map();
