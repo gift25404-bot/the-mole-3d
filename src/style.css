@@ -81,3 +81,31 @@ canvas{display:block;position:absolute;inset:0;z-index:0}.topbar{position:absolu
 .auth-screen.hidden{display:none!important}
 
 .avatar-customizer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0;padding:12px;background:#10181b;border:1px solid #4a514d;text-align:left}.avatar-customizer label,.private-label{display:flex;flex-direction:column;gap:6px;color:#c7b99f;font:9px 'DM Mono';letter-spacing:1px}.avatar-customizer select,.private-input{width:100%;min-width:0;padding:10px;background:#0b1216;border:1px solid #59615c;color:#f4eee2;font:10px 'DM Mono'}#private-chat-button{background:#252d30;border:1px solid #b88d53;color:#f2dfbd;padding:10px 14px;font:10px 'DM Mono';cursor:pointer}.private-thread{max-height:180px;overflow:auto;margin:10px 0;padding:10px;background:#0b1216;border:1px solid #3c4542;color:#e8e1d5;font:10px/1.6 'DM Mono'}.private-thread p{overflow-wrap:anywhere}#private-form{display:flex;gap:7px}#private-form button{padding:10px;background:#b88d53;border:1px solid #d5ad6b;color:#111;font:700 10px 'DM Mono'}@media(max-width:600px){.avatar-customizer{grid-template-columns:1fr}.social-tools button{padding:7px;font-size:8px}}
+
+/* Lagos Life-inspired visual refresh: colourful city palette and rounded HUD. */
+html,body,#game{background:#243b46;color:#fff2d8}
+.topbar{background:linear-gradient(180deg,rgba(17,29,32,.9),transparent)}
+.sigil{border:0;border-radius:12px;background:#f2bd45;color:#263333;box-shadow:0 4px 0 #a56c24}
+.brand b{letter-spacing:2px}
+.status,.tag,.hud-left small,.hud-right small{color:#d8d2bb}
+#phase{color:#ffcb55}
+.live-dot{background:#ffcb55;box-shadow:0 0 12px #ffcb55}
+.hud-left,.hud-right,.objective,.chat-panel{background:rgba(25,44,46,.9);border:1px solid rgba(255,203,85,.48);border-radius:14px;box-shadow:0 8px 28px #1118}
+.hud-left{border-left:4px solid #f2bd45}.hud-right{border-right:4px solid #f2bd45}
+.objective{border-left:4px solid #f2bd45;border-radius:12px}
+.actions button,.social-tools button,#begin-game,#private-chat-button{background:#f2bd45;border:0;border-radius:12px;color:#263333;font-weight:700;box-shadow:0 4px 0 #a56c24}
+.actions button:hover,.social-tools button:hover{background:#ffda73;color:#1d2929;transform:translateY(-1px)}
+.prompt{background:rgba(25,44,46,.94);border:1px solid #f2bd45;border-radius:12px;color:#fff2d8}
+.chat-panel{overflow:hidden}.chat-head{border-color:#61706a;color:#ffe1a0}
+.chat-head span,.chat-panel .chat-log b{color:#ffcb55}
+#chat-input{background:#182b2e}
+.modal-card,.auth-card,.avatar-card{background:#20383b;border:1px solid #f2bd45;border-radius:20px;box-shadow:0 24px 90px #0009}
+.modal h2,.intro-card h1,.auth-card h1,.avatar-card h1{color:#ffda83}
+.vote-option,.room-list div,.lobby-input,.avatar-customizer select,.private-input{background:#172c30;border:1px solid #60746d;border-radius:9px;color:#fff2d8}
+.vote-option:hover,.lobby-input:focus{border-color:#ffcb55}
+.bus-intro{background:linear-gradient(120deg,rgba(16,34,37,.92),rgba(35,56,54,.78)),radial-gradient(circle at 50% 60%,#b57a37,transparent 55%)}
+.intro-card{background:rgba(25,44,46,.95);border:1px solid #f2bd45;border-radius:22px;box-shadow:0 20px 80px #0008}
+.auth-screen,.avatar-screen{background:radial-gradient(ellipse at 50% 12%,rgba(242,189,69,.22),transparent 48%),linear-gradient(145deg,#14292d,#31504c 58%,#172d31)}
+.look-option{background:#172c30;border:1px solid #60746d;border-radius:14px}
+.look-option.selected{border:2px solid #ffcb55;background:#2a4644;box-shadow:0 0 18px #f2bd4533}
+@media(max-width:700px){.hud-left,.hud-right,.objective,.chat-panel{border-radius:10px}.actions button{border-radius:9px}}
