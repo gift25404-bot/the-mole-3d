@@ -26,7 +26,7 @@ const house=new THREE.Group();scene.add(house);
 // House is split into connected rooms; door-sized gaps are left in the partitions.
 box(20,.35,17,floorMat,0,0,0,house);
 box(20,.5,17,trim,0,3.8,0,house);
-box(.35,3.8,17,wallMat,-10,1.9,0,house); box(.35,3.8,17,wallMat,10,1.9,0,house);
+box(.35,3.8,17,wallMat,-10,1.9,0,house); box(.35,3.8,6,wallMat,10,1.9,-5.5,house); box(.35,3.8,6,wallMat,10,1.9,5.5,house); // doorway into the east wing
 box(20,3.8,.35,wallMat,0,1.9,-8.5,house); box(20,3.8,.35,wallMat,0,1.9,8.5,house);
 // front wall has a central entry opening
 box(7,3.8,.35,wallMat,-6.5,1.9,8.5,house); box(7,3.8,.35,wallMat,6.5,1.9,8.5,house);
