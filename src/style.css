@@ -56,3 +56,23 @@ canvas{display:block;position:absolute;inset:0;z-index:0}.topbar{position:absolu
 .auth-feedback{min-height:38px;font:10px/1.5 'DM Mono';color:#e2c18d;text-align:center;margin:12px 0}
 .auth-foot{display:block;text-align:center;color:#898e88;font:9px/1.5 'DM Mono'}
 @media(max-height:650px){.auth-card{padding:18px 24px}.auth-mark{margin-bottom:8px}.auth-intro{margin-bottom:10px}#auth-form label{margin:8px 0 4px}}
+
+.avatar-screen{position:absolute;z-index:31;inset:0;display:grid;place-items:center;padding:16px;background:radial-gradient(ellipse at 50% 12%,rgba(87,62,39,.36),transparent 48%),linear-gradient(145deg,#080d11,#182126 58%,#0a0e12);overflow:auto}
+.avatar-screen.hidden{display:none}.avatar-card{width:min(720px,100%);max-height:96%;overflow:auto;padding:26px;background:rgba(15,22,26,.98);border:1px solid #8c704d;box-shadow:0 24px 90px #000;text-align:center}
+.avatar-card h1{font-size:clamp(24px,4vw,34px);letter-spacing:3px;color:#e8d4b0;margin:8px 0}
+.avatar-intro{font-size:12px;color:#b9b9b0;margin:0 0 20px}
+.look-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.look-option{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:13px 8px;background:#10181b;border:1px solid #4a514d;color:#eee7da;cursor:pointer}
+.look-option.selected{border:2px solid #d5ad6b;background:#242a29;box-shadow:0 0 18px #b88d5333}
+.look-option b{font:700 11px 'DM Mono';letter-spacing:1px}.look-option small{font:9px 'DM Mono';color:#a9aaa3;text-align:center}
+.look-preview{position:relative;display:block;width:48px;height:56px}
+.look-preview:before{content:'';position:absolute;width:28px;height:29px;left:10px;top:2px;border-radius:48% 48% 45% 45%;background:var(--skin)}
+.look-preview:after{content:'';position:absolute;width:38px;height:25px;left:5px;bottom:0;border-radius:13px 13px 5px 5px;background:var(--shirt)}
+.look-preview i{position:absolute;z-index:1;width:30px;height:13px;left:9px;top:0;border-radius:18px 18px 5px 5px;background:var(--hair)}
+.skin-warm{--skin:#9a674b}.skin-deep{--skin:#603b2d}.skin-cocoa{--skin:#815238}.skin-gold{--skin:#d49b76}.skin-light{--skin:#e0b99a}.skin-olive{--skin:#9b7957}
+.hair-dark{--hair:#211b1a}.hair-black{--hair:#101315}.hair-brown{--hair:#39251d}.hair-auburn{--hair:#743d27}.hair-blonde{--hair:#c79b55}
+.shirt-coral{--shirt:#c96f62}.shirt-blue{--shirt:#477caa}.shirt-green{--shirt:#527b5c}.shirt-purple{--shirt:#8064a6}.shirt-red{--shirt:#a94f4f}.shirt-teal{--shirt:#39858a}
+.look-feedback{font:10px 'DM Mono';color:#e2c18d;margin:15px 0 10px}
+.confirm-look{width:100%;padding:13px;background:#b88d53;border:1px solid #d5ad6b;color:#111;font:700 10px 'DM Mono';letter-spacing:1.3px;cursor:pointer}
+@media(max-width:560px){.avatar-card{padding:16px}.look-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.look-option{padding:9px 5px}}
+@media(max-height:560px){.avatar-card{padding:12px}.look-option{padding:6px}.look-preview{height:43px}.look-preview:before{height:24px}.look-option small{font-size:8px}}
