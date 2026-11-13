@@ -1,4 +1,6 @@
 
+
+{
   "name": "the-mole-3d",
   "version": "0.6.0",
   "private": true,
@@ -7,7 +9,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-   "start": "node server.js", "server": "node server.js",
+    "start": "node server.js",
+    "server": "node server.js",
     "dev:all": "concurrently \"npm run server\" \"npm run dev\""
   },
   "dependencies": {
@@ -20,3 +23,5 @@
     "concurrently": "^9.1.2"
   }
 }
+
+
