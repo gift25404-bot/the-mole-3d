@@ -6,8 +6,9 @@ const httpServer=createServer((req,res)=>{
   res.writeHead(200,{'content-type':'application/json'});
   res.end(JSON.stringify({name:'THE MOLE game server',status:'online'}));
 });
+const allowedOrigins=[...new Set(['http://localhost:5173','https://the-mole-3d.vercel.app',...(process.env.CLIENT_ORIGIN||'').split(',').map(value=>value.trim()).filter(Boolean)])];
 const io=new Server(httpServer,{
-  cors:{origin:process.env.CLIENT_ORIGIN?.split(',')||['http://localhost:5173','https://the-mole-3d.vercel.app'],methods:['GET','POST']}
+  cors:{origin:allowedOrigins,methods:['GET','POST']}
 });
 const rooms=new Map();
 const MAX_PLAYERS=12, MIN_PLAYERS=4, DISCUSSION_MS=25000, RESULTS_MS=8000;
