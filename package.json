@@ -1,4 +1,4 @@
-{
+{"start": "node server.js",
   "name": "the-mole-3d",
   "version": "0.6.0",
   "private": true,
