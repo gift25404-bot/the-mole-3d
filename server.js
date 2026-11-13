@@ -198,7 +198,7 @@ io.on('connection',socket=>{
   });
   socket.on('player:move',pos=>{
     const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
-    if(!p||!room?.started||!p.alive)return;
+    if(!p||!room||(room.started&&!p.alive))return;
     p.x=Math.max(-42,Math.min(42,Number(pos?.x)||0));p.y=Math.max(0,Math.min(12,Number(pos?.y)||0));p.z=Math.max(-40,Math.min(40,Number(pos?.z)||0));
     p.rotation=Number(pos?.rotation)||0;
     socket.to(room.code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,y:p.y,z:p.z,rotation:p.rotation});
