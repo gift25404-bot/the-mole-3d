@@ -201,7 +201,37 @@ function setAmbience(on){
 if(!document.querySelector('#sound')){
  const sound=document.createElement('button');sound.id='sound';sound.textContent='SOUND: OFF';sound.className='sound-toggle';document.querySelector('.actions')?.append(sound);
 }
+
 document.querySelector('#sound').onclick=()=>setAmbience(!ambienceOn);
+
+// Player flashlight: press F or use the on-screen control while exploring.
+const flashlight=new THREE.SpotLight(0xe8f2ff,0,22,Math.PI/7,.42,1.5);
+flashlight.position.set(0,1.72,.12);
+const flashlightTarget=new THREE.Object3D();
+flashlightTarget.position.set(0,1.35,9);
+player.group.add(flashlightTarget);
+player.group.add(flashlight);
+flashlight.target=flashlightTarget;
+let flashlightOn=false;
+if(!document.querySelector('#flashlight')){
+ const button=document.createElement('button');
+ button.id='flashlight';
+ button.type='button';
+ button.textContent='FLASHLIGHT: OFF';
+ button.setAttribute('aria-pressed','false');
+ document.querySelector('.actions')?.append(button);
+}
+function toggleFlashlight(){
+ flashlightOn=!flashlightOn;
+ flashlight.intensity=flashlightOn?18:0;
+ const button=document.querySelector('#flashlight');
+ if(button){
+  button.textContent=`FLASHLIGHT: ${flashlightOn?'ON':'OFF'}`;
+  button.setAttribute('aria-pressed',String(flashlightOn));
+ }
+ notice(flashlightOn?'Flashlight switched on.':'Flashlight switched off.');
+}
+document.querySelector('#flashlight').onclick=toggleFlashlight;
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
 const serverUrl=import.meta.env.VITE_SERVER_URL||'https://the-mole-3d.onrender.com';
@@ -478,7 +508,7 @@ document.querySelector('#ability').onclick=()=>{
 updateStatus();
 // The role reveal is shown after the player enters the house from the bus scene.
 
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')switchCamera();if(e.key.toLowerCase()==='e')interact()});
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')switchCamera();if(e.key.toLowerCase()==='e')interact();if(e.key.toLowerCase()==='f'&&!e.repeat)toggleFlashlight()});
 document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',()=>keys[k]=true);['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 let cluesFound=0, exitUnlocked=false;
