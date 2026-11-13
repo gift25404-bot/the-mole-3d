@@ -123,10 +123,29 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
   g.add(leg);limbs.push(leg);
  }
  const label=makeLabel(name);label.position.set(0,2.62,0);g.add(label);
- return {group:g,limbs,name,isPlayer,phase:Math.random()*6};
+ return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
 const player=makeAvatar('ALEX',0x477c8c,0x9a674b,0x211b1a,-10,8,true);
+const avatarLooks={
+ sunset:{name:'Sunset',skin:0x9a674b,hair:0x211b1a,shirt:0xc96f62,pants:0x30343b},
+ midnight:{name:'Midnight',skin:0x603b2d,hair:0x101315,shirt:0x477caa,pants:0x252b35},
+ cocoa:{name:'Cocoa',skin:0x815238,hair:0x39251d,shirt:0x527b5c,pants:0x35343b},
+ golden:{name:'Golden',skin:0xd49b76,hair:0x743d27,shirt:0x8064a6,pants:0x343044},
+ cloud:{name:'Cloud',skin:0xe0b99a,hair:0xc79b55,shirt:0xa94f4f,pants:0x34343b},
+ ocean:{name:'Ocean',skin:0x9b7957,hair:0x29201c,shirt:0x39858a,pants:0x283b45}
+};
+let selectedLook='sunset';
+function applyPlayerLook(key){
+ const look=avatarLooks[key]||avatarLooks.sunset;
+ player.appearance.skinMat.color.setHex(look.skin);
+ player.appearance.hairMat.color.setHex(look.hair);
+ player.appearance.shirtMat.color.setHex(look.shirt);
+ player.appearance.pantsMat.color.setHex(look.pants);
+ selectedLook=key;
+ document.querySelectorAll('.look-option').forEach(button=>button.classList.toggle('selected',button.dataset.look===key));
+ const feedback=document.querySelector('#look-feedback');if(feedback)feedback.textContent='Selected: '+look.name;
+}
 const npcs=[
  makeAvatar('MAYA',0x9b5c6e,0xc88b67,0x30201b,-14,5),
  makeAvatar('TUNDE',0x4c755a,0x70452f,0x111315,-11,11),
@@ -261,7 +280,24 @@ document.querySelector('#auth-form').addEventListener('submit',event=>{
  if(!email.toLowerCase().endsWith('@gmail.com')){authFeedback.textContent='Please enter a Gmail address ending in @gmail.com.';return;}
  if(username.length<3){authFeedback.textContent='Your username must have at least 3 characters.';return;}
  if(password.length<8){authFeedback.textContent='Use a password with at least 8 characters.';return;}
- authFeedback.textContent='The sign-in screen is ready, but secure account service still needs to be connected. No account was created and your password was not saved.';
+ // Demo flow only: secure sign-in is not connected; discard the password.
+ onlineName=username.slice(0,16);
+ document.querySelector('#player-name').textContent=onlineName.toUpperCase();
+ player.name=onlineName.toUpperCase();
+ const oldLabel=player.group.children.find(child=>child.isSprite);
+ if(oldLabel)player.group.remove(oldLabel);
+ const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
+ document.querySelector('#auth-screen').classList.add('hidden');
+ document.querySelector('#avatar-screen').classList.remove('hidden');
+ document.querySelector('#auth-password').value='';
+ authFeedback.textContent='Demo only — secure sign-in is not connected.';
+});
+document.querySelectorAll('.look-option').forEach(button=>button.addEventListener('click',()=>applyPlayerLook(button.dataset.look)));
+document.querySelector('#confirm-look')?.addEventListener('click',()=>{
+ const look=avatarLooks[selectedLook];
+ try{localStorage.setItem('mole-avatar-look',selectedLook);localStorage.setItem('mole-player-name',onlineName);}catch{}
+ document.querySelector('#avatar-screen').classList.add('hidden');
+ notice(look.name+' look selected. Welcome to Blackwood.');
 });
 document.querySelector('#begin-game')?.addEventListener('click',()=>{
  document.querySelector('#bus-intro')?.classList.add('intro-hidden');
