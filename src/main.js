@@ -254,7 +254,7 @@ socket.on('round:ended',data=>{
  modal(mafia?'MAFIA WINS':'PASSENGERS WIN',mafia?'The Mafia outnumbered the remaining passengers.':'The Mafia has been found. The passengers win!',onlineRoom?.hostId===socket.id?'<button class="vote-option" id="online-restart">PLAY AGAIN</button>':'<p>Waiting for the room host to start another round.</p>');
  document.querySelector('#online-restart')?.addEventListener('click',()=>socket.emit('round:restart',res=>{if(!res?.ok)notice(res?.error||'Could not restart.');else closeModal();}));
 });
-socket.on('round:reset',()=>{onlineRole=null;onlinePromptKey='';document.querySelector('#role-label').textContent='PASSENGER';notice('New round lobby is ready.');});
+socket.on('round:reset',()=>{onlineRole=null;onlinePromptKey='';document.querySelector('#role-label').textContent='PASSENGER';closeModal();notice('New round lobby is ready.');});
 socket.on('player:moved',data=>{
  let a=remoteAvatars.get(data.id);
  if(!a){a=makeAvatar(data.name,0x647c9b,0xb77f60,0x211b1a,data.x,data.z);remoteAvatars.set(data.id,a);}
@@ -265,6 +265,7 @@ socket.on('round:voteCount',data=>notice(`VOTES CAST: ${data.count}/${data.total
 function showOnlineNightAction(state){
  const key=`NIGHT:${state.day}`;if(onlinePromptKey===key)return;onlinePromptKey=key;
  const role=onlineRole;
+ if(role==='GHOST'){modal('SPECTATOR MODE','You have been eliminated. Watch the remaining players until the round ends.');return;}
  if(!['MAFIA','DETECTIVE','DOCTOR'].includes(role)){modal('NIGHT AT BLACKWOOD','You are a Citizen. Stay quiet and wait for morning.');return;}
  const targets=state.players.filter(p=>p.alive&&(role==='DOCTOR'||p.id!==socket.id));
  const title=role==='MAFIA'?'MAFIA: CHOOSE A TARGET':role==='DETECTIVE'?'DETECTIVE: INVESTIGATE':'DOCTOR: PROTECT A PLAYER';
@@ -277,11 +278,13 @@ function showOnlineNightAction(state){
 }
 function showOnlineDiscussion(state){
  const key=`DISCUSSION:${state.day}`;if(onlinePromptKey===key)return;onlinePromptKey=key;
+ if(onlineRole==='GHOST'){modal('SPECTATOR MODE','You have been eliminated. The living passengers are discussing the round.');return;}
  modal('DISCUSSION TIME','Discuss what happened with your room. When ready, anyone still alive can open the vote.', '<button class="vote-option" id="open-online-vote">START VOTING</button>');
  document.querySelector('#open-online-vote').onclick=()=>socket.emit('round:meeting',res=>{if(!res?.ok)notice(res?.error||'Voting is not ready.');});
 }
 function showOnlineVote(state){
  const key=`VOTE:${state.day}`;if(onlinePromptKey===key)return;onlinePromptKey=key;
+ if(onlineRole==='GHOST'){modal('SPECTATOR MODE','You have been eliminated. Watch the vote, but you cannot vote again.');return;}
  if(state.votedIds?.includes(socket.id)){modal('VOTE SUBMITTED','Your vote is locked. Waiting for the other passengers.');return;}
  const targets=state.players.filter(p=>p.alive&&p.id!==socket.id);
  const content=targets.map(p=>`<button class="vote-option" data-online-vote="${p.id}">VOTE: ${p.name}</button>`).join('')+'<button class="vote-option" data-online-vote="SKIP">SKIP VOTE</button>';
