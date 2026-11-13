@@ -2,106 +2,214 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { randomInt } from 'node:crypto';
 
-const httpServer = createServer((req,res)=>{
-  res.writeHead(200, {'content-type':'application/json'});
+const httpServer=createServer((req,res)=>{
+  res.writeHead(200,{'content-type':'application/json'});
   res.end(JSON.stringify({name:'THE MOLE game server',status:'online'}));
 });
-const io = new Server(httpServer, {
-  cors: { origin: process.env.CLIENT_ORIGIN?.split(',') || ['http://localhost:5173'], methods:['GET','POST'] }
+const io=new Server(httpServer,{
+  cors:{origin:process.env.CLIENT_ORIGIN?.split(',')||['http://localhost:5173','https://the-mole-3d.vercel.app'],methods:['GET','POST']}
 });
-const rooms = new Map();
-const MAX_PLAYERS = 12;
-const cleanName = value => String(value || 'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16) || 'PLAYER';
-const publicRoom = room => ({
-  code: room.code,
-  hostId: room.hostId,
-  started: room.started,
-  players: [...room.players.values()].map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive}))
+const rooms=new Map();
+const MAX_PLAYERS=12, MIN_PLAYERS=4, DISCUSSION_MS=25000, RESULTS_MS=8000;
+const cleanName=value=>String(value||'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'PLAYER';
+const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=randomInt(i+1);[list[i],list[j]]=[list[j],list[i]];}return list;};
+const alivePlayers=room=>[...room.players.values()].filter(p=>p.alive);
+const publicRoom=room=>({
+  code:room.code,hostId:room.hostId,started:room.started,phase:room.phase,day:room.day,
+  players:[...room.players.values()].map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive,x:p.x,z:p.z,rotation:p.rotation}))
 });
-function sendRoom(room){
-  io.to(room.code).emit('room:update', publicRoom(room));
-}
-function removePlayer(socket){
-  const code=socket.data.roomCode;
-  if(!code)return;
-  const room=rooms.get(code);
-  if(!room)return;
-  room.players.delete(socket.id);
-  socket.leave(code);
-  socket.data.roomCode=null;
-  if(room.players.size===0){rooms.delete(code);return;}
-  if(room.hostId===socket.id)room.hostId=room.players.keys().next().value;
+function sendRoom(room){io.to(room.code).emit('room:update',publicRoom(room));}
+function clearTimer(room){if(room.timer){clearTimeout(room.timer);room.timer=null;}}
+function sendState(room){
+  io.to(room.code).emit('round:state',{
+    ...publicRoom(room),phase:room.phase,day:room.day,deadline:room.deadline||null,
+    voteCount:room.votes.size,votedIds:[...room.votes.keys()]
+  });
   sendRoom(room);
 }
-io.on('connection', socket=>{
-  socket.emit('server:hello',{message:'Connected to THE MOLE server'});
+function removePlayer(socket){
+  const code=socket.data.roomCode;if(!code)return;
+  const room=rooms.get(code);if(!room){socket.data.roomCode=null;return;}
+  room.players.delete(socket.id);socket.leave(code);socket.data.roomCode=null;
+  if(room.players.size===0){clearTimer(room);rooms.delete(code);return;}
+  if(room.hostId===socket.id)room.hostId=room.players.keys().next().value;
+  sendState(room);
+  if(room.started)advanceIfReady(room);
+}
+function checkWinner(room){
+  const alive=alivePlayers(room),mafia=alive.filter(p=>p.role==='MAFIA').length;
+  if(mafia===0)return 'PASSENGERS';
+  if(mafia>=alive.length-mafia)return 'MAFIA';
+  return null;
+}
+function finishRound(room,winner){
+  clearTimer(room);room.phase='ENDED';room.winner=winner;
+  io.to(room.code).emit('round:ended',{winner,players:alivePlayers(room).map(p=>({id:p.id,name:p.name}))});
+  sendState(room);
+}
+function startDiscussion(room){
+  clearTimer(room);room.phase='DISCUSSION';room.deadline=Date.now()+DISCUSSION_MS;
+  io.to(room.code).emit('round:notice',{message:'Night is over. Discuss what happened, then vote.'});
+  sendState(room);
+  room.timer=setTimeout(()=>startVoting(room),DISCUSSION_MS);
+}
+function startVoting(room){
+  if(!room.started||room.phase!=='DISCUSSION')return;
+  clearTimer(room);room.phase='VOTE';room.deadline=Date.now()+45000;room.votes.clear();
+  io.to(room.code).emit('round:notice',{message:'Voting is open. Choose one living player or skip.'});
+  sendState(room);
+  room.timer=setTimeout(()=>resolveVote(room),45000);
+}
+function beginNight(room){
+  clearTimer(room);room.phase='NIGHT';room.day+=1;room.actions=new Map();room.votes.clear();room.deadline=null;
+  io.to(room.code).emit('round:notice',{message:'Night has fallen. Special roles, choose your action.'});
+  sendState(room);advanceIfReady(room);
+}
+function resolveNight(room){
+  if(room.phase!=='NIGHT')return;
+  clearTimer(room);
+  const actions=[...room.actions.values()];
+  const mafia=actions.find(a=>a.role==='MAFIA');
+  const doctor=actions.find(a=>a.role==='DOCTOR');
+  const detective=actions.find(a=>a.role==='DETECTIVE');
+  if(detective){
+    const target=room.players.get(detective.targetId);
+    if(target)io.to(detective.playerId).emit('round:investigation',{name:target.name,result:target.role==='MAFIA'?'MAFIA':'NOT MAFIA'});
+  }
+  let removed=null;
+  if(mafia&&mafia.targetId!==doctor?.targetId){
+    removed=room.players.get(mafia.targetId);
+    if(removed)removed.alive=false;
+  }
+  io.to(room.code).emit('round:nightResult',{
+    removed:removed?{id:removed.id,name:removed.name,role:removed.role}:null,
+    protected:!!(mafia&&doctor&&mafia.targetId===doctor.targetId)
+  });
+  const winner=checkWinner(room);
+  if(winner){finishRound(room,winner);return;}
+  startDiscussion(room);
+}
+function advanceIfReady(room){
+  if(!room.started)return;
+  if(room.phase==='NIGHT'){
+    const required=alivePlayers(room).filter(p=>['MAFIA','DETECTIVE','DOCTOR'].includes(p.role));
+    if(required.every(p=>room.actions.has(p.id)))resolveNight(room);
+  }else if(room.phase==='VOTE'){
+    const alive=alivePlayers(room);
+    if(alive.every(p=>room.votes.has(p.id)))resolveVote(room);
+  }
+}
+function resolveVote(room){
+  if(room.phase!=='VOTE')return;
+  clearTimer(room);
+  const counts=new Map();
+  for(const targetId of room.votes.values())if(targetId!=='SKIP')counts.set(targetId,(counts.get(targetId)||0)+1);
+  const ranked=[...counts.entries()].sort((a,b)=>b[1]-a[1]);
+  let removed=null;
+  if(ranked.length&&(!ranked[1]||ranked[0][1]>ranked[1][1])){
+    removed=room.players.get(ranked[0][0]);
+    if(removed)removed.alive=false;
+  }
+  room.phase='RESULTS';room.deadline=Date.now()+RESULTS_MS;
+  io.to(room.code).emit('round:voteResult',{
+    removed:removed?{id:removed.id,name:removed.name,role:removed.role}:null,
+    skipped:!removed&&ranked.length===0,tied:!removed&&ranked.length>0
+  });
+  const winner=checkWinner(room);
+  if(winner){finishRound(room,winner);return;}
+  sendState(room);
+  room.timer=setTimeout(()=>beginNight(room),RESULTS_MS);
+}
+io.on('connection',socket=>{
+  socket.emit('server:hello',{message:'Connected to THE MOLE game server'});
   socket.on('room:create',(payload={},ack=()=>{})=>{
     removePlayer(socket);
-    let code;
-    do { code=randomInt(100000,999999).toString(); } while(rooms.has(code));
-    const room={code,hostId:socket.id,started:false,players:new Map(),votes:new Map(),roles:new Map()};
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,x:0,z:5,rotation:0});
+    let code;do{code=randomInt(100000,999999).toString();}while(rooms.has(code));
+    const room={code,hostId:socket.id,started:false,phase:'LOBBY',day:0,players:new Map(),votes:new Map(),actions:new Map(),timer:null};
+    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,z:5,rotation:0});
     rooms.set(code,room);socket.join(code);socket.data.roomCode=code;
-    ack({ok:true,room:publicRoom(room),yourId:socket.id});
-    sendRoom(room);
+    ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
   socket.on('room:join',(payload={},ack=()=>{})=>{
-    const code=String(payload.code||'').replace(/\D/g,'').slice(0,6);
-    const room=rooms.get(code);
+    const code=String(payload.code||'').replace(/\D/g,'').slice(0,6),room=rooms.get(code);
     if(!room)return ack({ok:false,error:'That room code was not found.'});
     if(room.started)return ack({ok:false,error:'This round has already started.'});
     if(room.players.size>=MAX_PLAYERS)return ack({ok:false,error:'This room is full.'});
     removePlayer(socket);
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,x:0,z:5,rotation:0});
+    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,z:5,rotation:0});
     socket.join(code);socket.data.roomCode=code;
-    ack({ok:true,room:publicRoom(room),yourId:socket.id});
-    sendRoom(room);
+    ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
   socket.on('room:leave',()=>removePlayer(socket));
-  socket.on('round:start',ack=>{
-    const code=socket.data.roomCode,room=rooms.get(code);
-    if(!room)return ack?.({ok:false,error:'Join a room first.'});
-    if(room.hostId!==socket.id)return ack?.({ok:false,error:'Only the host can start the round.'});
-    if(room.players.size<4)return ack?.({ok:false,error:'At least 4 real players are needed to start.'});
-    const ids=[...room.players.keys()];
-    const roles=ids.map((id,i)=>i===0?'MAFIA':i===1?'DETECTIVE':i===2?'DOCTOR':'CITIZEN');
-    for(let i=roles.length-1;i>0;i--){const j=randomInt(i+1);[roles[i],roles[j]]=[roles[j],roles[i]];}
-    room.started=true;room.votes.clear();
-    ids.forEach((id,i)=>io.to(id).emit('round:role',{role:roles[i]}));
-    io.to(code).emit('round:started',{players:publicRoom(room).players});
-    ack?.({ok:true});
+  socket.on('round:start',(ack=()=>{})=>{
+    const room=rooms.get(socket.data.roomCode);
+    if(!room)return ack({ok:false,error:'Join a room first.'});
+    if(room.hostId!==socket.id)return ack({ok:false,error:'Only the host can start the round.'});
+    if(room.started)return ack({ok:false,error:'A round is already running.'});
+    if(room.players.size<MIN_PLAYERS)return ack({ok:false,error:'At least four real players are needed to start.'});
+    const players=shuffle([...room.players.values()]);
+    const roles=shuffle(['MAFIA','DETECTIVE','DOCTOR',...Array(players.length-3).fill('CITIZEN')]);
+    players.forEach((p,i)=>{p.role=roles[i];p.alive=true;io.to(p.id).emit('round:role',{role:p.role});});
+    room.started=true;room.day=0;room.winner=null;room.votes.clear();room.actions.clear();
+    ack({ok:true});beginNight(room);
+  });
+  socket.on('round:action',(payload={},ack=()=>{})=>{
+    const room=rooms.get(socket.data.roomCode),player=room?.players.get(socket.id);
+    if(!player||!room?.started||room.phase!=='NIGHT'||!player.alive)return ack({ok:false,error:'You cannot act right now.'});
+    if(!['MAFIA','DETECTIVE','DOCTOR'].includes(player.role))return ack({ok:false,error:'Your role has no night action.'});
+    if(room.actions.has(socket.id))return ack({ok:false,error:'You already submitted your night action.'});
+    const targetId=String(payload.targetId||''),target=room.players.get(targetId);
+    if(!target||!target.alive)return ack({ok:false,error:'Choose a living player.'});
+    if(player.role!=='DOCTOR'&&targetId===socket.id)return ack({ok:false,error:'Choose another player.'});
+    room.actions.set(socket.id,{playerId:socket.id,role:player.role,targetId});
+    ack({ok:true});io.to(room.code).emit('round:actionCount',{count:room.actions.size,total:alivePlayers(room).filter(p=>['MAFIA','DETECTIVE','DOCTOR'].includes(p.role)).length});
+    advanceIfReady(room);
+  });
+  socket.on('round:meeting',(ack=()=>{})=>{
+    const room=rooms.get(socket.data.roomCode),player=room?.players.get(socket.id);
+    if(!player||!room?.started||room.phase!=='DISCUSSION'||!player.alive)return ack({ok:false,error:'Voting is not open yet.'});
+    startVoting(room);ack({ok:true});
+  });
+  socket.on('round:castVote',(payload={},ack=()=>{})=>{
+    const room=rooms.get(socket.data.roomCode),player=room?.players.get(socket.id);
+    if(!player||!room?.started||room.phase!=='VOTE'||!player.alive)return ack({ok:false,error:'Voting is not open for you.'});
+    if(room.votes.has(socket.id))return ack({ok:false,error:'You have already voted.'});
+    const targetId=String(payload.targetId||'');
+    if(targetId!=='SKIP'){
+      const target=room.players.get(targetId);
+      if(!target||!target.alive||target.id===socket.id)return ack({ok:false,error:'Choose another living player.'});
+    }
+    room.votes.set(socket.id,targetId);ack({ok:true});sendState(room);advanceIfReady(room);
+  });
+  socket.on('round:restart',(ack=()=>{})=>{
+    const room=rooms.get(socket.data.roomCode);
+    if(!room||room.phase!=='ENDED')return ack({ok:false,error:'The round has not ended.'});
+    if(room.hostId!==socket.id)return ack({ok:false,error:'Only the host can restart the room.'});
+    clearTimer(room);room.started=false;room.phase='LOBBY';room.day=0;room.winner=null;room.votes.clear();room.actions.clear();
+    for(const p of room.players.values()){p.alive=true;p.role=null;p.x=0;p.z=5;}
+    io.to(room.code).emit('round:reset');sendState(room);ack({ok:true});
   });
   socket.on('player:move',pos=>{
-    const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
-    if(!p||!room.started)return;
-    p.x=Math.max(-9.3,Math.min(9.3,Number(pos?.x)||0));
-    p.z=Math.max(-7.8,Math.min(10.8,Number(pos?.z)||0));
+    const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
+    if(!p||!room?.started||!p.alive)return;
+    p.x=Math.max(-9.3,Math.min(9.3,Number(pos?.x)||0));p.z=Math.max(-7.8,Math.min(10.8,Number(pos?.z)||0));
     p.rotation=Number(pos?.rotation)||0;
-    socket.to(code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,z:p.z,rotation:p.rotation});
+    socket.to(room.code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,z:p.z,rotation:p.rotation});
   });
   socket.on('chat:send',payload=>{
-    const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
-    if(!p||!room||!String(payload?.message||'').trim())return;
-    const message=String(payload.message).trim().slice(0,180);
-    io.to(code).emit('chat:message',{name:p.name,message,at:Date.now()});
+    const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
+    const message=String(payload?.message||'').trim().slice(0,180);
+    if(!p||!room||!message|| (room.started&&!p.alive))return;
+    io.to(room.code).emit('chat:message',{name:p.name,message,at:Date.now()});
   });
   socket.on('chat:private',payload=>{
-    const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
-    const target=room?.players.get(String(payload?.to||''));
+    const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id),target=room?.players.get(String(payload?.to||''));
     const message=String(payload?.message||'').trim().slice(0,180);
     if(!p||!target||!message)return;
     const packet={from:p.name,to:target.name,message,at:Date.now()};
-    io.to(target.id).emit('chat:private',packet);
-    socket.emit('chat:private',packet);
-  });
-  socket.on('round:vote',payload=>{
-    const code=socket.data.roomCode,room=rooms.get(code),p=room?.players.get(socket.id);
-    const target=String(payload?.target||'');
-    if(!p||!room?.started||!room.players.has(target)||target===socket.id)return;
-    room.votes.set(socket.id,target);
-    io.to(code).emit('round:voteCount',{count:room.votes.size,total:room.players.size});
+    io.to(target.id).emit('chat:private',packet);socket.emit('chat:private',packet);
   });
   socket.on('disconnect',()=>removePlayer(socket));
 });
 const port=Number(process.env.PORT)||3001;
-httpServer.listen(port,'0.0.0.0',()=>console.log(`THE MOLE server listening on ${port}`));
+httpServer.listen(port,'0.0.0.0',()=>console.log(`THE MOLE game server listening on ${port}`));
