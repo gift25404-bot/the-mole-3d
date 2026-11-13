@@ -135,6 +135,69 @@ const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15
 for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}
 // exterior trees and fence-like silhouettes
 for(let i=0;i<22;i++){const a=i/22*Math.PI*2, r=14+Math.sin(i*4)*2,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.3,2.2,5),wood);trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,3.2,6),mat(0x263a35));crown.position.set(x,3.3,z);crown.castShadow=true;scene.add(crown)}
+// Fill the empty lots with overgrown trees and abandoned, weathered vehicles.
+const forestLeafMats = [mat(0x203d2b), mat(0x294a31), mat(0x365638), mat(0x455b36)];
+const barkMat = mat(0x49372a);
+function addOvergrownTree(x,z,scale=1){
+  const tree = new THREE.Group();
+  tree.position.set(x,0,z);
+  tree.scale.setScalar(scale);
+  scene.add(tree);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.2,.38,3.8,7),barkMat);
+  trunk.position.y=1.9; trunk.castShadow=true; trunk.receiveShadow=true; tree.add(trunk);
+  for(const [y,radius,height,offset] of [[3.2,1.55,2.7,0],[4.15,1.25,2.35,.45],[4.8,.88,1.8,-.3]]){
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(radius,1),forestLeafMats[Math.floor(Math.random()*forestLeafMats.length)]);
+    crown.position.set(offset,y,0); crown.scale.set(1,height/radius,.92); crown.castShadow=true; crown.receiveShadow=true; tree.add(crown);
+  }
+  // Low bushes make the neglected ground feel overgrown.
+  for(let i=0;i<3;i++){
+    const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(.7,1),forestLeafMats[(i+1)%forestLeafMats.length]);
+    bush.position.set((i-1)*.75,.48,((i%2)*.8)-.4); bush.scale.set(1,.7,1); bush.castShadow=true; tree.add(bush);
+  }
+}
+function addWreckedCar(x,z,rotation=0,color=0x6c6251){
+  const wreck = new THREE.Group();
+  wreck.position.set(x,0,z); wreck.rotation.y=rotation; scene.add(wreck);
+  const rust = mat(0x59463a), faded = mat(color), darkGlass = new THREE.MeshStandardMaterial({color:0x26383a,roughness:.5,transparent:true,opacity:.72});
+  const body = box(4.1,.82,1.85,faded,0,.72,0,wreck);
+  body.rotation.z=-.035;
+  box(2.25,.92,1.55,rust,-.15,1.48,0,wreck).rotation.z=.035;
+  box(1.85,.68,1.58,darkGlass,-.15,1.52,0,wreck);
+  // Missing side panels, a crooked bonnet and a visibly damaged bumper.
+  box(1.3,.16,1.9,rust,1.55,.55,.02,wreck).rotation.z=-.13;
+  box(.22,.25,2.05,rust,2.08,.38,0,wreck).rotation.z=.08;
+  for(const [wx,wz] of [[-1.35,-.98],[1.25,-.98],[-1.35,.98],[1.25,.98]]){
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.24,12),mat(0x171918));
+    wheel.rotation.z=Math.PI/2; wheel.position.set(wx,.43,wz); wheel.castShadow=true; wreck.add(wheel);
+  }
+  // One door hangs open and the roof has a dented plate.
+  const looseDoor=box(1.15,.12,.12,rust,-.45,.78,1.08,wreck); looseDoor.rotation.z=-.48; looseDoor.rotation.y=-.2;
+  const dent=box(.9,.08,.7,rust,-.2,2.0,-.12,wreck); dent.rotation.z=.08;
+  const lampMat=new THREE.MeshStandardMaterial({color:0x8e6c3d,emissive:0x24180c});
+  for(const side of [-1,1])box(.18,.22,.08,lampMat,2.12,.78,side*.58,wreck);
+}
+// Dense pockets of vegetation around the perimeter, leaving the bus, road and
+// mansion entrance clear for players to move through.
+for(const [x,z,s] of [
+  [-38,-30,1.35],[-29,-34,1.15],[-18,-35,1.3],[-5,-36,1.1],[10,-35,1.3],[25,-34,1.2],[38,-29,1.35],
+  [-39,-15,1.1],[-34,2,1.25],[-39,29,1.35],[-29,34,1.1],[-17,31,1.3],[2,35,1.15],[19,34,1.25],[34,31,1.3],
+  [39,12,1.15],[36,-8,1.2],[-27,-22,1.1],[28,-20,1.15],[-24,27,1.1],[27,26,1.1]
+]) addOvergrownTree(x,z,s);
+// Extra saplings and bushes fill the gaps between larger trees.
+for(let i=0;i<34;i++){
+  const x=-38+((i*17)%77), z=-32+((i*23)%66);
+  if(Math.abs(x)<21 && Math.abs(z)<13) continue;
+  if(Math.abs(z-17)<5 && Math.abs(x)<30) continue;
+  addOvergrownTree(x,z,.48+((i%4)*.09));
+}
+// Abandoned cars left to rust around the neglected roadside and empty lots.
+addWreckedCar(-31,7,.18,0x75664f);
+addWreckedCar(30,7,-.32,0x52605b);
+addWreckedCar(-30,-23,.55,0x65534a);
+addWreckedCar(29,-24,-.42,0x6b6656);
+addWreckedCar(34,25,.12,0x5a5d57);
+addWreckedCar(-35,27,-.2,0x766047);
+
 // minibus
 const bus=new THREE.Group();scene.add(bus);bus.position.set(-13,0,8);
 box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);
