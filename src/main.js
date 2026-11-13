@@ -439,8 +439,8 @@ function toggleFlashlight(){
 document.querySelector('#flashlight').onclick=toggleFlashlight;
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
-const serverUrl=import.meta.env.VITE_SERVER_URL||'https://mole-multiplayer-server-production.up.railway.app';
-const socket=io(serverUrl,{autoConnect:true,reconnection:true,timeout:5000});
+const serverUrl=import.meta.env.VITE_SERVER_URL||'';
+const socket=io(serverUrl||window.location.origin,{autoConnect:!!serverUrl,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null,onlineRoundState=null,onlinePromptKey='';
 const remoteAvatars=new Map();
 socket.on('connect',()=>{document.querySelector('#online').textContent='ONLINE LOBBY';});
@@ -538,8 +538,8 @@ function openOnlineLobby(){
  const content=`<label class="lobby-label">YOUR DISPLAY NAME</label><input id="lobby-name" maxlength="16" value="${onlineName}" class="lobby-input"><button class="vote-option" id="create-room">CREATE A ROOM</button><div class="lobby-divider">OR JOIN A ROOM</div><input id="room-code" maxlength="6" inputmode="numeric" placeholder="6-DIGIT ROOM CODE" class="lobby-input"><button class="vote-option" id="join-room">JOIN ROOM</button><p class="lobby-help">Online rooms need the game server running. At least four real players are needed to start a round.</p>`;
  modal('ONLINE LOBBY','Create a private room and share its code with friends.',content);
  const getName=()=>{onlineName=document.querySelector('#lobby-name').value.trim().slice(0,16)||'PLAYER';return onlineName;};
- document.querySelector('#create-room').onclick=()=>socket.emit('room:create',{name:getName()},res=>{if(!res?.ok)notice(res?.error||'Could not create room.');else{onlineRoom=res.room;notice(`ROOM CREATED: ${res.room.code}`);showRoomPanel(res.room);}});
- document.querySelector('#join-room').onclick=()=>socket.emit('room:join',{name:getName(),code:document.querySelector('#room-code').value},res=>{if(!res?.ok)notice(res?.error||'Could not join room.');else{onlineRoom=res.room;notice('You joined the room.');showRoomPanel(res.room);}});
+ document.querySelector('#create-room').onclick=()=>{if(!serverUrl){notice('Multiplayer is being connected to Render. Try again after the server is deployed.');return;}socket.emit('room:create',{name:getName()},res=>{if(!res?.ok)notice(res?.error||'Could not create room.');else{onlineRoom=res.room;notice(`ROOM CREATED: ${res.room.code}`);showRoomPanel(res.room);}});};
+ document.querySelector('#join-room').onclick=()=>{if(!serverUrl){notice('Multiplayer is being connected to Render. Try again after the server is deployed.');return;}socket.emit('room:join',{name:getName(),code:document.querySelector('#room-code').value},res=>{if(!res?.ok)notice(res?.error||'Could not join room.');else{onlineRoom=res.room;notice('You joined the room.');showRoomPanel(res.room);}});};
 }
 function showRoomPanel(room){
  const list=room.players.map(p=>`<div class="passenger-row"><span class="passenger-dot"></span><b>${p.name}</b><small>${p.id===room.hostId?'HOST':'PLAYER'}</small></div>`).join('');
