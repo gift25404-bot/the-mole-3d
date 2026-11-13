@@ -37,8 +37,53 @@ box(5,3.8,.22,wallMat,-7.5,1.9,1.5,house);
 // window frames / windows
 for(const x of [-7,-3,3,7]){box(1.7,1.35,.12,trim,x,2.35,-8.28,house);box(1.45,1.1,.05,glass,x,2.35,-8.18,house);box(1.8,.1,.2,wood,x,1.66,-8.2,house)}
 // front porch, steps and roof
-box(8,.25,2.5,wood,0,-.02,9.6,house);box(8,.18,2,trim,0,3.9,0,house);
-const roof=new THREE.Mesh(new THREE.ConeGeometry(12,4,4),mat(0x292e31));roof.rotation.y=Math.PI/4;roof.position.set(0,5.3,0);roof.scale.set(1,.75,.95);roof.castShadow=true;house.add(roof);
+box(8,.25,2.5,wood,0,-.02,9.6,house);
+// THREE-STOREY UNFINISHED CONCRETE BUILDING: open upper floors, exposed columns,
+// unfinished blockwork, scaffolding and reinforcing bars. The ground floor
+// remains the playable interior; upper levels form the visible construction shell.
+const concrete=mat(0x77766f,.98),rawConcrete=mat(0x96948a,.98),blockwork=mat(0x625f57,.98),rustSteel=mat(0x754c36,.8),scaffoldMat=mat(0x394b50,.8);
+const slab=(x,z,w,d,y)=>box(w,.34,d,concrete,x,y,z,house);
+slab(0,0,20,17,7.6);slab(0,0,20,17,11.4);
+slab(14,0,8,15,7.6);slab(14,0,8,15,11.4);
+// Reinforced-concrete columns at each structural bay.
+for(const y of [5.7,9.5]){
+ for(const [x,z] of [[-9.55,-8.05],[-3.2,-8.05],[3.2,-8.05],[9.55,-8.05],[-9.55,0],[9.55,0],[-9.55,8.05],[-3.2,8.05],[3.2,8.05],[9.55,8.05],[10.2,-7],[17.8,-7],[10.2,7],[17.8,7]]){
+  box(.42,3.8,.42,rawConcrete,x,y,z,house);
+ }
+}
+// Exposed beams and incomplete waist-high masonry on the second and third floors.
+for(const y of [7.35,11.15]){
+ for(const z of [-8.05,8.05])box(20,.42,.42,concrete,0,y,z,house);
+ for(const x of [-9.55,9.55])box(.42,.42,17,concrete,x,y,0,house);
+ for(const z of [-8.05,8.05])for(const x of [-7,-2,3,8])box(2.4,1.05,.22,blockwork,x,y-1.05,z,house);
+ for(const x of [-9.55,9.55])for(const z of [-5,0,5])box(.22,1.05,2.2,blockwork,x,y-1.05,z,house);
+}
+// East wing continues the unfinished structure.
+for(const y of [5.7,9.5])for(const [x,z] of [[10.2,-7],[14,-7],[17.8,-7],[10.2,0],[17.8,0],[10.2,7],[14,7],[17.8,7]])box(.4,3.8,.4,rawConcrete,x,y,z,house);
+for(const y of [7.35,11.15]){box(8,.4,.4,concrete,14,y,-7,house);box(8,.4,.4,concrete,14,y,7,house);box(.4,.4,14,concrete,10.2,y,0,house);box(.4,.4,14,concrete,17.8,y,0,house);}
+// Incomplete stair flights visible through the open side of the structure.
+for(let floor=0;floor<2;floor++){
+ const base=3.9+floor*3.8;
+ for(let step=0;step<9;step++)box(1.15,.18,.62,rawConcrete,-6+step*.38,base+step*.38,-1+step*.58,house);
+ box(.18,3.45,.18,scaffoldMat,-6,base+1.7,-1,house);
+}
+// Temporary steel-pipe scaffolding on the front and east elevations.
+for(const x of [-11,-7,-3,1,5,9,13,17,19]){
+ for(const z of [9.7,10.5])box(.09,11.8,.09,scaffoldMat,x,5.9,z,house);
+}
+for(const y of [1.2,4.8,8.6,11.8]){
+ for(const z of [9.7,10.5])box(30,.09,.09,scaffoldMat,4,y,z,house);
+ for(const x of [-11,19])box(.09,.09,18,scaffoldMat,x,y,1,house);
+}
+for(const x of [-11,-7,-3,1,5,9,13,17,19])box(.08,18,.08,scaffoldMat,x,5.8,10.5,house);
+// Rebar protruding from the unfinished top slab.
+for(const [x,z] of [[-9,-7],[-5,-7],[0,-7],[5,-7],[9,-7],[-9,0],[9,0],[-9,7],[-4,7],[2,7],[8,7],[12,-6],[17,-6],[12,6],[17,6]]){
+ const rod=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.15,7),rustSteel);rod.position.set(x,12.15,z);rod.castShadow=true;house.add(rod);
+}
+// Construction clutter: stacked blocks, timber planks and cement sacks.
+for(let i=0;i<5;i++){box(.75,.38,.55,blockwork,-8+i*.82,.2,10.8,house);box(1.8,.12,.22,wood,5+i*.45,.15,11.2,house);}
+for(let i=0;i<3;i++){const sack=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xaaa18a));sack.scale.set(1,.55,.72);sack.position.set(8+i*.7,.28,11.5);sack.castShadow=true;house.add(sack);}
+
 // furniture and room details
 box(4,.45,2,wood,-6,.5,-5,house);box(.15,1.1,.15,trim,-7.7,.25,-5,house);box(.15,1.1,.15,trim,-4.3,.25,-5,house);
 box(2,.7,1.1,mat(0x58605a),5,.35,-5,house);box(2.2,.18,1.2,mat(0x8b765e),5,.78,-5,house);
