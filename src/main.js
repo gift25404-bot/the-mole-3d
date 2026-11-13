@@ -275,7 +275,7 @@ function setAuthMode(mode){
  document.querySelector('#auth-tab-signin').classList.toggle('active',mode==='signin');
  document.querySelector('#auth-tab-signup').classList.toggle('active',mode==='signup');
  document.querySelector('#auth-submit').textContent=mode==='signin'?'SIGN IN TO THE GAME':'CREATE PLAYER ACCOUNT';
- document.querySelector('#auth-password').autocomplete=mode==='signin'?'current-password':'new-password';
+ // No password field is shown until secure authentication is configured.
  authFeedback.textContent=mode==='signin'?'Sign-in service is not connected yet. Your password will not be stored here.':'Account creation is not connected yet. Your password will not be stored here.';
 }
 document.querySelector('#auth-tab-signin').onclick=()=>setAuthMode('signin');
