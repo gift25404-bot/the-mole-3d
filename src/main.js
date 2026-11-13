@@ -849,14 +849,40 @@ socket.on('chat:private',packet=>{const thread=document.querySelector('#private-
 // Additional avatar controls.
 const preview=document.createElement('div');preview.className='live-avatar-preview';preview.innerHTML='<div class="preview-person" id="preview-person"><span class="preview-hair"></span><span class="preview-face"><i></i><i></i><b></b></span><span class="preview-body"></span></div><div class="preview-copy"><b>LIVE CHARACTER PREVIEW</b><small>Changes appear on your passenger as you customise.</small></div>';
 document.querySelector('.avatar-card .look-grid')?.before(preview);
-const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="9a674b">Warm brown</option><option value="603b2d">Deep brown</option><option value="815238">Cocoa</option><option value="d49b76">Golden</option><option value="e0b99a">Light</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Midnight</option><option value="573522">Chestnut</option><option value="c79b55">Golden</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly</option><option value="short">Short</option><option value="long">Long sides</option></select></label><label>OUTFIT COLOUR<select id="outfit-choice"><option value="c96f62">Coral</option><option value="477caa">Blue</option><option value="527b5c">Forest</option><option value="8064a6">Violet</option><option value="39858a">Teal</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
+const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="603b2d">Deep espresso</option><option value="70452f">Rich brown</option><option value="815238">Cocoa</option><option value="9a674b" selected>Warm brown</option><option value="ad7654">Caramel</option><option value="bd8967">Copper</option><option value="d49b76">Golden</option><option value="e0b99a">Light beige</option><option value="f0c9a8">Fair peach</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Natural black</option><option value="39251d">Dark brown</option><option value="573522">Chestnut</option><option value="743d27">Auburn</option><option value="c79b55">Golden blonde</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option><option value="343b62">Blue-black</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly afro</option><option value="short">Short crop</option><option value="fade">Low fade</option><option value="braids">Braids</option><option value="locs">Locs</option><option value="bun">High bun</option><option value="ponytail">Ponytail</option><option value="long">Long sides</option></select></label><label>OUTFIT<select id="outfit-choice"><option value="c96f62">Coral hoodie</option><option value="477caa">Blue jacket</option><option value="527b5c">Forest green</option><option value="8064a6">Violet sweater</option><option value="39858a">Teal streetwear</option><option value="252d3c">Midnight black</option><option value="e2d6c4">Cream sweatshirt</option><option value="b48a42">Mustard jacket</option><option value="a94f4f">Red varsity</option><option value="48606a">Slate denim</option><option value="6b4b3b">Earth brown</option><option value="d28caa">Pink jacket</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
 document.querySelector('.avatar-card .look-grid')?.after(studio);
 const previewPerson=document.querySelector('#preview-person');
 function refreshAvatarPreview(){if(!previewPerson)return;previewPerson.style.setProperty('--preview-skin','#'+document.querySelector('#skin-choice').value);previewPerson.style.setProperty('--preview-hair','#'+document.querySelector('#hair-choice').value);previewPerson.style.setProperty('--preview-shirt','#'+document.querySelector('#outfit-choice').value);previewPerson.dataset.hair=document.querySelector('#hair-style').value;}
 document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
 document.querySelector('#hair-choice')?.addEventListener('change',e=>{player.appearance.hairMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>{player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
-document.querySelector('#hair-style')?.addEventListener('change',e=>{const parts=player.appearance.hairPieces;const style=e.target.value;parts[0].scale.set(1,style==='short'?.78:style==='long'?1.04:1.12,style==='short'?.92:1.06);parts[1].visible=style!=='short';parts[2].visible=style!=='short';parts[3].visible=style!=='short';parts[4].scale.y=style==='long'?2:1.2;parts[5].scale.y=style==='long'?2:1.2;refreshAvatarPreview()});
+// Build extra hairstyle silhouettes once, then switch them instantly from the studio.
+const hairstyleMeshes={};
+function addHairShape(style,geometry,x,y,z,sx=1,sy=1,sz=1){
+ const mesh=new THREE.Mesh(geometry,player.appearance.hairMat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;mesh.visible=false;player.group.add(mesh);(hairstyleMeshes[style]??=[]).push(mesh);return mesh;
+}
+addHairShape('curly',new THREE.SphereGeometry(.46,16,12),0,2.13,-.015,1.12,.92,1.04);
+for(let side of [-1,1]){
+ for(let i=0;i<4;i++){
+  addHairShape('braids',new THREE.CapsuleGeometry(.045,.38,4,8),side*(.31+i*.035),1.88-i*.08,.04,.9,1,.9);
+  addHairShape('locs',new THREE.CapsuleGeometry(.065,.43,4,8),side*(.31+i*.035),1.82-i*.07,.02,1,1,.95);
+ }
+}
+addHairShape('bun',new THREE.SphereGeometry(.19,12,10),0,2.37,-.24,1,1,1);
+addHairShape('ponytail',new THREE.SphereGeometry(.15,12,10),0,2.12,-.35,1,1,1);
+addHairShape('ponytail',new THREE.CapsuleGeometry(.09,.42,4,8),0,1.82,-.4,1,1,1);
+function setHairStyle(style){
+ const parts=player.appearance.hairPieces;
+ parts.forEach((part,i)=>{part.visible=style!=='curly'&&style!=='braids'&&style!=='locs'&&style!=='bun'&&style!=='ponytail'||i===0;});
+ parts[0].scale.set(1,style==='short'||style==='fade'?.76:style==='long'?1.05:1.12,style==='short'||style==='fade'?.9:1.06);
+ parts[1].visible=style==='long';parts[2].visible=style==='long';parts[3].visible=style==='long';
+ parts[4].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
+ parts[5].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
+ Object.entries(hairstyleMeshes).forEach(([key,meshes])=>meshes.forEach(mesh=>mesh.visible=key===style));
+ refreshAvatarPreview();
+}
+document.querySelector('#hair-style')?.addEventListener('change',e=>setHairStyle(e.target.value));
+setHairStyle('curly');
 refreshAvatarPreview();
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
 let headAccessory=null;
