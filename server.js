@@ -64,7 +64,7 @@ io.on('connection', socket=>{
     if(room.hostId!==socket.id)return ack?.({ok:false,error:'Only the host can start the round.'});
     if(room.players.size<4)return ack?.({ok:false,error:'At least 4 real players are needed to start.'});
     const ids=[...room.players.keys()];
-    const roles=ids.map((id,i)=>i===0?'MOLE':i===1?'DETECTIVE':i===2?'DOCTOR':'CITIZEN');
+    const roles=ids.map((id,i)=>i===0?'MAFIA':i===1?'DETECTIVE':i===2?'DOCTOR':'CITIZEN');
     for(let i=roles.length-1;i>0;i--){const j=randomInt(i+1);[roles[i],roles[j]]=[roles[j],roles[i]];}
     room.started=true;room.votes.clear();
     ids.forEach((id,i)=>io.to(id).emit('round:role',{role:roles[i]}));
