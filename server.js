@@ -17,7 +17,7 @@ const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=randomInt(i+1);[li
 const alivePlayers=room=>[...room.players.values()].filter(p=>p.alive);
 const publicRoom=room=>({
   code:room.code,hostId:room.hostId,started:room.started,phase:room.phase,day:room.day,
-  players:[...room.players.values()].map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive,x:p.x,z:p.z,rotation:p.rotation}))
+  players:[...room.players.values()].map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive,x:p.x,y:p.y||0,z:p.z,rotation:p.rotation}))
 });
 function sendRoom(room){io.to(room.code).emit('room:update',publicRoom(room));}
 function clearTimer(room){if(room.timer){clearTimeout(room.timer);room.timer=null;}}
