@@ -130,7 +130,7 @@ if(!document.querySelector('#sound')){
 document.querySelector('#sound').onclick=()=>setAmbience(!ambienceOn);
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
-const serverUrl=import.meta.env.VITE_SERVER_URL||'http://localhost:3001';
+const serverUrl=import.meta.env.VITE_SERVER_URL||'https://the-mole-3d.onrender.com';
 const socket=io(serverUrl,{autoConnect:true,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null;
 const remoteAvatars=new Map();
