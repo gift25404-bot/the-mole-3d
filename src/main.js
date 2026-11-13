@@ -607,7 +607,7 @@ document.querySelector('#begin-game')?.addEventListener('click',()=>{
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
-document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div></div>`);
+document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div><div>10 — SECOND FLOOR</div><div>11 — THIRD FLOOR / ROOFTOP</div><div>12 — EAST WING STAIRCASE</div></div>`);
 
 // Local social-deduction round: one hidden Mole, one Detective, one Doctor.
 const roster = [player, ...npcs];
@@ -755,6 +755,11 @@ function interact(){
 }
 updateObjective();
 const clock=new THREE.Clock();let elapsed=0,lastNetworkMove=0;
+const floorBadge=document.createElement('div');
+floorBadge.id='floor-indicator';
+floorBadge.textContent='GROUND FLOOR';
+document.querySelector('#game').append(floorBadge);
+
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  // Animate the rain around the world and occasionally illuminate the skyline.
  const rainPos=rain.geometry.attributes.position;
@@ -772,7 +777,10 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
   notice(events[Math.floor(Math.random()*events.length)]);
   flashRemaining=.5;nextSpookyEvent=elapsed+28+Math.random()*28;
  }
- const p=player.group;let dx=0,dz=0;if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
+ const p=player.group;let dx=0,dz=0;
+ const floorName=p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
+ floorBadge.textContent=floorName;
+if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
  if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40);
  // Stair zones set the avatar's actual elevation, making both upper levels walkable.
