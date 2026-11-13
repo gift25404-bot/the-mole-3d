@@ -3,8 +3,8 @@ import { io } from 'socket.io-client';
 import './style.css';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x101820);
-scene.fog = new THREE.FogExp2(0x101820, 0.027);
+scene.background = new THREE.Color(0x243b46);
+scene.fog = new THREE.FogExp2(0x243b46, 0.012);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -12,16 +12,42 @@ renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x9eafc2,0x241b16,1.45));
-const moon=new THREE.DirectionalLight(0x9db7d1,2.1); moon.position.set(-9,18,8); moon.castShadow=true; moon.shadow.mapSize.set(2048,2048); scene.add(moon);
-const warm=new THREE.PointLight(0xffb35c,38,15); warm.position.set(0,3,0); scene.add(warm);
+scene.add(new THREE.HemisphereLight(0xffd7a0,0x4b3a2b,2.0));
+const moon=new THREE.DirectionalLight(0xffd6a0,2.5); moon.position.set(-9,18,8); moon.castShadow=true; moon.shadow.mapSize.set(2048,2048); scene.add(moon);
+const warm=new THREE.PointLight(0xffb35c,30,18); warm.position.set(0,3,0); scene.add(warm);
 const hallLight=new THREE.PointLight(0xffd18a,16,10); hallLight.position.set(0,3,-8); scene.add(hallLight);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
-const floorMat=mat(0x514a3e), wallMat=mat(0x655d50), darkMat=mat(0x242a2a), wood=mat(0x49352a), trim=mat(0x302820), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
+const floorMat=mat(0x75634b), wallMat=mat(0xb7a58a), darkMat=mat(0x343a38), wood=mat(0x68442e), trim=mat(0x3b3028), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
 function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
 function plane(w,d,m,x,y,z){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,d),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o}
-plane(60,60,mat(0x202b2b),0,-.16,0);
+plane(90,90,mat(0x75684f),0,-.16,0);
+// Lagos-inspired roadside setting: warm streetlights, kiosks, palms and overhead wires.
+const roadMat=mat(0x343b3d), curbMat=mat(0xc9b58b), stallBlue=mat(0x277c86), stallRed=mat(0xb94f3e), palmMat=mat(0x3c6848);
+box(90,.08,8,roadMat,0,-.105,17);
+for(let x=-42;x<44;x+=8) box(3,.025,.12,mat(0xe7d39a),x,-.055,17);
+for(const side of [-1,1]){
+  box(90,.18,.45,curbMat,0,-.04,side*21);
+  for(let x=-38;x<=38;x+=12){
+    const pole=box(.16,6,.16,trim,x,3,side*16);
+    box(1.5,.12,.12,trim,x+.65,5.8,side*16);
+    const glow=new THREE.PointLight(0xffc477,5,11);glow.position.set(x+.7,5.5,side*16);scene.add(glow);
+    // Small palm silhouettes along the road.
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,3.8,7),wood);trunk.position.set(x,1.8,side*25);scene.add(trunk);
+    for(let f=0;f<6;f++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.24,3.2,5),palmMat);leaf.position.set(x+Math.cos(f*Math.PI/3)*1.15,3.7,side*25+Math.sin(f*Math.PI/3)*1.15);leaf.rotation.z=Math.cos(f*Math.PI/3)*.75;leaf.rotation.x=Math.sin(f*Math.PI/3)*.75;scene.add(leaf);}
+  }
+}
+// A few colourful roadside kiosks give the arrival area a recognisable city feel.
+for(const [x,z,color] of [[-22,12,stallBlue],[22,12,stallRed],[-25,23,stallRed],[25,23,stallBlue]]){
+  const kiosk=new THREE.Group();scene.add(kiosk);kiosk.position.set(x,0,z);
+  box(3.2,2.1,2.2,mat(0x9b7048),0,1,0,kiosk);
+  box(3.6,.16,2.6,mat(color.color.getHex()),0,2.15,0,kiosk);
+  box(3.8,.12,2.8,mat(0xe7c46f),0,2.3,0,kiosk);
+  box(2.5,.9,.08,mat(0x293a3b),0,1.25,1.12,kiosk);
+}
+// Simple overhead utility wires across the street.
+for(const z of [14,19]){const wire=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,86,5),mat(0x25292a));wire.rotation.z=Math.PI/2;wire.position.set(0,7,z);scene.add(wire);}
+
 const house=new THREE.Group();scene.add(house);
 // House is split into connected rooms; door-sized gaps are left in the partitions.
 box(20,.35,17,floorMat,0,0,0,house);
@@ -111,7 +137,7 @@ for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);con
 for(let i=0;i<22;i++){const a=i/22*Math.PI*2, r=14+Math.sin(i*4)*2,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.3,2.2,5),wood);trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,3.2,6),mat(0x263a35));crown.position.set(x,3.3,z);crown.castShadow=true;scene.add(crown)}
 // minibus
 const bus=new THREE.Group();scene.add(bus);bus.position.set(-13,0,8);
-box(4.5,1.8,2.1,mat(0xc99b36),0,1,0,bus);box(3.6,.65,2.08,mat(0xdbc27a),-.15,2.05,0,bus);
+box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);\nbox(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
 for(const x of [-1.35,-.35,.65,1.55])box(.65,.58,.05,glass,x,2.05,1.06,bus);
 for(const x of [-1.5,1.5])for(const z of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.22,12),mat(0x151719));w.rotation.z=Math.PI/2;w.position.set(x,.45,z);bus.add(w)}
 // doors are hinged panels
