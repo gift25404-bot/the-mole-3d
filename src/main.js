@@ -239,6 +239,30 @@ function closeModal(){document.querySelector('#modal').classList.add('hidden')}
 document.querySelector('#close-modal').onclick=closeModal;
 document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who is the Mafia.', '<div class="room-list"><div>MAFIA — secretly disrupts the group</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
 document.querySelector('#chat-button')?.addEventListener('click',()=>modal('MESSAGES','Group chat is available when you join an online room. Private chat is not enabled yet.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message"><button type="submit">SEND</button></form>'));
+// Account screen is shown before the bus intro. Real account creation/sign-in
+// is intentionally blocked until a trusted authentication provider is configured.
+let authMode='signin';
+const authFeedback=document.querySelector('#auth-feedback');
+function setAuthMode(mode){
+ authMode=mode;
+ document.querySelector('#auth-tab-signin').classList.toggle('active',mode==='signin');
+ document.querySelector('#auth-tab-signup').classList.toggle('active',mode==='signup');
+ document.querySelector('#auth-submit').textContent=mode==='signin'?'SIGN IN TO THE GAME':'CREATE PLAYER ACCOUNT';
+ document.querySelector('#auth-password').autocomplete=mode==='signin'?'current-password':'new-password';
+ authFeedback.textContent=mode==='signin'?'Sign-in service is not connected yet. Your password will not be stored here.':'Account creation is not connected yet. Your password will not be stored here.';
+}
+document.querySelector('#auth-tab-signin').onclick=()=>setAuthMode('signin');
+document.querySelector('#auth-tab-signup').onclick=()=>setAuthMode('signup');
+document.querySelector('#auth-form').addEventListener('submit',event=>{
+ event.preventDefault();
+ const email=document.querySelector('#auth-email').value.trim();
+ const username=document.querySelector('#auth-username').value.trim();
+ const password=document.querySelector('#auth-password').value;
+ if(!email.toLowerCase().endsWith('@gmail.com')){authFeedback.textContent='Please enter a Gmail address ending in @gmail.com.';return;}
+ if(username.length<3){authFeedback.textContent='Your username must have at least 3 characters.';return;}
+ if(password.length<8){authFeedback.textContent='Use a password with at least 8 characters.';return;}
+ authFeedback.textContent='The sign-in screen is ready, but secure account service still needs to be connected. No account was created and your password was not saved.';
+});
 document.querySelector('#begin-game')?.addEventListener('click',()=>{
  document.querySelector('#bus-intro')?.classList.add('intro-hidden');
  speak('The bus has broken down. The road is empty. Ahead, a house stands beneath the storm. Stay together. Your roles will be revealed when you arrive.');
