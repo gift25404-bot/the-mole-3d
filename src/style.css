@@ -151,3 +151,11 @@ html,body,#game{background:#243b46;color:#fff2d8}
 .avatar-customizer label{gap:7px}
 .avatar-customizer select{min-height:38px}
 @media(max-width:560px){.live-avatar-preview{min-height:125px;gap:12px}.preview-person{transform:scale(.86);transform-origin:center}.preview-copy small{font-size:9px}.avatar-customizer{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Additional live-preview silhouettes for the expanded hair studio. */
+.preview-person[data-hair="curly"] .preview-hair{height:30px;border-radius:50%;box-shadow:-10px 5px 0 -1px var(--preview-hair),10px 5px 0 -1px var(--preview-hair),-5px -5px 0 -1px var(--preview-hair),6px -5px 0 -1px var(--preview-hair)}
+.preview-person[data-hair="braids"] .preview-hair{height:18px;border-radius:20px 20px 5px 5px;box-shadow:-9px 24px 0 -4px var(--preview-hair),-3px 29px 0 -4px var(--preview-hair),4px 29px 0 -4px var(--preview-hair),10px 24px 0 -4px var(--preview-hair)}
+.preview-person[data-hair="locs"] .preview-hair{height:21px;border-radius:18px 18px 4px 4px;box-shadow:-12px 24px 0 -2px var(--preview-hair),-5px 31px 0 -2px var(--preview-hair),5px 31px 0 -2px var(--preview-hair),12px 24px 0 -2px var(--preview-hair)}
+.preview-person[data-hair="bun"] .preview-hair{height:20px;border-radius:20px 20px 5px 5px;box-shadow:0 -11px 0 -2px var(--preview-hair)}
+.preview-person[data-hair="ponytail"] .preview-hair{height:18px;border-radius:18px 18px 4px 4px;box-shadow:12px 22px 0 -3px var(--preview-hair)}
+.preview-person[data-hair="fade"] .preview-hair{height:13px;top:12px;border-radius:16px 16px 5px 5px}
