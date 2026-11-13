@@ -57,6 +57,8 @@ function addClue(name,description,x,z,color){
 addClue('OLD PHOTOGRAPH','A family photograph. Someone has circled the library window.',-6,-5,0xd7c7a3);
 addClue('TORN NOTE','The note reads: “The clock remembers what the doors forget.”',5,-5,0xc8b48b);
 addClue('BRASS KEY','A heavy key with the number 314 engraved on it.',5,4,0xc59a4d);
+// East wing expansion: study, music room and conservatory.
+const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15,wallMat,18,1.9,0,house);box(8,3.8,.3,wallMat,14,1.9,-7.5,house);box(8,3.8,.3,wallMat,14,1.9,7.5,house);box(.22,3.8,4,wallMat,10,1.9,-5,house);box(.22,3.8,4,wallMat,10,1.9,5,house);addClue('DUSTY DIARY','A diary entry says the east wing was locked after the last storm.',12,-5,0x9b7655);addClue('MUSIC BOX','A tiny music box bears the initials B.H.',16,0,0xb88d53);addClue('SEALED LETTER','A sealed letter mentions a hidden passage.',12,5,0x7f9b9b);
 
 // hanging lamps
 for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}
@@ -402,7 +404,7 @@ document.querySelector('#begin-game')?.addEventListener('click',()=>{
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
-document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div></div>`);
+document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div></div>`);
 
 // Local social-deduction round: one hidden Mole, one Detective, one Doctor.
 const roster = [player, ...npcs];
@@ -514,8 +516,8 @@ document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addE
 let cluesFound=0, exitUnlocked=false;
 function updateObjective(){
  const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
- if(count)count.textContent=`CLUES FOUND: ${cluesFound} / 3`;
- if(objective)objective.textContent=cluesFound<3?'SEARCH THE HOUSE FOR CLUES':'RETURN TO THE FRONT DOOR';
+ if(count)count.textContent=`CLUES FOUND: ${cluesFound} / 6`;
+ if(objective)objective.textContent=cluesFound<6?'SEARCH THE HOUSE FOR CLUES':'RETURN TO THE FRONT DOOR';
 }
 function interact(){
  const p=player.group.position;
@@ -525,12 +527,12 @@ function interact(){
  if(nearestClue){
   nearestClue.collected=true;scene.remove(nearestClue.group);cluesFound++;updateObjective();
   notice(`${nearestClue.name} collected.`);
-  if(cluesFound===3){exitUnlocked=true;notice('All clues found. The front door lock has released!');}
+  if(cluesFound===6){exitUnlocked=true;notice('All six clues found. The front door lock has released!');}
   return;
  }
  const dDoor=p.distanceTo(new THREE.Vector3(0,0,8.5));
  if(dDoor<3.2){
-  if(!exitUnlocked){notice(`The lock is jammed. Find all 3 clues first (${cluesFound}/3).`);return}
+  if(!exitUnlocked){notice(`The lock is jammed. Find all 6 clues first (${cluesFound}/6).`);return}
   doorOpen=!doorOpen;doorPivot.rotation.y=doorOpen?-1.45:0;
   if(doorOpen){modal('YOU FOUND THE WAY OUT','The group has uncovered the house secret and opened the front door. This exploration chapter is complete.','<button class="vote-option" id="continue-round">RETURN TO THE HOUSE</button>');document.querySelector('#continue-round').onclick=closeModal;}
   else notice('The front door closes.');
@@ -546,7 +548,7 @@ const clock=new THREE.Clock();let elapsed=0,lastNetworkMove=0;
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  const p=player.group;let dx=0,dz=0;if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-9.3,9.3);p.position.z=THREE.MathUtils.clamp(p.position.z,-7.8,10.8)}
+ if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-9.3,17.2);p.position.z=THREE.MathUtils.clamp(p.position.z,-7.8,10.8)}
  player.limbs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(elapsed*10+i*Math.PI)*.65:Math.sin(elapsed*2+i)*.035});
  npcs.forEach((n,i)=>{n.phase+=dt;const t=n.phase; n.group.position.x+=Math.sin(t*.24+i)*.0015;n.group.position.z+=Math.cos(t*.22+i)*.0015;n.limbs.forEach((l,j)=>l.rotation.x=Math.sin(t*2+j)*.08)});
  // clue items hover gently until collected
@@ -567,3 +569,33 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2))});
 notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
+
+
+// Private player messages (online rooms only).
+const privateButton=document.createElement('button');privateButton.id='private-chat-button';privateButton.textContent='✉ PRIVATE';document.querySelector('.social-tools')?.append(privateButton);
+privateButton.onclick=()=>{
+ if(!onlineRoom||!socket.connected){notice('Join an online room before sending private messages.');return;}
+ const others=onlineRoom.players.filter(p=>p.id!==socket.id);if(!others.length){notice('No other players are in this room yet.');return;}
+ modal('PRIVATE MESSAGES','Only you and the selected player receive this message.','<label class="private-label">MESSAGE PLAYER</label><select id="private-target" class="private-input"></select><div id="private-thread" class="private-thread"></div><form id="private-form"><input id="private-input" class="private-input" maxlength="180" placeholder="Write a private message"><button>SEND</button></form>');
+ const select=document.querySelector('#private-target');others.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;select.append(o)});
+ document.querySelector('#private-form').onsubmit=e=>{e.preventDefault();const input=document.querySelector('#private-input'),message=input.value.trim();if(message){socket.emit('chat:private',{to:select.value,message});input.value=''}};
+};
+socket.on('chat:private',packet=>{const thread=document.querySelector('#private-thread');if(!thread){notice('New private message from '+packet.from+'.');return;}const p=document.createElement('p');p.textContent=packet.from+' → '+packet.to+': '+packet.message;thread.append(p);thread.scrollTop=thread.scrollHeight;});
+
+// Additional avatar controls.
+const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Midnight</option><option value="573522">Chestnut</option><option value="c79b55">Golden</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option></select></label><label>OUTFIT COLOUR<select id="outfit-choice"><option value="c96f62">Coral</option><option value="477caa">Blue</option><option value="527b5c">Forest</option><option value="8064a6">Violet</option><option value="39858a">Teal</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
+document.querySelector('.avatar-card .look-grid')?.after(studio);
+document.querySelector('#hair-choice')?.addEventListener('change',e=>player.appearance.hairMat.color.setHex(parseInt(e.target.value,16)));
+document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
+let headAccessory=null;
+document.querySelector('#accessory-choice')?.addEventListener('change',e=>{
+ if(headAccessory)player.group.remove(headAccessory);headAccessory=null;if(e.target.value==='none')return;
+ headAccessory=new THREE.Group();const goldMat=mat(e.target.value==='crown'?0xd5ad6b:0x293d4a);
+ const shape=new THREE.Mesh(new THREE.TorusGeometry(.29,.06,8,20),goldMat);shape.position.y=2.3;shape.rotation.x=Math.PI/2;headAccessory.add(shape);
+ if(e.target.value==='cap'){const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.05,20),goldMat);brim.position.y=2.2;headAccessory.add(brim)}
+ player.group.add(headAccessory);
+});
+
+// Small synthesized sound cues for collected clues and discoveries.
+function playCue(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audioCtx=audioCtx||new AC();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=660;g.gain.setValueAtTime(.035,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.14);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.15)}catch{}}
+const oldNotice=notice;notice=function(message){oldNotice(message);if(/collected|released|switched on|opened/i.test(message))playCue()};
