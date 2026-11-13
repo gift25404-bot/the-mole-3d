@@ -241,12 +241,12 @@ socket.on('round:notice',data=>notice(data.message));
 socket.on('round:actionCount',data=>notice(`NIGHT ACTIONS: ${data.count}/${data.total}`));
 socket.on('round:investigation',data=>modal('DETECTIVE REPORT',`${data.name} is ${data.result}.`,'<p>This result is private to you.</p>'));
 socket.on('round:nightResult',data=>{
- if(data.removed)addChat('SYSTEM',`${data.removed.name} was eliminated overnight. Role: ${data.removed.role}.`,true);
+ if(data.removed){addChat('SYSTEM',`${data.removed.name} was eliminated overnight. Role: ${data.removed.role}.`,true);if(data.removed.id===socket.id){onlineRole='GHOST';document.querySelector('#role-label').textContent='ELIMINATED';modal('YOU HAVE BEEN ELIMINATED','You can watch the rest of this round, but you cannot vote or use a role action.');}}
  else if(data.protected)addChat('SYSTEM','The Doctor protected the Mafia target. Nobody was eliminated overnight.',true);
  else addChat('SYSTEM','Nobody was eliminated overnight.',true);
 });
 socket.on('round:voteResult',data=>{
- if(data.removed)addChat('SYSTEM',`${data.removed.name} was voted out. Role: ${data.removed.role}.`,true);
+ if(data.removed){addChat('SYSTEM',`${data.removed.name} was voted out. Role: ${data.removed.role}.`,true);if(data.removed.id===socket.id){onlineRole='GHOST';document.querySelector('#role-label').textContent='ELIMINATED';modal('YOU HAVE BEEN ELIMINATED','You can watch the rest of this round, but you cannot vote or use a role action.');}}
  else addChat('SYSTEM',data.tied?'The vote was tied. Nobody was removed.':'The group skipped the vote.',true);
 });
 socket.on('round:ended',data=>{
