@@ -129,3 +129,25 @@ html,body,#game{background:#243b46;color:#fff2d8}
  box-shadow:0 5px 18px #0006;pointer-events:none
 }
 @media(max-width:700px){#floor-indicator{top:150px;right:10px;font-size:9px;padding:7px 9px}}
+
+
+/* Live character studio: large animated portrait with instantly applied options. */
+.avatar-card{width:min(760px,100%)}
+.live-avatar-preview{display:flex;align-items:center;justify-content:center;gap:22px;min-height:150px;margin:12px 0 18px;padding:14px;background:linear-gradient(135deg,#294348,#172a30);border:1px solid #718078;border-radius:16px}
+.preview-person{--preview-skin:#9a674b;--preview-hair:#211b1a;--preview-shirt:#c96f62;position:relative;width:104px;height:128px;flex:none;filter:drop-shadow(0 8px 8px #0007);animation:preview-bob 2.8s ease-in-out infinite}
+.preview-face{position:absolute;z-index:2;left:29px;top:12px;width:48px;height:53px;border-radius:46% 46% 43% 43%;background:var(--preview-skin);box-shadow:inset -5px -3px 0 #0002}
+.preview-face i{position:absolute;top:23px;left:11px;width:5px;height:7px;border-radius:50%;background:#211b1a;box-shadow:19px 0 #211b1a}
+.preview-face b{position:absolute;left:17px;top:39px;width:14px;height:6px;border-bottom:2px solid #542e2a;border-radius:50%}
+.preview-hair{position:absolute;z-index:3;left:27px;top:7px;width:52px;height:23px;border-radius:24px 24px 8px 8px;background:var(--preview-hair)}
+.preview-person[data-hair="short"] .preview-hair{height:16px;border-radius:22px 22px 4px 4px}
+.preview-person[data-hair="long"] .preview-hair{height:29px;border-radius:24px 24px 10px 10px;box-shadow:-5px 27px 0 -1px var(--preview-hair),5px 27px 0 -1px var(--preview-hair)}
+.preview-person[data-hair="curly"] .preview-hair{box-shadow:-9px 8px 0 -2px var(--preview-hair),9px 8px 0 -2px var(--preview-hair),-3px -3px 0 -2px var(--preview-hair),4px -4px 0 -2px var(--preview-hair)}
+.preview-body{position:absolute;left:17px;bottom:0;width:72px;height:62px;border-radius:27px 27px 10px 10px;background:var(--preview-shirt);border:3px solid #ffffff18}
+.preview-copy{display:flex;flex-direction:column;gap:7px;text-align:left;max-width:260px}
+.preview-copy b{font:700 11px 'DM Mono';letter-spacing:1.4px;color:#ffda83}
+.preview-copy small{font:10px/1.6 'DM Mono';color:#d2d8ce}
+@keyframes preview-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.avatar-customizer{grid-template-columns:repeat(3,minmax(0,1fr))}
+.avatar-customizer label{gap:7px}
+.avatar-customizer select{min-height:38px}
+@media(max-width:560px){.live-avatar-preview{min-height:125px;gap:12px}.preview-person{transform:scale(.86);transform-origin:center}.preview-copy small{font-size:9px}.avatar-customizer{grid-template-columns:repeat(2,minmax(0,1fr))}}
