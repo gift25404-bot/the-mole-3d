@@ -31,3 +31,11 @@ canvas{display:block;position:absolute;inset:0;z-index:0}.topbar{position:absolu
 .lobby-help{font:10px 'DM Mono';line-height:1.5;color:#a8aaa4}
 .sound-toggle{border:1px solid rgba(229,193,126,.55);background:rgba(18,24,29,.88);color:#f2dfbd;padding:9px 12px;border-radius:8px;font:700 10px/1.2 inherit;letter-spacing:.08em;cursor:pointer}
 .sound-toggle:hover{background:rgba(87,65,40,.92)}
+
+.social-tools{position:absolute;z-index:4;right:22px;top:88px;display:flex;gap:8px}
+.social-tools button,#begin-game{background:#252d30;border:1px solid #b88d53;color:#f2dfbd;padding:10px 14px;font:10px 'DM Mono';letter-spacing:1px;cursor:pointer}
+.bus-intro{position:absolute;z-index:10;inset:0;display:grid;place-items:center;background:linear-gradient(120deg,rgba(5,9,13,.96),rgba(20,27,29,.86)),radial-gradient(circle at 50% 60%,#4a3928,transparent 55%);padding:20px}
+.bus-intro.intro-hidden{display:none}.intro-card{max-width:540px;text-align:center;padding:34px;background:rgba(12,17,20,.88);border:1px solid #8c704d;box-shadow:0 20px 80px #000}
+.intro-card h1{font-size:clamp(28px,6vw,48px);letter-spacing:3px;color:#e8d4b0}.intro-card p:not(.eyebrow){color:#c3c3bb;line-height:1.7;font-size:14px}
+@media(max-width:700px) and (orientation:portrait){#game:after{content:'Rotate your phone to landscape to play';position:absolute;z-index:20;inset:0;background:#10151b;color:#f2eee6;display:grid;place-items:center;font:16px 'DM Mono';text-align:center;padding:25px}}
+@media(max-width:700px) and (orientation:landscape){.social-tools{right:10px;top:66px}.social-tools button{padding:7px;font-size:8px}.topbar{height:54px}}
