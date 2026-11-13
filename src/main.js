@@ -756,7 +756,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  if(elapsed>nextSpookyEvent){
   const events=['A distant generator suddenly starts.','A streetlight flickers behind you.','A metal gate rattles somewhere nearby.','A strange sound echoes from the empty market.'];
   notice(events[Math.floor(Math.random()*events.length)]);
-  warm.intensity=4;nextSpookyEvent=elapsed+28+Math.random()*28;
+  flashRemaining=.5;nextSpookyEvent=elapsed+28+Math.random()*28;
  }
  const p=player.group;let dx=0,dz=0;if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
