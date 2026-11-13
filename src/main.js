@@ -73,17 +73,56 @@ let doorOpen=false;
 // Characters: cute low-poly Bitmoji-ish avatars with animated arms/legs.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- const body= new THREE.Mesh(new THREE.CapsuleGeometry(.34,.62,4,8),mat(shirt));body.position.y=1.15;body.castShadow=true;g.add(body);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.34,12,10),mat(skin));head.position.y=1.92;head.scale.set(1,.98,.9);head.castShadow=true;g.add(head);
- const haircap=new THREE.Mesh(new THREE.SphereGeometry(.35,10,8,0,Math.PI*2,0,Math.PI*.55),mat(hair));haircap.position.set(0,2.02,-.015);g.add(haircap);
- const eyeMat=new THREE.MeshStandardMaterial({color:0x1c1b1a});
- for(const ex of [-.12,.12]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),eyeMat);eye.position.set(ex,1.96,.29);g.add(eye)}
+ const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0x30343b,.9);
+ const dark=mat(0x211b1a,.6),white=mat(0xfff8ed,.45),iris=mat(0x30251f,.4);
+ const sphere=(radius,material,px,py,pz,sx=1,sy=1,sz=1)=>{
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,16,12),material);
+  mesh.position.set(px,py,pz);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;g.add(mesh);return mesh;
+ };
+ // Oversized rounded head and neck create a friendly cartoon silhouette.
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.13,.15,.22,12),skinMat);neck.position.y=1.48;g.add(neck);
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.37,.48,5,12),shirtMat);torso.position.y=1.12;torso.scale.set(1,.94,.72);torso.castShadow=true;g.add(torso);
+ const head=sphere(.39,skinMat,0,1.94,0,1,.99,.88);
+ // Ears and a small rounded nose.
+ sphere(.105,skinMat,-.385,1.92,0,1,.9,.72);sphere(.105,skinMat,.385,1.92,0,1,.9,.72);
+ sphere(.055,skinMat,0,1.84,.345,.85,.8,.8);
+ // Hair cap, fringe and side locks.
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.405,16,12,0,Math.PI*2,0,Math.PI*.57),hairMat);
+ cap.position.set(0,2.075,-.018);cap.castShadow=true;g.add(cap);
+ for(const [hx,hy,hz,scale] of [[-.22,2.08,.245,.78],[0,2.12,.29,.72],[.22,2.08,.245,.78]]){
+  sphere(.16,hairMat,hx,hy,hz,scale, .78, .65);
+ }
+ sphere(.13,hairMat,-.34,1.91,-.015,.75,1.2,.8);
+ sphere(.13,hairMat,.34,1.91,-.015,.75,1.2,.8);
+ // Large bright eyes, pupils and expressive eyebrows.
+ for(const ex of [-.145,.145]){
+  sphere(.092,white,ex,1.965,.306,1,.92,.5);
+  sphere(.046,iris,ex+.012,1.96,.35,.92,1,.55);
+  sphere(.019,dark,ex+.012,1.96,.372,1,1,.6);
+  sphere(.018,white,ex-.005,1.982,.385,1,1,.6);
+  const brow=new THREE.Mesh(new THREE.CapsuleGeometry(.018,.105,3,6),hairMat);
+  brow.position.set(ex,2.105,.302);brow.rotation.z=ex<0?-.12:.12;g.add(brow);
+ }
+ // A small curved smile gives each passenger a friendly avatar expression.
+ const smileCurve=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-.09,1.755,.326),new THREE.Vector3(0,1.725,.35),new THREE.Vector3(.09,1.755,.326)
+ ]);
+ const smile=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,12,.012,5,false),dark);g.add(smile);
+ // Clothing details: collar, sleeves, hands, trousers and shoes.
+ const collar=new THREE.Mesh(new THREE.ConeGeometry(.115,.13,4),mat(0xe5d6bc,.8));
+ collar.position.set(0,1.48,.19);collar.rotation.y=Math.PI/4;g.add(collar);
  const limbs=[];
  for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.39,1.42,0);const a=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.42,3,6),mat(skin));a.position.y=-.26;arm.add(a);g.add(arm);limbs.push(arm);
-  const leg=new THREE.Group();leg.position.set(side*.17,.63,0);const l=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.42,3,6),mat(0x30343b));l.position.y=-.27;g.add(leg);limbs.push(leg);
+  const arm=new THREE.Group();arm.position.set(side*.36,1.34,0);
+  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.115,.32,4,8),shirtMat);sleeve.position.y=-.13;sleeve.rotation.z=side*-.12;arm.add(sleeve);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.105,12,10),skinMat);hand.position.set(side*-.015,-.38,.015);arm.add(hand);
+  g.add(arm);limbs.push(arm);
+  const leg=new THREE.Group();leg.position.set(side*.17,.62,0);
+  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.14,.39,4,8),pantsMat);trouser.position.y=-.22;leg.add(trouser);
+  const shoe=new THREE.Mesh(new THREE.SphereGeometry(.14,12,8),mat(0x17191c,.8));shoe.scale.set(1,.55,1.45);shoe.position.set(0,-.48,.055);leg.add(shoe);
+  g.add(leg);limbs.push(leg);
  }
- const label=makeLabel(name);label.position.set(0,2.55,0);g.add(label);
+ const label=makeLabel(name);label.position.set(0,2.62,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
