@@ -131,6 +131,25 @@ addClue('BRASS KEY','A heavy key with the number 314 engraved on it.',5,4,0xc59a
 // East wing expansion: study, music room and conservatory.
 const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15,wallMat,18,1.9,0,house);box(8,3.8,.3,wallMat,14,1.9,-7.5,house);box(8,3.8,.3,wallMat,14,1.9,7.5,house);box(.22,3.8,4,wallMat,10,1.9,-5,house);box(.22,3.8,4,wallMat,10,1.9,5,house);addClue('DUSTY DIARY','A diary entry says the east wing was locked after the last storm.',12,-5,0x9b7655);addClue('MUSIC BOX','A tiny music box bears the initials B.H.',16,0,0xb88d53);addClue('SEALED LETTER','A sealed letter mentions a hidden passage.',12,5,0x7f9b9b);
 
+const sideMissionItems=[];
+let moleCoins=0;
+function updateCoins(){
+ let counter=document.querySelector('#coin-counter');
+ if(!counter){counter=document.createElement('div');counter.id='coin-counter';counter.className='coin-counter';document.querySelector('#game')?.append(counter);}
+ counter.textContent='🪙 '+moleCoins+' COINS';
+}
+function addMissionPickup(name,x,z,color){
+ const g=new THREE.Group();g.position.set(x,.45,z);scene.add(g);
+ const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.42),mat(color,.35));
+ gem.castShadow=true;g.add(gem);
+ const halo=new THREE.PointLight(color,1.8,4);halo.position.y=.3;g.add(halo);
+ sideMissionItems.push({name,group:g,collected:false,phase:Math.random()*6});
+}
+addMissionPickup('GENERATOR FUSE',-25,3,0xf2bd45);
+addMissionPickup('WATER PUMP PART',26,4,0x68c5d0);
+addMissionPickup('OLD MARKET TOKEN',-34,18,0xd69b55);
+updateCoins();
+
 // hanging lamps
 for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}
 // exterior trees and fence-like silhouettes
@@ -198,7 +217,42 @@ addWreckedCar(29,-24,-.42,0x6b6656);
 addWreckedCar(34,25,.12,0x5a5d57);
 addWreckedCar(-35,27,-.2,0x766047);
 
+// Neighbourhood landmarks: kiosks, generator sheds, water tanks and utility poles.
+const kioskWall=mat(0x8b6948), fadedPaint=mat(0x9c7654), tankMat=mat(0x52656a);
+for(const [x,z] of [[-36,-5],[36,-3],[-34,18],[35,18]]){
+ const hut=new THREE.Group();hut.position.set(x,0,z);scene.add(hut);
+ box(5,2.7,.22,kioskWall,0,1.35,0,hut);
+ box(5.4,.18,3.5,mat(0x5c5142),0,2.75,-1.5,hut);
+ box(1.4,1.8,.12,trim,-1.35,.9,.14,hut);
+ box(1.1,.85,.1,mat(0x263538),1.25,1.1,.14,hut);
+ box(2.4,.12,.25,fadedPaint,0,2.15,.16,hut);
+}
+for(const [x,z] of [[-25,3],[26,4],[-24,20],[24,20]]){
+ box(1.8,1.3,1.25,mat(0x3f4946),x,.68,z);
+ for(let k=0;k<4;k++)box(.12,.42,.12,rustSteel,x-.55+k*.36,1.42,z+.25);
+ const tank=new THREE.Mesh(new THREE.CylinderGeometry(.95,.95,1.45,12),tankMat);
+ tank.position.set(x+2.2,4.1,z);tank.castShadow=true;scene.add(tank);
+ for(const [a,b] of [[-.65,-.65],[.65,-.65],[-.65,.65],[.65,.65]])box(.12,2.2,.12,scaffoldMat,x+2.2+a,1.1,z+b);
+}
+for(let x=-40;x<=40;x+=10){
+ box(.18,7,.18,trim,x,3.5,-27);
+ box(2.1,.12,.12,trim,x+1,6.4,-27);
+}
+
 // minibus
+// Live rain particles and a distant lightning flash make the night storm visible.
+const rainCount=950, rainPositions=new Float32Array(rainCount*3);
+for(let i=0;i<rainCount;i++){
+ rainPositions[i*3]=(Math.random()-.5)*86;
+ rainPositions[i*3+1]=Math.random()*25;
+ rainPositions[i*3+2]=(Math.random()-.5)*86;
+}
+const rainGeometry=new THREE.BufferGeometry();
+rainGeometry.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+const rain=new THREE.Points(rainGeometry,new THREE.PointsMaterial({color:0xb9d5df,size:.075,transparent:true,opacity:.58}));
+scene.add(rain);
+const lightning=new THREE.DirectionalLight(0xc7d9ff,0);lightning.position.set(-20,25,-10);scene.add(lightning);
+let nextStormFlash=9+Math.random()*12,flashRemaining=0,nextSpookyEvent=24+Math.random()*18;
 const bus=new THREE.Group();scene.add(bus);bus.position.set(-13,0,8);
 box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);
 box(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
@@ -665,6 +719,13 @@ function interact(){
   if(cluesFound===6){exitUnlocked=true;notice('All six clues found. The front door lock has released!');}
   return;
  }
+ // Collect optional neighbourhood supplies for bonus coins.
+ let supply=null,supplyDist=2.7;
+ for(const item of sideMissionItems){if(item.collected)continue;const d=p.distanceTo(item.group.position);if(d<supplyDist){supplyDist=d;supply=item;}}
+ if(supply){
+  supply.collected=true;scene.remove(supply.group);moleCoins+=25;updateCoins();
+  notice(supply.name+' recovered • +25 coins');playCue();return;
+ }
  const dDoor=p.distanceTo(new THREE.Vector3(0,0,8.5));
  if(dDoor<3.2){
   if(!exitUnlocked){notice(`The lock is jammed. Find all 6 clues first (${cluesFound}/6).`);return}
@@ -681,11 +742,28 @@ function interact(){
 updateObjective();
 const clock=new THREE.Clock();let elapsed=0,lastNetworkMove=0;
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ // Animate the rain around the world and occasionally illuminate the skyline.
+ const rainPos=rain.geometry.attributes.position;
+ for(let i=0;i<rainCount;i++){
+  rainPos.array[i*3+1]-=dt*19;
+  rainPos.array[i*3]+=dt*.7;
+  if(rainPos.array[i*3+1]<0){rainPos.array[i*3+1]=18+Math.random()*9;rainPos.array[i*3]=(Math.random()-.5)*86;rainPos.array[i*3+2]=(Math.random()-.5)*86;}
+ }
+ rainPos.needsUpdate=true;
+ if(elapsed>nextStormFlash){flashRemaining=.22;nextStormFlash=elapsed+13+Math.random()*18;}
+ if(flashRemaining>0){flashRemaining-=dt;lightning.intensity=flashRemaining>.12?2.8:1.1;}
+ else lightning.intensity=0;
+ if(elapsed>nextSpookyEvent){
+  const events=['A distant generator suddenly starts.','A streetlight flickers behind you.','A metal gate rattles somewhere nearby.','A strange sound echoes from the empty market.'];
+  notice(events[Math.floor(Math.random()*events.length)]);
+  warm.intensity=4;nextSpookyEvent=elapsed+28+Math.random()*28;
+ }
  const p=player.group;let dx=0,dz=0;if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-9.3,17.2);p.position.z=THREE.MathUtils.clamp(p.position.z,-7.8,10.8)}
+ if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40)}
  player.limbs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(elapsed*10+i*Math.PI)*.65:Math.sin(elapsed*2+i)*.035});
  npcs.forEach((n,i)=>{n.phase+=dt;const t=n.phase; n.group.position.x+=Math.sin(t*.24+i)*.0015;n.group.position.z+=Math.cos(t*.22+i)*.0015;n.limbs.forEach((l,j)=>l.rotation.x=Math.sin(t*2+j)*.08)});
+ sideMissionItems.forEach(item=>{if(!item.collected){item.group.position.y=.45+Math.sin(elapsed*2+item.phase)*.13;item.group.rotation.y+=dt*.8;}});
  // clue items hover gently until collected
  clueItems.forEach(c=>{if(!c.collected)c.group.position.y=c.baseY+Math.sin(elapsed*2+c.phase)*.09;});
  // flicker the old house lights
