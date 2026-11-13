@@ -7,7 +7,27 @@
   <title>THE MOLE — Night at Blackwood House</title>
 </head>
 <body>
-  <div id="game">
+  <div id="game">\n    <div id="auth-screen" class="auth-screen">
+      <div class="auth-card">
+        <div class="auth-mark">M</div>
+        <p class="eyebrow">BLACKWOOD HOUSE • PLAYER ACCESS</p>
+        <h1>WELCOME BACK</h1>
+        <p class="auth-intro">Sign in or create your player account before boarding the bus.</p>
+        <div class="auth-tabs"><button type="button" id="auth-tab-signin" class="active">SIGN IN</button><button type="button" id="auth-tab-signup">CREATE ACCOUNT</button></div>
+        <form id="auth-form">
+          <label for="auth-email">GMAIL ADDRESS</label>
+          <input id="auth-email" type="email" autocomplete="email" placeholder="you@gmail.com" required>
+          <label for="auth-username">USERNAME</label>
+          <input id="auth-username" type="text" autocomplete="username" minlength="3" maxlength="16" placeholder="Choose a player name" required>
+          <label for="auth-password">PASSWORD</label>
+          <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+          <button id="auth-submit" type="submit">SIGN IN TO THE GAME</button>
+          <p id="auth-feedback" class="auth-feedback" aria-live="polite">Account sign-in is being connected. Your password will not be stored in this game page.</p>
+        </form>
+        <small class="auth-foot">Your account details are private. Never share your password with other players.</small>
+      </div>
+    </div>
+
     <div class="topbar">
       <div class="brand"><span class="sigil">M</span><div><b>THE MOLE</b><small>THE BROKEN BUS • NIGHT 01</small></div></div>
       <div class="status">
