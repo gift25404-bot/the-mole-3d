@@ -294,11 +294,12 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
  // Hair cap, fringe and side locks.
  const cap=new THREE.Mesh(new THREE.SphereGeometry(.405,16,12,0,Math.PI*2,0,Math.PI*.57),hairMat);
  cap.position.set(0,2.075,-.018);cap.castShadow=true;g.add(cap);
+ const hairPieces=[cap];
  for(const [hx,hy,hz,scale] of [[-.22,2.08,.245,.78],[0,2.12,.29,.72],[.22,2.08,.245,.78]]){
-  sphere(.16,hairMat,hx,hy,hz,scale, .78, .65);
+  hairPieces.push(sphere(.16,hairMat,hx,hy,hz,scale,.78,.65));
  }
- sphere(.13,hairMat,-.34,1.91,-.015,.75,1.2,.8);
- sphere(.13,hairMat,.34,1.91,-.015,.75,1.2,.8);
+ hairPieces.push(sphere(.13,hairMat,-.34,1.91,-.015,.75,1.2,.8));
+ hairPieces.push(sphere(.13,hairMat,.34,1.91,-.015,.75,1.2,.8));
  // Large bright eyes, pupils and expressive eyebrows.
  for(const ex of [-.145,.145]){
   sphere(.092,white,ex,1.965,.306,1,.92,.5);
@@ -328,7 +329,7 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
   g.add(leg);limbs.push(leg);
  }
  const label=makeLabel(name);label.position.set(0,2.62,0);g.add(label);
- return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat}};
+ return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,hairPieces}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
 const player=makeAvatar('ALEX',0x477c8c,0x9a674b,0x211b1a,-10,8,true);
@@ -846,9 +847,17 @@ privateButton.onclick=()=>{
 socket.on('chat:private',packet=>{const thread=document.querySelector('#private-thread');if(!thread){notice('New private message from '+packet.from+'.');return;}const p=document.createElement('p');p.textContent=packet.from+' → '+packet.to+': '+packet.message;thread.append(p);thread.scrollTop=thread.scrollHeight;});
 
 // Additional avatar controls.
-const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Midnight</option><option value="573522">Chestnut</option><option value="c79b55">Golden</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option></select></label><label>OUTFIT COLOUR<select id="outfit-choice"><option value="c96f62">Coral</option><option value="477caa">Blue</option><option value="527b5c">Forest</option><option value="8064a6">Violet</option><option value="39858a">Teal</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
+const preview=document.createElement('div');preview.className='live-avatar-preview';preview.innerHTML='<div class="preview-person" id="preview-person"><span class="preview-hair"></span><span class="preview-face"><i></i><i></i><b></b></span><span class="preview-body"></span></div><div class="preview-copy"><b>LIVE CHARACTER PREVIEW</b><small>Changes appear on your passenger as you customise.</small></div>';
+document.querySelector('.avatar-card .look-grid')?.before(preview);
+const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="9a674b">Warm brown</option><option value="603b2d">Deep brown</option><option value="815238">Cocoa</option><option value="d49b76">Golden</option><option value="e0b99a">Light</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Midnight</option><option value="573522">Chestnut</option><option value="c79b55">Golden</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly</option><option value="short">Short</option><option value="long">Long sides</option></select></label><label>OUTFIT COLOUR<select id="outfit-choice"><option value="c96f62">Coral</option><option value="477caa">Blue</option><option value="527b5c">Forest</option><option value="8064a6">Violet</option><option value="39858a">Teal</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
 document.querySelector('.avatar-card .look-grid')?.after(studio);
-document.querySelector('#hair-choice')?.addEventListener('change',e=>player.appearance.hairMat.color.setHex(parseInt(e.target.value,16)));
+const previewPerson=document.querySelector('#preview-person');
+function refreshAvatarPreview(){if(!previewPerson)return;previewPerson.style.setProperty('--preview-skin','#'+document.querySelector('#skin-choice').value);previewPerson.style.setProperty('--preview-hair','#'+document.querySelector('#hair-choice').value);previewPerson.style.setProperty('--preview-shirt','#'+document.querySelector('#outfit-choice').value);previewPerson.dataset.hair=document.querySelector('#hair-style').value;}
+document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#hair-choice')?.addEventListener('change',e=>{player.appearance.hairMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#outfit-choice')?.addEventListener('change',e=>{player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#hair-style')?.addEventListener('change',e=>{const parts=player.appearance.hairPieces;const style=e.target.value;parts[0].scale.set(1,style==='short'?.78:style==='long'?1.04:1.12,style==='short'?.92:1.06);parts[1].visible=style!=='short';parts[2].visible=style!=='short';parts[3].visible=style!=='short';parts[4].scale.y=style==='long'?2:1.2;parts[5].scale.y=style==='long'?2:1.2;refreshAvatarPreview()});
+refreshAvatarPreview();
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
 let headAccessory=null;
 document.querySelector('#accessory-choice')?.addEventListener('change',e=>{
