@@ -257,7 +257,15 @@ function modal(title,copy,content=''){document.querySelector('#modal-title').tex
 function closeModal(){document.querySelector('#modal').classList.add('hidden')}
 document.querySelector('#close-modal').onclick=closeModal;
 document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who is the Mafia.', '<div class="room-list"><div>MAFIA — secretly disrupts the group</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
-document.querySelector('#chat-button')?.addEventListener('click',()=>modal('MESSAGES','Group chat is available when you join an online room. Private chat is not enabled yet.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message"><button type="submit">SEND</button></form>'));
+document.querySelector('#chat-button')?.addEventListener('click',()=>{
+ modal('MESSAGES','Group chat is available when you join an online room.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message" autocomplete="off"><button type="submit">SEND</button></form>');
+ document.querySelector('#chat-form')?.addEventListener('submit',event=>{
+  event.preventDefault();const input=document.querySelector('#chat-input');const message=input.value.trim();
+  if(!message)return;
+  if(!onlineRoom||!socket.connected){notice('Join an online room before sending group messages.');return;}
+  socket.emit('chat:send',{message});input.value='';
+ });
+});
 // Account screen is shown before the bus intro. Real account creation/sign-in
 // is intentionally blocked until a trusted authentication provider is configured.
 let authMode='signin';
@@ -276,11 +284,9 @@ document.querySelector('#auth-form').addEventListener('submit',event=>{
  event.preventDefault();
  const email=document.querySelector('#auth-email').value.trim();
  const username=document.querySelector('#auth-username').value.trim();
- const password=document.querySelector('#auth-password').value;
  if(!email.toLowerCase().endsWith('@gmail.com')){authFeedback.textContent='Please enter a Gmail address ending in @gmail.com.';return;}
  if(username.length<3){authFeedback.textContent='Your username must have at least 3 characters.';return;}
- if(password.length<8){authFeedback.textContent='Use a password with at least 8 characters.';return;}
- // Demo flow only: secure sign-in is not connected; discard the password.
+ // Demo flow only: secure sign-in is not connected; no password is requested or stored.
  onlineName=username.slice(0,16);
  document.querySelector('#player-name').textContent=onlineName.toUpperCase();
  player.name=onlineName.toUpperCase();
@@ -289,7 +295,6 @@ document.querySelector('#auth-form').addEventListener('submit',event=>{
  const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
  document.querySelector('#auth-screen').classList.add('hidden');
  document.querySelector('#avatar-screen').classList.remove('hidden');
- document.querySelector('#auth-password').value='';
  authFeedback.textContent='Demo only — secure sign-in is not connected.';
 });
 document.querySelectorAll('.look-option').forEach(button=>button.addEventListener('click',()=>applyPlayerLook(button.dataset.look)));
@@ -301,8 +306,9 @@ document.querySelector('#confirm-look')?.addEventListener('click',()=>{
 });
 document.querySelector('#begin-game')?.addEventListener('click',()=>{
  document.querySelector('#bus-intro')?.classList.add('intro-hidden');
- speak('The bus has broken down. The road is empty. Ahead, a house stands beneath the storm. Stay together. Your roles will be revealed when you arrive.');
+ speak('The bus has broken down. The road is empty. Ahead, a house stands beneath the storm. Stay together. Your role is being revealed.');
  setAmbience(true);
+ showRole();
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
@@ -406,7 +412,7 @@ document.querySelector('#ability').onclick=()=>{
  else notice('Citizen ability: listen, explore and question passengers.');
 };
 updateStatus();
-setTimeout(showRole,500);
+// The role reveal is shown after the player enters the house from the bus scene.
 
 document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')switchCamera();if(e.key.toLowerCase()==='e')interact()});
 document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
