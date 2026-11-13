@@ -41,7 +41,7 @@ for(const side of [-1,1]){
 for(const [x,z,color] of [[-22,12,stallBlue],[22,12,stallRed],[-25,23,stallRed],[25,23,stallBlue]]){
   const kiosk=new THREE.Group();scene.add(kiosk);kiosk.position.set(x,0,z);
   box(3.2,2.1,2.2,mat(0x9b7048),0,1,0,kiosk);
-  box(3.6,.16,2.6,mat(color.color.getHex()),0,2.15,0,kiosk);
+  box(3.6,.16,2.6,mat(color),0,2.15,0,kiosk);
   box(3.8,.12,2.8,mat(0xe7c46f),0,2.3,0,kiosk);
   box(2.5,.9,.08,mat(0x293a3b),0,1.25,1.12,kiosk);
 }
