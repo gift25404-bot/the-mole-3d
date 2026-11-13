@@ -106,6 +106,20 @@ for(const x of [-11,-7,-3,1,5,9,13,17,19])box(.08,18,.08,scaffoldMat,x,5.8,10.5,
 for(const [x,z] of [[-9,-7],[-5,-7],[0,-7],[5,-7],[9,-7],[-9,0],[9,0],[-9,7],[-4,7],[2,7],[8,7],[12,-6],[17,-6],[12,6],[17,6]]){
  const rod=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.15,7),rustSteel);rod.position.set(x,12.15,z);rod.castShadow=true;house.add(rod);
 }
+
+// Playable interior staircases: ground floor -> first floor -> rooftop level.
+const stairConcrete=mat(0xaaa79b,.98), stairEdge=mat(0x696960,.95);
+for(let i=0;i<16;i++){
+ const rise=(i+1)*.48, z=5.55-i*.70;
+ box(2.25,.18,.78,stairConcrete,13.25,rise-.09,z,house);
+ box(.12,.22,.8,stairEdge,12.12,rise-.11,z,house);
+}
+for(let i=0;i<16;i++){
+ const rise=7.8+(i+1)*.2375, z=-5.55+i*.70;
+ box(1.55,.18,.78,stairConcrete,16.25,rise-.09,z,house);
+ box(.10,.22,.8,stairEdge,15.43,rise-.11,z,house);
+}
+
 // Construction clutter: stacked blocks, timber planks and cement sacks.
 for(let i=0;i<5;i++){box(.75,.38,.55,blockwork,-8+i*.82,.2,10.8,house);box(1.8,.12,.22,wood,5+i*.45,.15,11.2,house);}
 for(let i=0;i<3;i++){const sack=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xaaa18a));sack.scale.set(1,.55,.72);sack.position.set(8+i*.7,.28,11.5);sack.castShadow=true;house.add(sack);}
@@ -425,7 +439,7 @@ function toggleFlashlight(){
 document.querySelector('#flashlight').onclick=toggleFlashlight;
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
-const serverUrl=import.meta.env.VITE_SERVER_URL||'https://the-mole-3d.onrender.com';
+const serverUrl=import.meta.env.VITE_SERVER_URL||'https://mole-multiplayer-server.up.railway.app';
 const socket=io(serverUrl,{autoConnect:true,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null,onlineRoundState=null,onlinePromptKey='';
 const remoteAvatars=new Map();
@@ -479,7 +493,7 @@ socket.on('round:reset',()=>{onlineRole=null;onlinePromptKey='';document.querySe
 socket.on('player:moved',data=>{
  let a=remoteAvatars.get(data.id);
  if(!a){a=makeAvatar(data.name,0x647c9b,0xb77f60,0x211b1a,data.x,data.z);remoteAvatars.set(data.id,a);}
- a.group.position.set(data.x,0,data.z);a.group.rotation.y=data.rotation;
+ a.group.position.set(data.x,Number(data.y)||0,data.z);a.group.rotation.y=data.rotation;
 });
 socket.on('chat:message',data=>addChat(data.name,data.message,data.name==='SYSTEM'));
 socket.on('round:voteCount',data=>notice(`VOTES CAST: ${data.count}/${data.total}`));
@@ -760,7 +774,21 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  }
  const p=player.group;let dx=0,dz=0;if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40)}
+ if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40);
+ // Stair zones set the avatar's actual elevation, making both upper levels walkable.
+ const onFirstStairs=p.position.x>12.05&&p.position.x<14.45&&p.position.z>-5.95&&p.position.z<5.95;
+ const onSecondStairs=p.position.x>15.35&&p.position.x<17.15&&p.position.z>-5.95&&p.position.z<5.95;
+ if(onFirstStairs&&p.position.y<8.4){
+  const progress=THREE.MathUtils.clamp((5.6-p.position.z)/11.2,0,1);
+  p.position.y=progress*7.8;
+ }else if(onSecondStairs&&p.position.y>7.35){
+  const progress=THREE.MathUtils.clamp((p.position.z+5.6)/11.2,0,1);
+  p.position.y=7.8+progress*3.8;
+ }else if(p.position.y>7.2&&p.position.y<8.5&&p.position.x>9.8&&p.position.x<19&&p.position.z>-8&&p.position.z<8){
+  p.position.y=7.8;
+ }else if(p.position.y>11.1){
+  p.position.y=11.6;
+ }}
  player.limbs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(elapsed*10+i*Math.PI)*.65:Math.sin(elapsed*2+i)*.035});
  npcs.forEach((n,i)=>{n.phase+=dt;const t=n.phase; n.group.position.x+=Math.sin(t*.24+i)*.0015;n.group.position.z+=Math.cos(t*.22+i)*.0015;n.limbs.forEach((l,j)=>l.rotation.x=Math.sin(t*2+j)*.08)});
  sideMissionItems.forEach(item=>{if(!item.collected){item.group.position.y=.45+Math.sin(elapsed*2+item.phase)*.13;item.group.rotation.y+=dt*.8;}});
@@ -769,11 +797,11 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  // flicker the old house lights
  warm.intensity=35+Math.sin(elapsed*8)*2+(Math.sin(elapsed*23)>.985?-22:0);
  // Send player movement at a modest rate when connected to an online room.
- if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
+ if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
  // Camera rigs
  const target=new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z);
- if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,0,p.position.z)}
- else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
+ if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,0,p.position.z)}
+ else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2+p.position.y,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
  else {const eye=new THREE.Vector3(p.position.x,p.position.y+1.72,p.position.z);camera.position.lerp(eye,.25);camera.rotation.set(0,p.rotation.y,0);camera.rotateY(Math.PI)}
  // labels face camera
  all.forEach(a=>a.group.children.forEach(c=>{if(c.isSprite)c.quaternion.copy(camera.quaternion)}));
