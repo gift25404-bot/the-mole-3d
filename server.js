@@ -133,7 +133,7 @@ io.on('connection',socket=>{
     removePlayer(socket);
     let code;do{code=randomInt(100000,999999).toString();}while(rooms.has(code));
     const room={code,hostId:socket.id,started:false,phase:'LOBBY',day:0,players:new Map(),votes:new Map(),actions:new Map(),timer:null};
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,z:5,rotation:0});
+    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
     rooms.set(code,room);socket.join(code);socket.data.roomCode=code;
     ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
@@ -143,7 +143,7 @@ io.on('connection',socket=>{
     if(room.started)return ack({ok:false,error:'This round has already started.'});
     if(room.players.size>=MAX_PLAYERS)return ack({ok:false,error:'This room is full.'});
     removePlayer(socket);
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,z:5,rotation:0});
+    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
     socket.join(code);socket.data.roomCode=code;
     ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
@@ -199,9 +199,9 @@ io.on('connection',socket=>{
   socket.on('player:move',pos=>{
     const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
     if(!p||!room?.started||!p.alive)return;
-    p.x=Math.max(-9.3,Math.min(9.3,Number(pos?.x)||0));p.z=Math.max(-7.8,Math.min(10.8,Number(pos?.z)||0));
+    p.x=Math.max(-42,Math.min(42,Number(pos?.x)||0));p.y=Math.max(0,Math.min(12,Number(pos?.y)||0));p.z=Math.max(-40,Math.min(40,Number(pos?.z)||0));
     p.rotation=Number(pos?.rotation)||0;
-    socket.to(room.code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,z:p.z,rotation:p.rotation});
+    socket.to(room.code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,y:p.y,z:p.z,rotation:p.rotation});
   });
   socket.on('chat:send',payload=>{
     const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
