@@ -66,9 +66,11 @@ function startVoting(room){
   room.timer=setTimeout(()=>resolveVote(room),45000);
 }
 function beginNight(room){
-  clearTimer(room);room.phase='NIGHT';room.day+=1;room.actions=new Map();room.votes.clear();room.deadline=null;
+  clearTimer(room);room.phase='NIGHT';room.day+=1;room.actions=new Map();room.votes.clear();room.deadline=Date.now()+30000;
   io.to(room.code).emit('round:notice',{message:'Night has fallen. Special roles, choose your action.'});
-  sendState(room);advanceIfReady(room);
+  sendState(room);
+  room.timer=setTimeout(()=>{io.to(room.code).emit('round:notice',{message:'Night action time expired. Resolving the night.'});resolveNight(room);},30000);
+  advanceIfReady(room);
 }
 function resolveNight(room){
   if(room.phase!=='NIGHT')return;
