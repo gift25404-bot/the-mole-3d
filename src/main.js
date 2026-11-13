@@ -98,6 +98,22 @@ const npcs=[
 const all=[player,...npcs];
 let cameraMode=0;const modes=['ISOMETRIC','THIRD PERSON','FIRST PERSON'];
 const keys={};let noticeTimer;
+function addChat(name,message,isSystem=false){
+ const log=document.querySelector('#chat-log');
+ if(!log)return;
+ const row=document.createElement('p');
+ if(isSystem)row.className='system-message';
+ const who=document.createElement('b');who.textContent=name+':';
+ const msg=document.createElement('span');msg.textContent=' '+message;
+ row.append(who,msg);log.append(row);log.scrollTop=log.scrollHeight;
+}
+function speak(text){
+ if(!('speechSynthesis' in window))return;
+ window.speechSynthesis.cancel();
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.rate=.92;utterance.pitch=.82;utterance.volume=.9;
+ window.speechSynthesis.speak(utterance);
+}
 function notice(t){const n=document.querySelector('#notice');n.textContent=t;n.classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.classList.remove('show'),2300)}
 
 // Procedural game audio: rain, night wind and a quiet bus engine. Browser audio
@@ -182,13 +198,20 @@ document.querySelector('#online').onclick=openOnlineLobby;
 function modal(title,copy,content=''){document.querySelector('#modal-title').textContent=title;document.querySelector('#modal-copy').textContent=copy;document.querySelector('#modal-content').innerHTML=content;document.querySelector('#modal').classList.remove('hidden')}
 function closeModal(){document.querySelector('#modal').classList.add('hidden')}
 document.querySelector('#close-modal').onclick=closeModal;
+document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who is the Mafia.', '<div class="room-list"><div>MAFIA — secretly disrupts the group</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
+document.querySelector('#chat-button')?.addEventListener('click',()=>modal('MESSAGES','Group chat is available when you join an online room. Private chat is not enabled yet.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message"><button type="submit">SEND</button></form>'));
+document.querySelector('#begin-game')?.addEventListener('click',()=>{
+ document.querySelector('#bus-intro')?.classList.add('intro-hidden');
+ speak('The bus has broken down. The road is empty. Ahead, a house stands beneath the storm. Stay together. Your roles will be revealed when you arrive.');
+ setAmbience(true);
+});
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
 document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div></div>`);
 
 // Local social-deduction round: one hidden Mole, one Detective, one Doctor.
 const roster = [player, ...npcs];
-const roleDeck = ['MOLE','DETECTIVE','DOCTOR','CITIZEN','CITIZEN','CITIZEN'];
+const roleDeck = ['MAFIA','DETECTIVE','DOCTOR','CITIZEN','CITIZEN','CITIZEN'];
 for (let i=roleDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[roleDeck[i],roleDeck[j]]=[roleDeck[j],roleDeck[i]];}
 roster.forEach((a,i)=>a.role=roleDeck[i]);
 let roundPhase='DAY', eliminated=[], protectedName=null, investigatedName=null;
@@ -198,7 +221,7 @@ document.querySelector('#phase').textContent='DAY 1';
 function living(){return roster.filter(a=>!eliminated.includes(a.name))}
 function updateStatus(){document.querySelector('#house-status').textContent=`PASSENGERS: ${living().length} • POWER: UNSTABLE`;}
 function roleDescription(){
- if(playerRole==='MOLE') return 'You are the secret Mole. Blend in, misdirect the others and avoid being voted out.';
+ if(playerRole==='MAFIA') return 'You are the secret Mafia member. Blend in, misdirect the others and avoid being voted out.';
  if(playerRole==='DETECTIVE') return 'You are the Detective. Use your ability at night to check one passenger. The result is private.';
  if(playerRole==='DOCTOR') return 'You are the Doctor. Choose one passenger to protect during the night.';
  return 'You are a Citizen. Listen carefully, compare stories and help identify the Mole.';
@@ -217,9 +240,9 @@ function voteMeeting(){
  document.querySelector('#skip-vote').onclick=()=>{closeModal();notice('The group decided not to vote anyone out.');nightPhase();};
 }
 function checkWin(){
- const alive=living(), moleAlive=alive.some(a=>a.role==='MOLE');
+ const alive=living(), moleAlive=alive.some(a=>a.role==='MAFIA');
  if(!moleAlive){modal('PASSENGERS WIN','The Mole has been found. The group survives this round.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');}
- else if(alive.filter(a=>a.role!=='MOLE').length<=1){modal('THE MOLE WINS','The Mole has outlasted the other passengers.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');}
+ else if(alive.filter(a=>a.role!=='MAFIA').length<=1){modal('THE MOLE WINS','The Mole has outlasted the other passengers.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');}
  const r=document.querySelector('#restart');if(r)r.onclick=()=>location.reload();
 }
 function chooseTarget(title,copy,callback){
@@ -229,8 +252,8 @@ function chooseTarget(title,copy,callback){
 }
 
 function resolveNight(protectedTarget=null){
- const mole=roster.find(a=>a.role==='MOLE');
- if(playerRole==='MOLE'){
+ const mole=roster.find(a=>a.role==='MAFIA');
+ if(playerRole==='MAFIA'){
    if(investigatedName && !eliminated.includes(investigatedName)){
      eliminated.push(investigatedName);
      const target=roster.find(a=>a.name===investigatedName);
@@ -255,7 +278,7 @@ function resolveNight(protectedTarget=null){
 function nightPhase(){
  roundPhase='NIGHT';document.querySelector('#phase').textContent='NIGHT 1';
  notice('Night falls over Blackwood House…');
- if(playerRole==='MOLE'){
+ if(playerRole==='MAFIA'){
   chooseTarget('MOLE: SECRET MOVE','Choose a passenger to secretly remove from the next round.',name=>{
    investigatedName=name;resolveNight();
   });
@@ -264,7 +287,7 @@ function nightPhase(){
  if(playerRole==='DETECTIVE'){
   chooseTarget('DETECTIVE INVESTIGATION','Choose one passenger to check. Your result is private.',name=>{
    const target=roster.find(a=>a.name===name);
-   addChat('SYSTEM',`Private investigation: ${name} is ${target.role==='MOLE'?'SUSPICIOUS':'NOT THE MOLE'}.`,true);
+   addChat('SYSTEM',`Private investigation: ${name} is ${target.role==='MAFIA'?'SUSPICIOUS':'NOT THE MOLE'}.`,true);
    resolveNight();
   });
   return;
@@ -280,7 +303,7 @@ function nightPhase(){
 }
 document.querySelector('#start-vote').onclick=voteMeeting;
 document.querySelector('#ability').onclick=()=>{
- if(playerRole==='DETECTIVE'||playerRole==='DOCTOR'||playerRole==='MOLE')nightPhase();
+ if(playerRole==='DETECTIVE'||playerRole==='DOCTOR'||playerRole==='MAFIA')nightPhase();
  else notice('Citizen ability: listen, explore and question passengers.');
 };
 updateStatus();
@@ -291,8 +314,9 @@ document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',()=>keys[k]=true);['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 let cluesFound=0, exitUnlocked=false;
 function updateObjective(){
- document.querySelector('#clue-count').textContent=`CLUES FOUND: ${cluesFound} / 3`;
- document.querySelector('#objective-text').textContent=cluesFound<3?'SEARCH THE HOUSE FOR CLUES':'RETURN TO THE FRONT DOOR';
+ const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
+ if(count)count.textContent=`CLUES FOUND: ${cluesFound} / 3`;
+ if(objective)objective.textContent=cluesFound<3?'SEARCH THE HOUSE FOR CLUES':'RETURN TO THE FRONT DOOR';
 }
 function interact(){
  const p=player.group.position;
