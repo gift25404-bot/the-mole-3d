@@ -443,6 +443,20 @@ const serverUrl=import.meta.env.VITE_SERVER_URL||'';
 const socket=io(serverUrl||window.location.origin,{autoConnect:!!serverUrl,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null,onlineRoundState=null,onlinePromptKey='';
 const remoteAvatars=new Map();
+function syncRemotePlayers(room){
+ const present=new Set();
+ for(const p of room.players||[]){
+  if(p.id===socket.id)continue;
+  present.add(p.id);
+  let avatar=remoteAvatars.get(p.id);
+  if(!avatar){avatar=makeAvatar(p.name,0x647c9b,0xb77f60,0x211b1a,p.x||0,p.z||0);remoteAvatars.set(p.id,avatar);}
+  avatar.group.position.set(Number(p.x)||0,Number(p.y)||0,Number(p.z)||0);
+  avatar.group.rotation.y=Number(p.rotation)||0;
+ }
+ for(const [id,avatar] of remoteAvatars){
+  if(!present.has(id)){scene.remove(avatar.group);remoteAvatars.delete(id);}
+ }
+}
 socket.on('connect',()=>{document.querySelector('#online').textContent='ONLINE LOBBY';});
 socket.on('connect_error',()=>{document.querySelector('#online').textContent='OFFLINE MODE';});
 socket.on('disconnect',()=>{remoteAvatars.forEach(a=>scene.remove(a.group));remoteAvatars.clear();});
@@ -462,7 +476,7 @@ socket.on('round:role',data=>{
 });
 socket.on('round:started',()=>{document.querySelector('#phase').textContent='NIGHT 1';notice('The online round has started!');});
 socket.on('round:state',state=>{
- onlineRoundState=state;onlineRoom=state;
+ onlineRoundState=state;onlineRoom=state;syncRemotePlayers(state);
  document.querySelector('#phase').textContent=state.phase==='LOBBY'?'GATHERING':state.phase==='ENDED'?'ROUND OVER':state.phase+(state.day?' '+state.day:'');
  const alive=state.players.filter(p=>p.alive).length;
  document.querySelector('#house-status').textContent=`PLAYERS: ${alive}/${state.players.length} • ONLINE`;
