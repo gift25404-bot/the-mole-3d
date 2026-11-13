@@ -33,6 +33,10 @@ function removePlayer(socket){
   room.players.delete(socket.id);socket.leave(code);socket.data.roomCode=null;
   if(room.players.size===0){clearTimer(room);rooms.delete(code);return;}
   if(room.hostId===socket.id)room.hostId=room.players.keys().next().value;
+  if(room.started){
+    const winner=checkWinner(room);
+    if(winner){finishRound(room,winner);return;}
+  }
   sendState(room);
   if(room.started)advanceIfReady(room);
 }
