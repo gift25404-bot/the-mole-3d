@@ -860,6 +860,51 @@ privateButton.onclick=()=>{
 };
 socket.on('chat:private',packet=>{const thread=document.querySelector('#private-thread');if(!thread){notice('New private message from '+packet.from+'.');return;}const p=document.createElement('p');p.textContent=packet.from+' → '+packet.to+': '+packet.message;thread.append(p);thread.scrollTop=thread.scrollHeight;});
 
+// Public community discussion board, separate from private game-room chat.
+const boardButton=document.createElement('button');
+boardButton.id='discussion-board-button';
+boardButton.textContent='▤ DISCUSSION BOARD';
+document.querySelector('.social-tools')?.append(boardButton);
+let boardPosts=[];
+function renderBoardPosts(){
+ const list=document.querySelector('#board-post-list');
+ if(!list)return;
+ list.replaceChildren();
+ if(!boardPosts.length){
+  const empty=document.createElement('p');empty.className='board-empty';empty.textContent='No posts yet. Start the conversation!';list.append(empty);return;
+ }
+ boardPosts.forEach(post=>{
+  const article=document.createElement('article');article.className='board-post';
+  const head=document.createElement('div');head.className='board-post-head';
+  const author=document.createElement('strong');author.textContent=post.name||'PLAYER';
+  const time=document.createElement('time');time.textContent=new Date(post.at).toLocaleString();
+  head.append(author,time);
+  const body=document.createElement('p');body.textContent=post.message||'';
+  article.append(head,body);list.append(article);
+ });
+ list.scrollTop=list.scrollHeight;
+}
+socket.on('board:history',posts=>{boardPosts=Array.isArray(posts)?posts:[];renderBoardPosts();});
+socket.on('board:new-post',post=>{
+ if(!boardPosts.some(item=>item.id===post.id)){boardPosts.push(post);if(boardPosts.length>100)boardPosts.shift();}
+ renderBoardPosts();
+});
+boardButton.onclick=()=>{
+ if(!socket.connected){notice('The public discussion board needs the online server. Please try again when ONLINE LOBBY is showing.');return;}
+ modal('PUBLIC DISCUSSION BOARD','Talk with the THE MOLE community. Keep posts friendly and do not share private information.','<div class="board-room-label">BLACKWOOD COMMUNITY ROOM · PUBLIC POSTS</div><div id="board-post-list" class="board-post-list"></div><form id="board-post-form" class="board-post-form"><textarea id="board-post-input" maxlength="500" rows="3" placeholder="Share a theory, question or game idea..."></textarea><button type="submit">POST MESSAGE</button></form><p class="board-note">Posts are visible to everyone who opens this board. Latest 100 posts are kept while the game server is running.</p>');
+ socket.emit('board:join');
+ renderBoardPosts();
+ document.querySelector('#board-post-form')?.addEventListener('submit',event=>{
+  event.preventDefault();
+  const input=document.querySelector('#board-post-input'),message=input.value.trim();
+  if(!message)return;
+  socket.emit('board:post',{name:onlineName,message},result=>{
+   if(!result?.ok){notice(result?.error||'Your post could not be sent.');return;}
+   input.value='';
+  });
+ });
+};
+
 // Additional avatar controls.
 const preview=document.createElement('div');preview.className='live-avatar-preview';preview.innerHTML='<div class="boutique-stage"><span class="stage-label">FULL LOOK</span><div class="preview-person" id="preview-person" data-hair="curly" data-accessory="none"><span class="preview-shadow"></span><span class="preview-hair"></span><span class="preview-face"><i></i><i></i><b></b></span><span class="preview-neck"></span><span class="preview-body"><i class="preview-collar"></i><i class="preview-seam"></i></span><span class="preview-arm preview-arm-left"><i></i></span><span class="preview-arm preview-arm-right"><i></i></span><span class="preview-leg preview-leg-left"><i></i></span><span class="preview-leg preview-leg-right"><i></i></span><span class="preview-shoe preview-shoe-left"></span><span class="preview-shoe preview-shoe-right"></span><span class="preview-accessory"></span></div><span class="stage-floor"></span></div><div class="preview-copy"><b>THE MOLE BOUTIQUE</b><strong>YOUR CHARACTER, HEAD TO TOE</strong><small>Try a complete look. Your choices update the passenger before you enter the game.</small><span class="preview-tag">STYLE STUDIO · LOOKBOOK 01</span></div>';
 document.querySelector('.avatar-card .look-grid')?.before(preview);
