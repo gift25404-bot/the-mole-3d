@@ -19,7 +19,7 @@ renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFSha
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.86;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x657985,0x090d0c,0.38));
+scene.add(new THREE.HemisphereLight(0x758b96,0x090d0c,0.42));
 const moon=new THREE.DirectionalLight(0x8095a5,.78); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 // Only weak pools of light reach the abandoned interior; the corners stay dark.
 const warm=new THREE.PointLight(0xffb35c,7,13); warm.position.set(0,3,0); scene.add(warm);
@@ -1050,6 +1050,21 @@ for(const floor of [0,1,2]){
 }
 
 
+// Fine floating dust in the house catches the weak lamps and adds depth.
+const dustCount=isMobileDevice?(lowPowerDevice?28:48):150;
+const dustPositions=new Float32Array(dustCount*3);
+const dustPhases=new Float32Array(dustCount);
+for(let i=0;i<dustCount;i++){
+ dustPositions[i*3]=(Math.random()-.5)*17;
+ dustPositions[i*3+1]=.35+Math.random()*3.2;
+ dustPositions[i*3+2]=(Math.random()-.5)*14;
+ dustPhases[i]=Math.random()*Math.PI*2;
+}
+const dustGeometry=new THREE.BufferGeometry();
+dustGeometry.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
+const dust=new THREE.Points(dustGeometry,new THREE.PointsMaterial({color:0xd7c5a3,size:isMobileDevice?.035:.045,transparent:true,opacity:.3,depthWrite:false,sizeAttenuation:true}));
+scene.add(dust);
+
 let lastMobileRender=0;
 function animate(now=0){requestAnimationFrame(animate);
  // On phones, throttle the whole simulation to 30 updates per second, not just drawing.
@@ -1057,6 +1072,14 @@ function animate(now=0){requestAnimationFrame(animate);
  if(isMobileDevice&&now-lastMobileRender<33)return;
  if(isMobileDevice)lastMobileRender=now;
  const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ // Slow drifting dust is deliberately lightweight for budget phones.
+ const dustPos=dust.geometry.attributes.position;
+ for(let i=0;i<dustCount;i++){
+  dustPos.array[i*3+1]+=dt*(.035+Math.sin(elapsed+dustPhases[i])*.012);
+  dustPos.array[i*3]+=Math.sin(elapsed*.35+dustPhases[i])*.0009;
+  if(dustPos.array[i*3+1]>4.1)dustPos.array[i*3+1]=.35;
+ }
+ dustPos.needsUpdate=true;
  // Animate the rain around the world and occasionally illuminate the skyline.
  const rainPos=rain.geometry.attributes.position;
  for(let i=0;i<rainCount;i++){
