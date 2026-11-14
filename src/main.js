@@ -454,7 +454,7 @@ document.querySelector('#flashlight').onclick=toggleFlashlight;
 
 // Online room layer. Set VITE_SERVER_URL when deploying the frontend separately.
 const serverUrl=import.meta.env.VITE_SERVER_URL||'';
-const socket=io(serverUrl||window.location.origin,{autoConnect:!!serverUrl,reconnection:true,timeout:5000});
+const socket=io(serverUrl||window.location.origin,{autoConnect:false,reconnection:true,timeout:5000});
 let onlineRoom=null,onlineName='ALEX',onlineRole=null,onlineRoundState=null,onlinePromptKey='';
 const remoteAvatars=new Map();
 function syncRemotePlayers(room){
@@ -589,28 +589,48 @@ document.querySelector('#chat-button')?.addEventListener('click',()=>{
   socket.emit('chat:send',{message});input.value='';
  });
 });
-// Account screen is shown before the bus intro. Real account creation/sign-in
-// is intentionally blocked until a trusted authentication provider is configured.
-let authMode='signin';
+// Supabase Auth stores account credentials securely; this game never stores passwords.
+const supabaseUrl=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'');
+const supabaseAnonKey=import.meta.env.VITE_SUPABASE_ANON_KEY||'';
+let authMode='signin',authSession=null;
 const authFeedback=document.querySelector('#auth-feedback');
+const authForm=document.querySelector('#auth-form');
+const authEmail=document.querySelector('#auth-email');
+const authUsername=document.querySelector('#auth-username');
+const authPassword=document.querySelector('#auth-password');
 function setAuthMode(mode){
  authMode=mode;
  document.querySelector('#auth-tab-signin').classList.toggle('active',mode==='signin');
  document.querySelector('#auth-tab-signup').classList.toggle('active',mode==='signup');
+ document.querySelector('#auth-username-wrap').classList.toggle('hidden',mode==='signin');
+ authUsername.required=mode==='signup';
+ authPassword.autocomplete=mode==='signin'?'current-password':'new-password';
  document.querySelector('#auth-submit').textContent=mode==='signin'?'SIGN IN TO THE GAME':'CREATE PLAYER ACCOUNT';
- // No password field is shown until secure authentication is configured.
- authFeedback.textContent=mode==='signin'?'Sign-in service is not connected yet. Your password will not be stored here.':'Account creation is not connected yet. Your password will not be stored here.';
+ authFeedback.textContent=mode==='signin'?'Enter your email and password to sign in.':'Choose a username and password with at least 8 characters.';
 }
 document.querySelector('#auth-tab-signin').onclick=()=>setAuthMode('signin');
 document.querySelector('#auth-tab-signup').onclick=()=>setAuthMode('signup');
-document.querySelector('#auth-form').addEventListener('submit',event=>{
- event.preventDefault();
- const email=document.querySelector('#auth-email').value.trim();
- const username=document.querySelector('#auth-username').value.trim();
- if(!email.toLowerCase().endsWith('@gmail.com')){authFeedback.textContent='Please enter a Gmail address ending in @gmail.com.';return;}
- if(username.length<3){authFeedback.textContent='Your username must have at least 3 characters.';return;}
- // Demo flow only: secure sign-in is not connected; no password is requested or stored.
- onlineName=username.slice(0,16);
+function saveAuthSession(session){
+ authSession=session;
+ try{
+  if(session?.refresh_token)sessionStorage.setItem('mole-refresh-token',session.refresh_token);
+  else sessionStorage.removeItem('mole-refresh-token');
+ }catch{}
+}
+async function authRequest(path,body,accessToken=''){
+ if(!supabaseUrl||!supabaseAnonKey)throw new Error('The account service is not configured yet. The site owner must finish the secure setup.');
+ const response=await fetch(supabaseUrl+'/auth/v1/'+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':supabaseAnonKey,...(accessToken?{Authorization:'Bearer '+accessToken}:{})},body:JSON.stringify(body)});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'Account request failed. Please try again.');
+ return data;
+}
+function enterAccount(user,session){
+ const metadata=user?.user_metadata||{};
+ const chosenName=String(metadata.display_name||authUsername.value.trim()||user?.email?.split('@')[0]||'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'PLAYER';
+ saveAuthSession(session);
+ onlineName=chosenName;
+ socket.auth={accessToken:session.access_token};
+ if(serverUrl)socket.connect();
  document.querySelector('#player-name').textContent=onlineName.toUpperCase();
  player.name=onlineName.toUpperCase();
  const oldLabel=player.group.children.find(child=>child.isSprite);
@@ -618,8 +638,37 @@ document.querySelector('#auth-form').addEventListener('submit',event=>{
  const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
  document.querySelector('#auth-screen').classList.add('hidden');
  document.querySelector('#avatar-screen').classList.remove('hidden');
- authFeedback.textContent='Demo only — secure sign-in is not connected.';
+}
+authForm.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const email=authEmail.value.trim(),password=authPassword.value;
+ const username=authUsername.value.trim();
+ if(!supabaseUrl||!supabaseAnonKey){authFeedback.textContent='Secure sign-in setup is not finished. Ask the site owner to connect the account service.';return;}
+ if(authMode==='signup'&&(username.length<3||username.length>16)){authFeedback.textContent='Your username must be 3–16 characters.';return;}
+ if(password.length<8){authFeedback.textContent='Your password must contain at least 8 characters.';return;}
+ const submit=document.querySelector('#auth-submit');submit.disabled=true;authFeedback.textContent=authMode==='signin'?'Signing in securely…':'Creating your account…';
+ try{
+  if(authMode==='signup'){
+   const data=await authRequest('signup',{email,password,data:{display_name:username}});
+   if(!data.access_token){authFeedback.textContent='Account created. Check your email for the verification link, then return here and sign in.';setAuthMode('signin');authEmail.value=email;authPassword.value='';return;}
+   enterAccount(data.user,data);
+  }else{
+   const data=await authRequest('token?grant_type=password',{email,password});
+   enterAccount(data.user,data);
+  }
+ }catch(error){authFeedback.textContent=error.message||'Could not sign in. Check your details and try again.';}
+ finally{submit.disabled=false;}
 });
+async function restoreAccountSession(){
+ let refreshToken='';try{refreshToken=sessionStorage.getItem('mole-refresh-token')||'';}catch{}
+ if(!refreshToken||!supabaseUrl||!supabaseAnonKey)return;
+ try{
+  const data=await authRequest('token?grant_type=refresh_token',{refresh_token:refreshToken});
+  enterAccount(data.user,data);
+ }catch{try{sessionStorage.removeItem('mole-refresh-token');}catch{}}
+}
+setAuthMode('signin');
+restoreAccountSession();
 document.querySelectorAll('.look-option').forEach(button=>button.addEventListener('click',()=>applyPlayerLook(button.dataset.look)));
 document.querySelector('#confirm-look')?.addEventListener('click',()=>{
  const look=avatarLooks[selectedLook];
