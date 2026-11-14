@@ -1542,6 +1542,12 @@ document.querySelector('.avatar-card .look-grid')?.after(studio);
   });
  });
  studio.append(randomBtn);
+ studio.querySelectorAll('select').forEach(select=>select.addEventListener('change',()=>{
+  const chosen=select.options[select.selectedIndex]?.textContent;
+  const panel=select.closest('label')?.parentElement?.querySelector('.creator-section');
+  const group=[...studio.querySelectorAll('.creator-section')].find(section=>section.querySelector('.creator-choice[aria-label="'+CSS.escape(chosen||'')+'"]'));
+  (group||panel)?.querySelectorAll('.creator-choice').forEach(btn=>btn.classList.toggle('active',btn.getAttribute('aria-label')===chosen));
+ }));
  document.querySelector('.avatar-card .look-grid')?.setAttribute('hidden','');
 
 const previewPerson=document.querySelector('#preview-person');
@@ -1629,14 +1635,19 @@ document.querySelector('#hair-style')?.addEventListener('change',e=>setHairStyle
 setHairStyle('curly');
 refreshAvatarPreview();
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
-let headAccessory=null;
+let headAccessory=null,previewHeadAccessory=null;
+function buildHeadAccessory(type){
+ if(type==='none')return null;
+ const group=new THREE.Group(),goldMat=mat(type==='crown'?0xd5ad6b:0x293d4a);
+ const shape=new THREE.Mesh(new THREE.TorusGeometry(.29,.06,8,20),goldMat);shape.position.y=2.3;shape.rotation.x=Math.PI/2;group.add(shape);
+ if(type==='cap'){const crown=new THREE.Mesh(new THREE.SphereGeometry(.34,18,10,0,Math.PI*2,0,Math.PI/2),goldMat);crown.position.y=2.27;group.add(crown);const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.05,20),goldMat);brim.position.y=2.2;group.add(brim);}
+ return group;
+}
 document.querySelector('#accessory-choice')?.addEventListener('change',e=>{
+ if(headAccessory)player.group.remove(headAccessory);if(previewHeadAccessory)previewAvatar.group.remove(previewHeadAccessory);
+ headAccessory=buildHeadAccessory(e.target.value);previewHeadAccessory=buildHeadAccessory(e.target.value);
+ if(headAccessory)player.group.add(headAccessory);if(previewHeadAccessory)previewAvatar.group.add(previewHeadAccessory);
  refreshAvatarPreview();
- if(headAccessory)player.group.remove(headAccessory);headAccessory=null;if(e.target.value==='none')return;
- headAccessory=new THREE.Group();const goldMat=mat(e.target.value==='crown'?0xd5ad6b:0x293d4a);
- const shape=new THREE.Mesh(new THREE.TorusGeometry(.29,.06,8,20),goldMat);shape.position.y=2.3;shape.rotation.x=Math.PI/2;headAccessory.add(shape);
- if(e.target.value==='cap'){const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.05,20),goldMat);brim.position.y=2.2;headAccessory.add(brim)}
- player.group.add(headAccessory);
 });
 
 // Small synthesized sound cues for collected clues and discoveries.
