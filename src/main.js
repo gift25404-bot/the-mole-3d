@@ -685,7 +685,7 @@ socket.on('round:actionCount',data=>notice(`NIGHT ACTIONS: ${data.count}/${data.
 socket.on('round:investigation',data=>modal('DETECTIVE REPORT',`${data.name} is ${data.result}.`,'<p>This result is private to you.</p>'));
 socket.on('round:nightResult',data=>{
  if(data.removed){addChat('SYSTEM',`${data.removed.name} was eliminated overnight. Role: ${data.removed.role}.`,true);if(data.removed.id===socket.id){onlineRole='GHOST';document.querySelector('#role-label').textContent='ELIMINATED';modal('YOU HAVE BEEN ELIMINATED','You can watch the rest of this round, but you cannot vote or use a role action.');}}
- else if(data.protected)addChat('SYSTEM','The Doctor protected the Mafia target. Nobody was eliminated overnight.',true);
+ else if(data.protected)addChat('SYSTEM','The Doctor protected the Mole's target. Nobody was eliminated overnight.',true);
  else addChat('SYSTEM','Nobody was eliminated overnight.',true);
 });
 socket.on('round:voteResult',data=>{
@@ -713,7 +713,7 @@ function showOnlineNightAction(state){
  if(role==='GHOST'){modal('SPECTATOR MODE','You have been eliminated. Watch the remaining players until the round ends.');return;}
  if(!['MAFIA','DETECTIVE','DOCTOR'].includes(role)){modal('NIGHT AT BLACKWOOD','You are a Citizen. Stay quiet and wait for morning.');return;}
  const targets=state.players.filter(p=>p.alive&&(role==='DOCTOR'||p.id!==socket.id));
- const title=role==='MAFIA'?'MAFIA: CHOOSE A TARGET':role==='DETECTIVE'?'DETECTIVE: INVESTIGATE':'DOCTOR: PROTECT A PLAYER';
+ const title=role==='MAFIA'?'THE MOLE: CHOOSE A TARGET':role==='DETECTIVE'?'DETECTIVE: INVESTIGATE':'DOCTOR: PROTECT A PLAYER';
  const copy=role==='MAFIA'?'Choose one living player. Your choice is secret.':role==='DETECTIVE'?'Choose one living player to investigate. Only you see the result.':'Choose one living player to protect tonight.';
  const content=targets.map(p=>`<button class="vote-option" data-online-target="${p.id}">${p.name}</button>`).join('');
  modal(title,copy,content||'<p>Waiting for the other players.</p>');
@@ -761,7 +761,7 @@ document.querySelector('#online').onclick=openOnlineLobby;
 function modal(title,copy,content=''){document.querySelector('#modal-title').textContent=title;document.querySelector('#modal-copy').textContent=copy;document.querySelector('#modal-content').innerHTML=content;document.querySelector('#modal').classList.remove('hidden')}
 function closeModal(){document.querySelector('#modal').classList.add('hidden')}
 document.querySelector('#close-modal').onclick=closeModal;
-document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who is the Mafia.', '<div class="room-list"><div>MAFIA — secretly disrupts the group</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
+document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who the hidden Mole is.', '<div class="room-list"><div>THE MOLE — the single hidden player</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
 document.querySelector('#chat-button')?.addEventListener('click',()=>{
  modal('MESSAGES','Group chat is available when you join an online room.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message" autocomplete="off"><button type="submit">SEND</button></form>');
  document.querySelector('#chat-form')?.addEventListener('submit',event=>{
@@ -912,7 +912,7 @@ arrivalSkip?.addEventListener('click',()=>{
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
-document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div><div>10 — SECOND FLOOR</div><div>11 — THIRD FLOOR / ROOFTOP</div><div>12 — EAST WING STAIRCASE</div></div>`);
+document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div><div>10 — SECOND FLOOR</div><div>11 — THIRD FLOOR / ROOFTOP</div><div>12 — EAST WING STAIRCASE</div><div>13 — ABANDONED CAFETERIA</div><div>14 — SECOND-FLOOR DORMITORIES</div><div>15 — THIRD-FLOOR DORMITORIES</div></div>`);
 
 // Local social-deduction round: one hidden Mole, one Detective, one Doctor.
 const roster = [player, ...npcs];
