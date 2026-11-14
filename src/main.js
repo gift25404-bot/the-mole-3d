@@ -525,6 +525,8 @@ socket.on('round:voteResult',data=>{
  else addChat('SYSTEM',data.tied?'The vote was tied. Nobody was removed.':'The group skipped the vote.',true);
 });
 socket.on('round:ended',data=>{
+ recordPlayerProgress('rounds',1);
+ if((onlineRole==='MAFIA'&&data.winner==='MAFIA')||(onlineRole!=='MAFIA'&&onlineRole!=='GHOST'&&data.winner==='PASSENGERS'))recordPlayerProgress('wins',1);
  onlinePromptKey='';const mafia=data.winner==='MAFIA';
  modal(mafia?'MAFIA WINS':'PASSENGERS WIN',mafia?'The Mafia outnumbered the remaining passengers.':'The Mafia has been found. The passengers win!',onlineRoom?.hostId===socket.id?'<button class="vote-option" id="online-restart">PLAY AGAIN</button>':'<p>Waiting for the room host to start another round.</p>');
  document.querySelector('#online-restart')?.addEventListener('click',()=>socket.emit('round:restart',res=>{if(!res?.ok)notice(res?.error||'Could not restart.');else closeModal();}));
@@ -862,7 +864,7 @@ function interact(){
  let nearestClue=null,clueDist=2.4;
  for(const clue of clueItems){if(clue.collected)continue;const d=p.distanceTo(clue.group.position);if(d<clueDist){clueDist=d;nearestClue=clue}}
  if(nearestClue){
-  nearestClue.collected=true;scene.remove(nearestClue.group);cluesFound++;updateObjective();
+  nearestClue.collected=true;scene.remove(nearestClue.group);cluesFound++;recordPlayerProgress('clues',1);updateObjective();
   notice(`${nearestClue.name} collected.`);
   if(cluesFound===6){exitUnlocked=false;notice('All six clues found. The house has revealed its secrets, but the front door remains sealed.');}
   return;
@@ -871,7 +873,7 @@ function interact(){
  let supply=null,supplyDist=2.7;
  for(const item of sideMissionItems){if(item.collected)continue;const d=p.distanceTo(item.group.position);if(d<supplyDist){supplyDist=d;supply=item;}}
  if(supply){
-  supply.collected=true;scene.remove(supply.group);moleCoins+=25;updateCoins();
+  supply.collected=true;scene.remove(supply.group);moleCoins+=25;recordPlayerProgress('supplies',1);updateCoins();
   notice(supply.name+' recovered • +25 coins');playCue();return;
  }
  const dDoor=p.distanceTo(new THREE.Vector3(0,0,8.5));
@@ -1021,6 +1023,16 @@ notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
 
 // Player phone: private messages, live voting, player list and personal notes.
 let phoneActiveTab='vote',phoneMessages=[],phoneNotes='';
+const playerProgressKey='the-mole-player-records-v1';
+let playerProgress={clues:0,supplies:0,rounds:0,wins:0};
+try{const saved=JSON.parse(localStorage.getItem(playerProgressKey)||'{}');for(const key of Object.keys(playerProgress))playerProgress[key]=Math.max(0,Number(saved[key])||0);}catch{}
+function recordPlayerProgress(key,amount=1){
+ if(!(key in playerProgress))return;
+ playerProgress[key]=Math.max(0,playerProgress[key]+amount);
+ try{localStorage.setItem(playerProgressKey,JSON.stringify(playerProgress));}catch{}
+ if(phoneActiveTab==='records'&&phonePanel&&!phonePanel.classList.contains('hidden'))renderPhoneTab();
+}
+
 const phoneButton=document.querySelector('#game-phone-button');
 const phonePanel=document.querySelector('#game-phone');
 const phoneContent=document.querySelector('#phone-content');
@@ -1072,7 +1084,16 @@ function renderPhoneTab(){
  }else if(phoneActiveTab==='players'){
   const players=onlineRoom?.players||[];
   phoneContent.innerHTML='<div class="phone-section-kicker">ROOM DIRECTORY</div><h3>Passengers</h3>'+(players.length?players.map(p=>'<div class="phone-contact"><span class="phone-contact-avatar">'+phoneEscape((p.name||'?').slice(0,1).toUpperCase())+'</span><div><b>'+phoneEscape(p.name)+'</b><small>'+(p.id===onlineRoom.hostId?'ROOM HOST':'PLAYER')+'</small></div><span class="'+(p.alive===false?'phone-offline':'phone-alive')+'">'+(p.alive===false?'OUT':'IN')+'</span></div>').join(''):'<p class="phone-muted">Join an online room to see its players.</p>');
- }else if(phoneActiveTab==='notes'){
+ }else if(phoneActiveTab==='records'){
+   const records=[
+    {name:'CLUE FINDER',desc:'Collect clues around Blackwood House',key:'clues',goal:6,reward:'Investigator'},
+    {name:'SUPPLY RUNNER',desc:'Recover hidden house supplies',key:'supplies',goal:3,reward:'Scavenger'},
+    {name:'ROUND REGULAR',desc:'Finish multiplayer rounds',key:'rounds',goal:5,reward:'Regular'},
+    {name:'BLACKWOOD CHAMPION',desc:'Win multiplayer rounds',key:'wins',goal:3,reward:'Champion'}
+   ];
+   const completed=records.filter(r=>playerProgress[r.key]>=r.goal).length;
+   phoneContent.innerHTML='<div class="phone-section-kicker">YOUR PLAYER JOURNEY</div><h3>Blackwood records</h3><p class="phone-muted">Your progress is saved on this device. Complete milestones to collect titles.</p><div class="record-summary"><b>'+completed+' / '+records.length+'</b><span>MILESTONES COMPLETED</span></div><div class="record-stats"><div><b>'+playerProgress.clues+'</b><small>CLUES</small></div><div><b>'+playerProgress.supplies+'</b><small>SUPPLIES</small></div><div><b>'+playerProgress.rounds+'</b><small>ROUNDS</small></div><div><b>'+playerProgress.wins+'</b><small>WINS</small></div></div>'+records.map(r=>{const value=Math.min(playerProgress[r.key],r.goal),done=value>=r.goal;return '<article class="record-card '+(done?'record-complete':'')+'"><div><b>'+r.name+'</b><span>'+(done?'✓ COMPLETED':value+' / '+r.goal)+'</span></div><p>'+r.desc+'</p><div class="record-track"><i style="width:'+Math.round(value/r.goal*100)+'%"></i></div><small>'+(done?'TITLE UNLOCKED: ':'TITLE REWARD: ')+r.reward+'</small></article>';}).join('');
+  }else if(phoneActiveTab==='notes'){
   phoneContent.innerHTML='<div class="phone-section-kicker">PERSONAL NOTEBOOK</div><h3>Your investigation notes</h3><p class="phone-muted">Only saved on this device. Do not write passwords or personal contact details here.</p><textarea id="phone-notes" class="phone-notes" maxlength="1500" placeholder="Write down clues, timelines and suspicions…">'+phoneEscape(phoneNotes)+'</textarea><small class="phone-muted">Notes are private to this browser session.</small>';
   document.querySelector('#phone-notes')?.addEventListener('input',e=>{phoneNotes=e.target.value;});
  }
