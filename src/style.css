@@ -601,3 +601,10 @@ html,body,#game{background:#243b46;color:#fff2d8}
   #game:has(#avatar-screen:not(.hidden)) > #avatar-screen,
   #game:has(#bus-intro:not(.intro-hidden)) > #bus-intro { visibility:visible !important; }
 }
+
+
+/* Immersive audio controls and touch jump button. */
+.sound-volume{display:flex;align-items:center;gap:5px;color:#d9c7a8;font:8px 'DM Mono';letter-spacing:1px;border:1px solid #625743;background:rgba(18,25,30,.88);padding:7px 8px}
+.sound-volume input{width:58px;accent-color:#c69b5e}
+.mobile-pad .mobile-jump{background:#344c50;border-color:#a9c5c0;color:#f4fff9;font-size:9px;font-weight:700}
+@media(max-width:900px){.sound-volume{display:none}}
