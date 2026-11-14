@@ -976,6 +976,49 @@ const preview=document.createElement('div');preview.className='live-avatar-previ
 document.querySelector('.avatar-card .look-grid')?.before(preview);
 const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="603b2d">Deep espresso</option><option value="70452f">Rich brown</option><option value="815238">Cocoa</option><option value="9a674b" selected>Warm brown</option><option value="ad7654">Caramel</option><option value="bd8967">Copper</option><option value="d49b76">Golden</option><option value="e0b99a">Light beige</option><option value="f0c9a8">Fair peach</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Natural black</option><option value="39251d">Dark brown</option><option value="573522">Chestnut</option><option value="743d27">Auburn</option><option value="c79b55">Golden blonde</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option><option value="343b62">Blue-black</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly afro</option><option value="short">Short crop</option><option value="fade">Low fade</option><option value="braids">Braids</option><option value="locs">Locs</option><option value="bun">High bun</option><option value="ponytail">Ponytail</option><option value="long">Long sides</option></select></label><label>OUTFIT<select id="outfit-choice"><option value="c96f62">Coral hoodie</option><option value="477caa">Blue jacket</option><option value="527b5c">Forest green</option><option value="8064a6">Violet sweater</option><option value="39858a">Teal streetwear</option><option value="252d3c">Midnight black</option><option value="e2d6c4">Cream sweatshirt</option><option value="b48a42">Mustard jacket</option><option value="a94f4f">Red varsity</option><option value="48606a">Slate denim</option><option value="6b4b3b">Earth brown</option><option value="d28caa">Pink jacket</option></select></label><label>BOTTOMS<select id="bottom-choice"><option value="30343b">Classic joggers</option><option value="222936">Cargo trousers</option><option value="4a5260">Blue denim</option><option value="5c493c">Brown cargos</option><option value="e0d5c1">Cream trousers</option><option value="263f38">Olive cargos</option><option value="4b345f">Purple trousers</option></select></label><label>SHOES<select id="shoe-choice"><option value="17191c">Black trainers</option><option value="eee5d4">White sneakers</option><option value="a94f35">Red sneakers</option><option value="c59a4d">Gold high-tops</option><option value="344c68">Blue runners</option><option value="654b38">Brown boots</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
 document.querySelector('.avatar-card .look-grid')?.after(studio);
+ // Turn the old dropdown wardrobe into a visual, Lagos-inspired character creator.
+ const pickerGroups=[
+  {id:'skin-choice',title:'SKIN TONE',kind:'swatch'},
+  {id:'hair-style',title:'HAIRSTYLE',kind:'tile'},
+  {id:'hair-choice',title:'HAIR COLOUR',kind:'swatch'},
+  {id:'outfit-choice',title:'OUTFIT',kind:'tile'},
+  {id:'bottom-choice',title:'TROUSERS',kind:'tile'},
+  {id:'shoe-choice',title:'FOOTWEAR',kind:'tile'},
+  {id:'accessory-choice',title:'ACCESSORIES',kind:'tile'}
+ ];
+ pickerGroups.forEach(group=>{
+  const select=document.getElementById(group.id);if(!select)return;
+  const label=select.closest('label');if(!label)return;
+  const panel=document.createElement('section');panel.className='creator-section';
+  const heading=document.createElement('h3');heading.textContent=group.title;panel.append(heading);
+  const choices=document.createElement('div');choices.className='creator-choices '+(group.kind==='swatch'?'swatch-choices':'tile-choices');
+  [...select.options].forEach(option=>{
+   const btn=document.createElement('button');btn.type='button';btn.className='creator-choice';
+   btn.setAttribute('aria-label',option.textContent);btn.title=option.textContent;
+   if(group.kind==='swatch'){const dot=document.createElement('i');dot.className='choice-dot';dot.style.backgroundColor='#'+option.value;btn.append(dot);}
+   const name=document.createElement('span');name.textContent=option.textContent;btn.append(name);
+   btn.classList.toggle('active',option.value===select.value);
+   btn.addEventListener('click',()=>{
+    select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}));
+    choices.querySelectorAll('.creator-choice').forEach(item=>item.classList.toggle('active',item===btn));
+   });
+   choices.append(btn);
+  });
+  select.hidden=true;label.hidden=true;panel.append(choices);studio.append(panel);
+ });
+ const randomBtn=document.createElement('button');randomBtn.type='button';randomBtn.className='creator-random';randomBtn.textContent='↻ RANDOM LOOK';
+ randomBtn.addEventListener('click',()=>{
+  pickerGroups.forEach(group=>{
+   const select=document.getElementById(group.id);if(!select)return;
+   const options=[...select.options];const chosen=options[Math.floor(Math.random()*options.length)];
+   select.value=chosen.value;select.dispatchEvent(new Event('change',{bubbles:true}));
+   const panel=studio.querySelectorAll('.creator-section')[pickerGroups.indexOf(group)];
+   panel?.querySelectorAll('.creator-choice').forEach(btn=>btn.classList.toggle('active',btn.getAttribute('aria-label')===chosen.textContent));
+  });
+ });
+ studio.append(randomBtn);
+ document.querySelector('.avatar-card .look-grid')?.setAttribute('hidden','');
+
 const previewPerson=document.querySelector('#preview-person');
 function refreshAvatarPreview(){if(!previewPerson)return;previewPerson.style.setProperty('--preview-skin','#'+document.querySelector('#skin-choice').value);previewPerson.style.setProperty('--preview-hair','#'+document.querySelector('#hair-choice').value);previewPerson.style.setProperty('--preview-shirt','#'+document.querySelector('#outfit-choice').value);previewPerson.style.setProperty('--preview-pants','#'+document.querySelector('#bottom-choice').value);previewPerson.style.setProperty('--preview-shoes','#'+document.querySelector('#shoe-choice').value);previewPerson.dataset.hair=document.querySelector('#hair-style').value;previewPerson.dataset.accessory=document.querySelector('#accessory-choice').value;}
 document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
