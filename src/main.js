@@ -3,8 +3,8 @@ import { io } from 'socket.io-client';
 import './style.css';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x243b46);
-scene.fog = new THREE.FogExp2(0x243b46, 0.012);
+scene.background = new THREE.Color(0x080f14);
+scene.fog = new THREE.FogExp2(0x101b20, 0.021);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
 // Detect phones/tablets early and select a lighter renderer profile.
 const isMobileDevice=matchMedia('(max-width: 800px), (pointer: coarse)').matches;
@@ -19,13 +19,13 @@ renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFSha
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffd7a0,0x4b3a2b,2.0));
-const moon=new THREE.DirectionalLight(0xffd6a0,2.5); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
+scene.add(new THREE.HemisphereLight(0x91a7b4,0x171b19,0.82));
+const moon=new THREE.DirectionalLight(0x9eb6ca,1.45); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 const warm=new THREE.PointLight(0xffb35c,30,18); warm.position.set(0,3,0); scene.add(warm);
 const hallLight=new THREE.PointLight(0xffd18a,16,10); hallLight.position.set(0,3,-8); scene.add(hallLight);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
-const floorMat=mat(0x75634b), wallMat=mat(0xb7a58a), darkMat=mat(0x343a38), wood=mat(0x68442e), trim=mat(0x3b3028), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
+const floorMat=mat(0x51483d), wallMat=mat(0x817b70), darkMat=mat(0x242b2b), wood=mat(0x68442e), trim=mat(0x3b3028), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
 function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!isMobileDevice;o.receiveShadow=!isMobileDevice;parent.add(o);return o}
 function plane(w,d,m,x,y,z){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,d),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o}
 plane(90,90,mat(0x75684f),0,-.16,0);
@@ -369,6 +369,12 @@ for(let i=0;i<34;i++){
   if(Math.abs(z-17)<5 && Math.abs(x)<30) continue;
   addOvergrownTree(x,z,.48+((i%4)*.09));
 }
+// A dark second tree line closes the horizon around the abandoned house.
+const deepForestMats=[mat(0x101e19),mat(0x17251d),mat(0x1c2b21)];
+for(let i=0;i<(isMobileDevice?22:38);i++){const a=i/(isMobileDevice?22:38)*Math.PI*2,r=39+(i%4)*2.1,x=Math.cos(a)*r,z=Math.sin(a)*r,h=6+(i%4)*.7;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.42,h*.58,6),barkMat);trunk.position.set(x,h*.29,z);scene.add(trunk);for(let t=0;t<3;t++){const crown=new THREE.Mesh(new THREE.ConeGeometry(1.9-t*.28,2.8-t*.28,6),deepForestMats[(i+t)%3]);crown.position.set(x,h*.48+t*1.15,z);scene.add(crown);}}
+const stainMat=mat(0x343b32),mossMat=mat(0x293b2d),vineMat=mat(0x26382b);
+for(const x of [-8,-5,-1,3,7]){const stain=box(.42,1.8,.035,stainMat,x,1.2,8.31,house);stain.rotation.z=(x%2)*.08;if(x%2===0)box(.7,.12,.04,mossMat,x+.5,.18,8.28,house);}
+if(!isMobileDevice)for(const x of [-8,-4,1,6]){const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(x,3.7,8.3),new THREE.Vector3(x+.25,2.9,8.28),new THREE.Vector3(x-.18,2.1,8.26),new THREE.Vector3(x+.2,1.1,8.25)]);house.add(new THREE.Mesh(new THREE.TubeGeometry(curve,10,.035,4,false),vineMat));}
 // Abandoned cars left to rust around the neglected roadside and empty lots.
 addWreckedCar(-31,7,.18,0x75664f);
 addWreckedCar(30,7,-.32,0x52605b);
@@ -507,7 +513,7 @@ const npcs=[
 ];
 const all=[player,...npcs];
 let cameraMode=0;const modes=['ISOMETRIC','THIRD PERSON','FIRST PERSON'];
-const keys={};let noticeTimer;
+const keys={};let noticeTimer,jumpOffset=0,jumpVelocity=0,jumpHeld=false;
 function addChat(name,message,isSystem=false){
  const log=document.querySelector('#chat-log');
  if(!log)return;
@@ -526,32 +532,26 @@ function speak(text){
 }
 function notice(t){const n=document.querySelector('#notice');n.textContent=t;n.classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.classList.remove('show'),2300)}
 
-// Procedural game audio: rain, night wind and a quiet bus engine. Browser audio
-// is started only after a player presses the sound button.
-let audioCtx=null, ambienceOn=false, ambienceNodes=[];
+// Layered procedural sound system: rain, wind, thunder, footsteps and interactions.
+let audioCtx=null, ambienceOn=false, ambienceNodes=[], masterGain=null, footstepClock=0;
 function setAmbience(on){
- ambienceOn=on;
- const button=document.querySelector('#sound');
- if(button)button.textContent=`SOUND: ${on?'ON':'OFF'}`;
+ ambienceOn=on;const button=document.querySelector('#sound');if(button)button.textContent=`SOUND: ${on?'ON':'OFF'}`;
  if(!on){ambienceNodes.forEach(n=>{try{n.stop?.();n.disconnect?.()}catch{}});ambienceNodes=[];return;}
- const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
- audioCtx=audioCtx||new AC();audioCtx.resume();
- const addTone=(frequency,type,volume,filterHz)=>{
-  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter();
-  osc.type=type;osc.frequency.value=frequency;filter.type='lowpass';filter.frequency.value=filterHz;
-  gain.gain.value=volume;osc.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);osc.start();ambienceNodes.push(osc,gain,filter);
- };
- addTone(42,'sawtooth',.012,90); // distant engine rumble
- addTone(115,'sine',.006,180); // low night wind
- // Soft, non-looping rain-like noise bed made from a short generated buffer.
- const length=audioCtx.sampleRate*2,buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate),data=buffer.getChannelData(0);
- for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*.12;
- const noise=audioCtx.createBufferSource(),ng=audioCtx.createGain(),nf=audioCtx.createBiquadFilter();
- noise.buffer=buffer;noise.loop=true;nf.type='lowpass';nf.frequency.value=850;ng.gain.value=.035;
- noise.connect(nf);nf.connect(ng);ng.connect(audioCtx.destination);noise.start();ambienceNodes.push(noise,ng,nf);
+ const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audioCtx=audioCtx||new AC();audioCtx.resume();
+ if(!masterGain){masterGain=audioCtx.createGain();masterGain.gain.value=.48;masterGain.connect(audioCtx.destination);}
+ const tone=(f,type,v,cut)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain(),q=audioCtx.createBiquadFilter();o.type=type;o.frequency.value=f;q.type='lowpass';q.frequency.value=cut;g.gain.value=v;o.connect(q);q.connect(g);g.connect(masterGain);o.start();ambienceNodes.push(o,g,q);};
+ tone(38,'sawtooth',.018,82);tone(72,'sine',.014,145);
+ const len=audioCtx.sampleRate*3,buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*.18;
+ const n=audioCtx.createBufferSource(),g=audioCtx.createGain(),q=audioCtx.createBiquadFilter();n.buffer=buf;n.loop=true;q.type='lowpass';q.frequency.value=620;g.gain.value=.052;n.connect(q);q.connect(g);g.connect(masterGain);n.start();ambienceNodes.push(n,g,q);
+}
+function playSfx(kind){
+ if(!ambienceOn||!audioCtx||!masterGain)return;
+ const now=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain(),q=audioCtx.createBiquadFilter();
+ const p=({step:[78,48,.075,.12,'triangle',170],jump:[145,285,.18,.16,'sine',900],land:[92,42,.14,.2,'triangle',210],door:[180,68,.42,.22,'sawtooth',520],clue:[520,790,.22,.13,'sine',1400],creak:[220,115,.7,.15,'sawtooth',480],thunder:[58,34,.85,.28,'sawtooth',115]})[kind]||[520,790,.22,.13,'sine',1400];
+ o.type=p[4];o.frequency.setValueAtTime(p[0],now);o.frequency.exponentialRampToValueAtTime(Math.max(20,p[1]),now+p[2]);q.type='lowpass';q.frequency.value=p[5];g.gain.setValueAtTime(p[3],now);g.gain.exponentialRampToValueAtTime(.001,now+p[2]);o.connect(q);q.connect(g);g.connect(masterGain);o.start(now);o.stop(now+p[2]+.02);
 }
 if(!document.querySelector('#sound')){
- const sound=document.createElement('button');sound.id='sound';sound.textContent='SOUND: OFF';sound.className='sound-toggle';document.querySelector('.actions')?.append(sound);
+ const sound=document.createElement('button');sound.id='sound';sound.textContent='SOUND: OFF';sound.className='sound-toggle';document.querySelector('.actions')?.append(sound);const volume=document.createElement('label');volume.className='sound-volume';volume.innerHTML='VOL <input id="sound-volume" type="range" min="0" max="100" value="48" aria-label="Sound volume">';document.querySelector('.actions')?.append(volume);volume.querySelector('input').addEventListener('input',e=>{if(masterGain)masterGain.gain.value=Number(e.target.value)/100;});
 }
 
 document.querySelector('#sound').onclick=()=>setAmbience(!ambienceOn);
@@ -854,6 +854,7 @@ function startArrival(){
  bus.position.set(arrivalStartBusX,0,8);
  camera.position.set(-23,6,22);camera.lookAt(-13,1.5,8);
  if(arrivalCaption)arrivalCaption.textContent='THE LAST BUS OF THE NIGHT…';
+ playSfx('creak');
  speak('It is almost midnight. The last bus rattles along an empty road. The rain is getting heavier.');
 }
 document.querySelector('#begin-game')?.addEventListener('click',()=>{
@@ -975,8 +976,8 @@ document.querySelector('#ability').onclick=()=>{
 updateStatus();
 // The role reveal is shown after the player enters the house from the bus scene.
 
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')switchCamera();if(e.key.toLowerCase()==='e')interact();if(e.key.toLowerCase()==='f'&&!e.repeat)toggleFlashlight()});
-document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k===' ')e.preventDefault();keys[k===' '?'space':k]=true;if(k==='c')switchCamera();if(k==='e')interact();if(k==='f'&&!e.repeat)toggleFlashlight()});
+document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
 let cluesFound=0, exitUnlocked=false, hasBrassKey=false, secretRoomOpen=false, secretLedgerFound=false;
@@ -991,11 +992,11 @@ function interact(){
  if(currentFloor===0&&!secretRoomOpen&&Math.hypot(p.x-14.5,p.z+1.7)<2.6){
   if(!hasBrassKey){notice('A hidden bookshelf is locked. Find the BRASS KEY in the house.');playCue();return;}
   secretRoomOpen=true;secretDoor.visible=false;secretDoorWall.visible=false;secretRoomGroup.visible=true;
-  notice('SECRET ROOM UNLOCKED • The bookshelf slides aside. An old archive is hidden behind it.');playCue();return;
+  notice('SECRET ROOM UNLOCKED • The bookshelf slides aside. An old archive is hidden behind it.');playSfx('door');playCue();return;
  }
  if(secretRoomOpen&&!secretLedgerFound&&Math.hypot(p.x-14.6,p.z+3.2)<2.2){
   secretLedgerFound=true;archiveLedger.visible=false;
-  notice('HIDDEN LEDGER • The old records reveal that someone built a passage beneath Blackwood House.');playCue();return;
+  playSfx('clue');notice('HIDDEN LEDGER • The old records reveal that someone built a passage beneath Blackwood House.');playCue();return;
  }
  if(currentFloor===2&&Math.hypot(p.x-suiteStation.x,p.z-suiteStation.z)<2.7){
   suiteThemeIndex=(suiteThemeIndex+1)%suiteThemes.length;
@@ -1011,7 +1012,7 @@ function interact(){
  let nearestClue=null,clueDist=2.4;
  for(const clue of clueItems){if(clue.collected)continue;const d=p.distanceTo(clue.group.position);if(d<clueDist){clueDist=d;nearestClue=clue}}
  if(nearestClue){
-  nearestClue.collected=true;nearestClue.group.parent?.remove(nearestClue.group);if(nearestClue.name==='BRASS KEY')hasBrassKey=true;cluesFound++;recordPlayerProgress('clues',1);updateObjective();
+  nearestClue.collected=true;nearestClue.group.parent?.remove(nearestClue.group);if(nearestClue.name==='BRASS KEY')hasBrassKey=true;cluesFound++;playSfx('clue');recordPlayerProgress('clues',1);updateObjective();
   notice(`${nearestClue.name} collected.`);
   if(cluesFound===6){exitUnlocked=false;notice('All six clues found. The house has revealed its secrets, but the front door remains sealed.');}
   return;
@@ -1075,7 +1076,7 @@ function animate(now=0){requestAnimationFrame(animate);
   if(rainPos.array[i*3+1]<0){rainPos.array[i*3+1]=18+Math.random()*9;rainPos.array[i*3]=(Math.random()-.5)*86;rainPos.array[i*3+2]=(Math.random()-.5)*86;}
  }
  rainPos.needsUpdate=true;
- if(elapsed>nextStormFlash){flashRemaining=.22;nextStormFlash=elapsed+13+Math.random()*18;}
+ if(elapsed>nextStormFlash){flashRemaining=.22;nextStormFlash=elapsed+13+Math.random()*18;playSfx('thunder');}
  if(flashRemaining>0){flashRemaining-=dt;lightning.intensity=flashRemaining>.12?2.8:1.1;}
  else lightning.intensity=0;
  if(elapsed>nextSpookyEvent){
@@ -1107,6 +1108,10 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  }else{
   p.position.y=[0,7.8,11.6][currentFloor];
  }
+ if(keys.space&&!jumpHeld&&!localPlayerDead&&jumpOffset===0){jumpVelocity=5.4;jumpHeld=true;playSfx('jump');}if(!keys.space)jumpHeld=false;
+ if(jumpVelocity!==0||jumpOffset>0){jumpVelocity-=14*dt;jumpOffset=Math.max(0,jumpOffset+jumpVelocity*dt);if(jumpOffset===0){jumpVelocity=0;playSfx('land');}}
+ p.position.y+=jumpOffset;
+ if(moving&&ambienceOn){footstepClock-=dt;if(footstepClock<=0){playSfx('step');footstepClock=keys.shift?.29:.43;}}else footstepClock=0;
  // Animate the cursed marks and resolve local practice-round trap hits.
  for(const spot of hazardSpots){
   const pulse=.34+Math.sin(elapsed*3.2+spot.x+spot.z)*.12;
