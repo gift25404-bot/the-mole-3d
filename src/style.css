@@ -608,3 +608,34 @@ html,body,#game{background:#243b46;color:#fff2d8}
 .sound-volume input{width:58px;accent-color:#c69b5e}
 .mobile-pad .mobile-jump{background:#344c50;border-color:#a9c5c0;color:#f4fff9;font-size:9px;font-weight:700}
 @media(max-width:900px){.sound-volume{display:none}}
+
+
+/* Expanded phone suite and calmer gameplay canvas. */
+.phone-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:9px}
+.phone-tabs button{min-height:54px;border-radius:10px;background:#121d21}
+.phone-tabs button span{font-size:8px}
+.phone-content{padding:14px}
+.phone-content .board-room-label{font-size:8px;letter-spacing:.1em}
+.phone-content .board-post-list{max-height:none;min-height:90px;height:auto;overflow:auto}
+.phone-content .board-post{padding:9px 10px;border-radius:9px}
+.phone-content .board-post p{font-size:11px}
+.phone-content .board-post-head time{font-size:8px}
+.phone-content .board-post-form textarea{min-height:54px;max-height:100px}
+.phone-content .board-post-form button{padding:10px;font-size:10px}
+#game.phone-mode canvas{filter:brightness(.38) saturate(.72);transition:filter .2s}
+#game.phone-mode .topbar,#game.phone-mode .hud-left,#game.phone-mode .hud-right,#game.phone-mode .objective,#game.phone-mode .social-tools,#game.phone-mode .chat-panel,#game.phone-mode .bottom,#game.phone-mode .prompt,#game.phone-mode .mobile-pad,#game.phone-mode #crosshair{opacity:0;pointer-events:none;transition:opacity .16s}
+#game.phone-mode .game-phone-button{opacity:.45}
+.game-phone{backdrop-filter:blur(12px)}
+@media(max-width:900px) and (orientation:landscape) and (max-height:520px){
+ .phone-tabs button{min-height:43px;padding:3px 1px}
+ .phone-tabs{padding:5px;gap:4px}
+ .phone-content{padding:7px 9px}
+ .phone-content h3{margin:3px 0;font-size:14px}
+ .phone-content p{font-size:9px;line-height:1.35}
+ .phone-content .board-post-list{min-height:55px}
+ .phone-content .board-post{padding:6px 8px}
+ .phone-content .board-post p{font-size:9px;margin-top:4px}
+ .phone-content .board-post-form{gap:5px;margin-top:6px}
+ .phone-content .board-post-form textarea{min-height:38px;padding:7px}
+ .phone-content .board-post-form button{padding:7px}
+}
