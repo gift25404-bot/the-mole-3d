@@ -236,8 +236,22 @@ io.on('connection',socket=>{
   socket.on('player:move',pos=>{
     const room=rooms.get(socket.data.roomCode),p=room?.players.get(socket.id);
     if(!p||!room||(room.started&&!p.alive))return;
-    p.x=Math.max(-42,Math.min(42,Number(pos?.x)||0));p.y=Math.max(0,Math.min(12,Number(pos?.y)||0));p.z=Math.max(-40,Math.min(40,Number(pos?.z)||0));
+    // Server-side bounds prevent clients from walking outside the house.
+    p.x=Math.max(-9.35,Math.min(17.35,Number(pos?.x)||0));p.y=Math.max(0,Math.min(12,Number(pos?.y)||0));p.z=Math.max(-7.15,Math.min(7.15,Number(pos?.z)||0));
     p.rotation=Number(pos?.rotation)||0;
+    if(room.started&&p.alive){
+      const floor=p.y>10?2:p.y>6?1:0;
+      const traps=[[-6,-4,0],[5,-5,0],[6,4,0],[-6,-4,1],[5,-5,1],[6,4,1],[-6,-4,2],[5,-5,2],[6,4,2]];
+      const hit=traps.some(([x,z,level])=>level===floor&&Math.hypot(p.x-x,p.z-z)<.88);
+      if(hit){
+        p.alive=false;
+        io.to(p.id).emit('round:hazard',{message:'A cursed floor trap caught you. You are now spectating.'});
+        io.to(room.code).emit('round:notice',{message:p.name+' triggered a cursed floor trap and is out of the round.'});
+        const winner=checkWinner(room);
+        if(winner){finishRound(room,winner);return;}
+        sendState(room);advanceIfReady(room);return;
+      }
+    }
     socket.to(room.code).emit('player:moved',{id:socket.id,name:p.name,x:p.x,y:p.y,z:p.z,rotation:p.rotation});
   });
   socket.on('chat:send',payload=>{
