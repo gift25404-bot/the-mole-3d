@@ -1063,7 +1063,7 @@ document.querySelector('#ability').onclick=()=>{
 updateStatus();
 // The role reveal is shown after the player enters the house from the bus scene.
 
-document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k===' ')e.preventDefault();keys[k===' '?'space':k]=true;if(k==='c')switchCamera();if(k==='e')interact();if(k==='f'&&!e.repeat)toggleFlashlight();if(k==='escape'&&cctvActive)closeCctv()});
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase(),mapped=({arrowup:'w',arrowdown:'s',arrowleft:'a',arrowright:'d'})[k]||k;if(k===' '||k.startsWith('arrow'))e.preventDefault();keys[mapped===' '?'space':mapped]=true;if(k==='c')switchCamera();if(k==='e')interact();if(k==='f'&&!e.repeat)toggleFlashlight();if(k==='escape'&&cctvActive)closeCctv()});
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
@@ -1075,6 +1075,14 @@ function updateObjective(){
 }
 function interact(){
  const p=player.group.position;
+ if(Math.hypot(p.x-liftX,p.z-liftZ)<2.5){
+  modal('BLACKWOOD ELEVATOR','Choose a floor. The lift serves all three levels.',`
+   <button class="vote-option" id="lift-floor-0">GROUND FLOOR</button>
+   <button class="vote-option" id="lift-floor-1">SECOND FLOOR</button>
+   <button class="vote-option" id="lift-floor-2">THIRD FLOOR</button>`);
+  [0,1,2].forEach(f=>document.querySelector('#lift-floor-'+f)?.addEventListener('click',()=>chooseLiftFloor(f)));
+  return;
+ }
  if(cctvActive){closeCctv();return;}
  if(currentFloor===0&&Math.hypot(p.x-16.5,p.z-2.6)<2.7){openCctv();return;}
  // The bookshelf in the east wing opens only after the brass key is collected.
@@ -1130,6 +1138,36 @@ const floorBadge=document.createElement('div');
 floorBadge.id='floor-indicator';
 floorBadge.textContent='GROUND FLOOR';
 document.querySelector('#game').append(floorBadge);
+ 
+// THREE-STOP PASSENGER ELEVATOR — ground, second and third floors.
+const liftX=11.35,liftZ=.7,liftFloors=[0,7.8,11.6];
+const liftStructure=new THREE.Group();house.add(liftStructure);
+const liftFrameMat=mat(0x394345,.72),liftGlass=new THREE.MeshStandardMaterial({color:0x607b7c,metalness:.28,roughness:.32,transparent:true,opacity:.28});
+for(const x of [10.25,12.45])for(const z of [-.42,1.82])box(.12,12.1,.12,liftFrameMat,x,6.05,z,liftStructure);
+for(const y of [.15,7.95,11.75]){
+ box(2.2,.12,.12,liftFrameMat,liftX,y,-.42,liftStructure);
+ box(2.2,.12,.12,liftFrameMat,liftX,y,1.82,liftStructure);
+ box(.12,.12,2.24,liftFrameMat,10.25,y,liftZ,liftStructure);
+ box(.12,.12,2.24,liftFrameMat,12.45,y,liftZ,liftStructure);
+}
+const liftCabin=new THREE.Group();liftStructure.add(liftCabin);
+box(2.0,.16,2.0,stairConcrete,0,0,0,liftCabin);
+box(.12,2.35,2.0,liftGlass,-.94,1.18,0,liftCabin);
+box(.12,2.35,2.0,liftGlass,.94,1.18,0,liftCabin);
+box(2.0,2.35,.12,liftGlass,0,1.18,.94,liftCabin);
+box(2.0,.12,.12,liftFrameMat,0,2.35,0,liftCabin);
+liftCabin.position.set(liftX,0,liftZ);
+box(.9,.42,.08,mat(0x222b2d),9.98,2.15,.7,liftStructure);
+let liftTargetY=0;
+function chooseLiftFloor(floor){
+ currentFloor=floor;liftTargetY=liftFloors[floor];
+ player.group.position.set(liftX-1.05,liftTargetY,liftZ);
+ player.group.rotation.y=Math.PI/2;
+ document.querySelector('#floor-indicator').textContent=['GROUND FLOOR','SECOND FLOOR','THIRD FLOOR'][floor];
+ closeModal();notice('ELEVATOR ARRIVED • '+['GROUND FLOOR','SECOND FLOOR','THIRD FLOOR'][floor]);
+ playSfx('door');playCue();
+}
+
 
 // Cursed floor patches: stepping on one eliminates a player from the round.
 const hazardSpots=[];
@@ -1172,6 +1210,7 @@ function animate(now=0){requestAnimationFrame(animate);
  if(isMobileDevice&&now-lastMobileRender<33)return;
  if(isMobileDevice)lastMobileRender=now;
  const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ liftCabin.position.y=THREE.MathUtils.damp(liftCabin.position.y,liftTargetY,.9,dt);
  // Random short power failures: lights dim, then return with a generator flicker.
  if(!powerOutageActive&&elapsed>=nextPowerOutage){powerOutageActive=true;powerOutageRemaining=4.5+Math.random()*3.5;warm.userData.savedIntensity=7;hallLight.userData.savedIntensity=3.5;houseAmbient.userData.savedIntensity=.42;notice('POWER FAILURE • The generator has cut out. Stay alert.');playCue();}
  if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?.45:.08;warm.intensity=flicker;hallLight.intensity=flicker*.55;houseAmbient.intensity=.12;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=7;hallLight.intensity=3.5;houseAmbient.intensity=.42;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The lights are back on.');playCue();}}
