@@ -346,3 +346,50 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .intro-card {box-shadow:0 10px 35px #0008}
  .modal-card,.auth-card,.avatar-card {box-shadow:0 10px 35px #0008}
 }
+
+
+/* Personal in-game phone */
+.game-phone-button{position:fixed;right:18px;top:88px;z-index:35;border:1px solid #d5b47a;background:linear-gradient(145deg,#26333a,#11191e);color:#f4dfb7;border-radius:16px;padding:10px 14px;font-weight:800;letter-spacing:.08em;box-shadow:0 8px 28px #0008;cursor:pointer}
+.game-phone-button.phone-open{border-color:#f2ce88;box-shadow:0 0 0 2px #d5b47a55,0 8px 28px #0009}
+.phone-unread{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:50%;background:#c64b40;color:#fff;font-size:10px;margin-left:5px}
+.game-phone{position:fixed;right:18px;top:140px;z-index:40;width:min(360px,calc(100vw - 28px));height:min(590px,calc(100dvh - 165px));min-height:390px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #c6a36e;border-radius:28px;background:linear-gradient(160deg,#18252a,#0d1419 70%);color:#f5ead6;box-shadow:0 22px 70px #000b, inset 0 0 0 5px #ffffff08}
+.game-phone.hidden{display:none}
+.phone-header{display:flex;align-items:center;justify-content:space-between;padding:18px 19px 13px;background:linear-gradient(110deg,#35454a,#18252a);border-bottom:1px solid #ffffff1a}
+.phone-header small,.phone-section-kicker{font-size:9px;letter-spacing:.2em;color:#d4b47e;font-weight:800}
+.phone-header h2{font-size:19px;letter-spacing:.12em;margin:4px 0 0}
+.phone-header button{border:0;background:#ffffff14;color:#fff;border-radius:50%;width:34px;height:34px;font-size:24px;cursor:pointer}
+.phone-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px;background:#0b1115;border-bottom:1px solid #ffffff16}
+.phone-tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid transparent;border-radius:12px;background:transparent;color:#aeb9b8;padding:8px 2px;font-size:17px;cursor:pointer}
+.phone-tabs button span{font-size:8px;letter-spacing:.1em;font-weight:800}
+.phone-tabs button.active{background:#c3a16b20;border-color:#c3a16b88;color:#f4d7a3}
+.phone-content{flex:1;overflow:auto;padding:17px 16px;overscroll-behavior:contain}
+.phone-content h3{font-size:20px;margin:7px 0;color:#fff0d4}
+.phone-content p{font-size:13px;line-height:1.5;color:#d1d0c5}
+.phone-muted{color:#a4b0ae!important;font-size:11px!important}
+.phone-action,.phone-player-action,.phone-skip,.phone-secondary{width:100%;border:1px solid #b99863;border-radius:12px;padding:11px 12px;margin:6px 0;background:linear-gradient(120deg,#87663c,#59472f);color:#fff4dd;font-weight:800;font-size:11px;letter-spacing:.06em;cursor:pointer}
+.phone-player-action{background:#24383d;border-color:#526b68;text-align:left}
+.phone-player-action:hover,.phone-secondary:hover{background:#30484c}
+.phone-skip,.phone-secondary{background:#172328;border-color:#52605d}
+.phone-success{color:#9fe0ad!important;font-weight:800}
+.phone-empty{display:grid;gap:10px;align-content:center;min-height:230px;text-align:center}
+.phone-empty b{letter-spacing:.12em;color:#e8c98f}
+.phone-message-form{display:grid;gap:8px;margin-top:12px}
+.phone-message-form label{font-size:9px;letter-spacing:.16em;color:#d4b47e;font-weight:800}
+.phone-message-form select,.phone-message-form textarea,.phone-notes{width:100%;box-sizing:border-box;border:1px solid #53635f;border-radius:10px;background:#0b1418;color:#f6ead6;padding:10px;font:inherit;font-size:12px;resize:vertical}
+.phone-thread{display:flex;flex-direction:column;gap:8px;max-height:185px;overflow:auto;padding:8px 0}
+.phone-message{max-width:88%;padding:9px 11px;border-radius:13px;background:#26383a;border:1px solid #ffffff12}
+.phone-message.sent{align-self:flex-end;background:#59472f;border-color:#b9986355}
+.phone-message b,.phone-message small{font-size:9px;color:#e4c58e}
+.phone-message p{margin:4px 0;color:#fff;font-size:12px;overflow-wrap:anywhere}
+.phone-contact{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #ffffff14}
+.phone-contact-avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#455a5a;color:#f2d8a7;font-weight:900}
+.phone-contact div{display:grid;gap:3px;flex:1}
+.phone-contact b{font-size:12px}.phone-contact small{font-size:9px;color:#9eaaa6;letter-spacing:.1em}
+.phone-alive,.phone-offline{font-size:9px;font-weight:900;color:#9bd8a2}.phone-offline{color:#d58a82}
+.phone-notes{min-height:220px;margin:8px 0 10px;line-height:1.55}
+.phone-footer{display:flex;justify-content:space-between;padding:9px 14px;background:#080e11;border-top:1px solid #ffffff18;color:#83908d;font-size:8px;letter-spacing:.12em}
+@media(max-width:800px),(pointer:coarse){
+ .game-phone-button{top:auto;right:12px;bottom:112px;padding:10px 12px;font-size:11px}
+ .game-phone{top:auto;right:8px;bottom:164px;width:min(350px,calc(100vw - 16px));height:min(540px,calc(100dvh - 190px));min-height:360px}
+ .phone-content{padding:13px}
+}
