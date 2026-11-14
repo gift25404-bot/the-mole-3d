@@ -488,57 +488,61 @@ let doorOpen=false;
 // Characters: cute low-poly Bitmoji-ish avatars with animated arms/legs.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
- const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0x30343b,.9),shoeMat=mat(0x17191c,.8);
- const dark=mat(0x211b1a,.6),white=mat(0xfff8ed,.45),iris=mat(0x30251f,.4);
+ const skinMat=mat(skin,.58),hairMat=mat(hair,.88),shirtMat=mat(shirt,.62),pantsMat=mat(0x30343b,.72),shoeMat=mat(0x17191c,.58);
+ const dark=mat(0x241a19,.45),white=mat(0xfffbf2,.28),iris=mat(0x30251f,.35);
  const sphere=(radius,material,px,py,pz,sx=1,sy=1,sz=1)=>{
-  const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,24,18),material);
-  mesh.position.set(px,py,pz);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;g.add(mesh);return mesh;
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,32,24),material);
+  mesh.position.set(px,py,pz);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return mesh;
  };
- // Oversized rounded head and neck create a friendly cartoon silhouette.
- const neck=new THREE.Mesh(new THREE.CylinderGeometry(.13,.15,.22,12),skinMat);neck.position.y=1.48;g.add(neck);
- const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.37,.48,5,12),shirtMat);torso.position.y=1.12;torso.scale.set(1,.94,.72);torso.castShadow=true;g.add(torso);
- const head=sphere(.43,skinMat,0,1.97,0,1,.99,.9);
- // Ears and a small rounded nose.
- sphere(.105,skinMat,-.385,1.92,0,1,.9,.72);sphere(.105,skinMat,.385,1.92,0,1,.9,.72);
- sphere(.055,skinMat,0,1.84,.345,.85,.8,.8);
- // Hair cap, fringe and side locks.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.445,24,16,0,Math.PI*2,0,Math.PI*.57),hairMat);
- cap.position.set(0,2.075,-.018);cap.castShadow=true;g.add(cap);
+ // Original polished 3D cartoon proportions: expressive head, compact body and rounded features.
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.14,.16,.22,20),skinMat);neck.position.y=1.49;g.add(neck);
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.32,.42,8,20),shirtMat);torso.position.y=1.08;torso.scale.set(1.04,1,.78);torso.castShadow=true;torso.receiveShadow=true;g.add(torso);
+ const head=sphere(.535,skinMat,0,2.02,0,1,.99,.91);
+ // Soft ears, cheeks and a small rounded nose.
+ sphere(.12,skinMat,-.49,1.99,0,1,.95,.72);sphere(.12,skinMat,.49,1.99,0,1,.95,.72);
+ sphere(.105,skinMat,-.22,1.84,.365,1,.72,.42);sphere(.105,skinMat,.22,1.84,.365,1,.72,.42);
+ sphere(.068,skinMat,0,1.91,.478,.88,1,.78);
+ // Hair cap and front curls; extra selectable styles reuse these six base pieces.
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.55,32,20,0,Math.PI*2,0,Math.PI*.58),hairMat);
+ cap.position.set(0,2.15,-.025);cap.castShadow=true;g.add(cap);
  const hairPieces=[cap];
- for(const [hx,hy,hz,scale] of [[-.22,2.08,.245,.78],[0,2.12,.29,.72],[.22,2.08,.245,.78]]){
-  hairPieces.push(sphere(.16,hairMat,hx,hy,hz,scale,.78,.65));
+ for(const [hx,hy,hz,scale] of [[-.25,2.16,.30,.84],[0,2.20,.34,.78],[.25,2.16,.30,.84]]){
+  hairPieces.push(sphere(.18,hairMat,hx,hy,hz,scale,.82,.68));
  }
- hairPieces.push(sphere(.13,hairMat,-.34,1.91,-.015,.75,1.2,.8));
- hairPieces.push(sphere(.13,hairMat,.34,1.91,-.015,.75,1.2,.8));
- // Large bright eyes, pupils and expressive eyebrows.
- for(const ex of [-.155,.155]){
-  sphere(.108,white,ex,1.98,.333,1,.96,.56);
-  sphere(.054,iris,ex+.012,1.975,.38,.92,1,.58);
-  sphere(.023,dark,ex+.012,1.975,.402,1,1,.6);
-  sphere(.022,white,ex-.008,1.999,.418,1,1,.6);
-  const brow=new THREE.Mesh(new THREE.CapsuleGeometry(.024,.12,4,8),hairMat);
-  brow.position.set(ex,2.105,.302);brow.rotation.z=ex<0?-.12:.12;g.add(brow);
+ hairPieces.push(sphere(.145,hairMat,-.43,1.98,-.025,.8,1.25,.85));
+ hairPieces.push(sphere(.145,hairMat,.43,1.98,-.025,.8,1.25,.85));
+ // Large friendly eyes with layered irises and catchlights.
+ for(const ex of [-.19,.19]){
+  sphere(.132,white,ex,2.045,.435,1,.98,.5);
+  sphere(.071,iris,ex+.012,2.04,.487,.92,1,.52);
+  sphere(.033,dark,ex+.012,2.04,.51,1,1,.55);
+  sphere(.026,white,ex-.012,2.075,.528,1,1,.55);
+  const brow=new THREE.Mesh(new THREE.CapsuleGeometry(.027,.13,5,10),hairMat);
+  brow.position.set(ex,2.22,.397);brow.rotation.z=ex<0?-.1:.1;g.add(brow);
  }
- // A small curved smile gives each passenger a friendly avatar expression.
+ // Simple curved smile, softly raised at the corners.
  const smileCurve=new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-.105,1.765,.345),new THREE.Vector3(0,1.73,.365),new THREE.Vector3(.105,1.765,.345)
+  new THREE.Vector3(-.13,1.80,.435),new THREE.Vector3(-.065,1.765,.475),
+  new THREE.Vector3(0,1.755,.482),new THREE.Vector3(.065,1.765,.475),
+  new THREE.Vector3(.13,1.80,.435)
  ]);
- const smile=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,16,.016,6,false),dark);g.add(smile);
- // Clothing details: collar, sleeves, hands, trousers and shoes.
- const collar=new THREE.Mesh(new THREE.ConeGeometry(.115,.13,4),mat(0xe5d6bc,.8));
- collar.position.set(0,1.48,.19);collar.rotation.y=Math.PI/4;g.add(collar);
+ const smile=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.018,8,false),dark);g.add(smile);
+ // Modern casual clothing with collar, sleeves, hands, trousers and chunky trainers.
+ const collar=new THREE.Mesh(new THREE.ConeGeometry(.12,.14,5),mat(0xe9dfcf,.72));
+ collar.position.set(0,1.40,.205);collar.rotation.y=Math.PI/5;g.add(collar);
  const limbs=[];
  for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.36,1.34,0);
-  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.115,.32,4,8),shirtMat);sleeve.position.y=-.13;sleeve.rotation.z=side*-.12;arm.add(sleeve);
-  const hand=new THREE.Mesh(new THREE.SphereGeometry(.105,12,10),skinMat);hand.position.set(side*-.015,-.38,.015);arm.add(hand);
+  const arm=new THREE.Group();arm.position.set(side*.34,1.30,0);
+  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.34,6,12),shirtMat);sleeve.position.y=-.13;sleeve.rotation.z=side*-.1;sleeve.castShadow=true;arm.add(sleeve);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.105,16,12),skinMat);hand.position.set(side*-.018,-.39,.025);arm.add(hand);
   g.add(arm);limbs.push(arm);
-  const leg=new THREE.Group();leg.position.set(side*.17,.62,0);
-  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.14,.39,4,8),pantsMat);trouser.position.y=-.22;leg.add(trouser);
-  const shoe=new THREE.Mesh(new THREE.SphereGeometry(.14,12,8),shoeMat);shoe.scale.set(1,.55,1.45);shoe.position.set(0,-.48,.055);leg.add(shoe);
+  const leg=new THREE.Group();leg.position.set(side*.16,.61,0);
+  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.135,.39,6,12),pantsMat);trouser.position.y=-.21;trouser.castShadow=true;leg.add(trouser);
+  const shoe=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.16,5,12),shoeMat);shoe.scale.set(1,.72,1.45);shoe.position.set(0,-.47,.075);shoe.castShadow=true;leg.add(shoe);
+  const sole=new THREE.Mesh(new THREE.CapsuleGeometry(.108,.17,5,12),mat(0xe5dfd3,.78));sole.scale.set(1,.24,1.45);sole.position.set(0,-.525,.08);leg.add(sole);
   g.add(leg);limbs.push(leg);
  }
- const label=makeLabel(name);label.position.set(0,2.62,0);g.add(label);
+ const label=makeLabel(name);label.position.set(0,2.83,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
