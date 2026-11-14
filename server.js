@@ -138,7 +138,7 @@ io.on('connection',socket=>{
     socket.emit('board:history',boardPosts);
   });
   socket.on('board:post',(payload={},ack=()=>{})=>{
-    const message=String(payload?.message||'').replace(/\\s+/g,' ').trim().slice(0,500);
+    const message=String(payload?.message||'').replace(/\s+/g,' ').trim().slice(0,500);
     if(!message)return ack({ok:false,error:'Write a message first.'});
     const now=Date.now();
     if(now-(socket.data.lastBoardPost||0)<BOARD_COOLDOWN_MS)return ack({ok:false,error:'Please wait a moment before posting again.'});
