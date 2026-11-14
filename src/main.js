@@ -705,6 +705,7 @@ const arrivalCaption=document.querySelector('#arrival-caption');
 const arrivalSkip=document.querySelector('#skip-arrival');
 function finishArrival(){
  arrivalActive=false;arrivalComplete=true;bus.position.x=arrivalEndBusX;
+ player.group.position.set(0,0,6.7);
  npcs.forEach((n,i)=>{const target=arrivalPassengerTargets[i];if(target)n.group.position.copy(target);});
  if(arrivalCaption)arrivalCaption.textContent='BLACKWOOD HOUSE. NO ONE KNOWS WHY THE BUS STOPPED HERE.';
  if(arrivalSkip)arrivalSkip.hidden=true;
@@ -857,7 +858,7 @@ function interact(){
  if(nearestClue){
   nearestClue.collected=true;scene.remove(nearestClue.group);cluesFound++;updateObjective();
   notice(`${nearestClue.name} collected.`);
-  if(cluesFound===6){exitUnlocked=true;notice('All six clues found. The front door lock has released!');}
+  if(cluesFound===6){exitUnlocked=false;notice('All six clues found. The house has revealed its secrets, but the front door remains sealed.');}
   return;
  }
  // Collect optional neighbourhood supplies for bonus coins.
@@ -869,10 +870,7 @@ function interact(){
  }
  const dDoor=p.distanceTo(new THREE.Vector3(0,0,8.5));
  if(dDoor<3.2){
-  if(!exitUnlocked){notice(`The lock is jammed. Find all 6 clues first (${cluesFound}/6).`);return}
-  doorOpen=!doorOpen;doorPivot.rotation.y=doorOpen?-1.45:0;
-  if(doorOpen){modal('YOU FOUND THE WAY OUT','The group has uncovered the house secret and opened the front door. This exploration chapter is complete.','<button class="vote-option" id="continue-round">RETURN TO THE HOUSE</button>');document.querySelector('#continue-round').onclick=closeModal;}
-  else notice('The front door closes.');
+  notice('The front door is sealed. Nobody can leave Blackwood House.');
   return;
  }
  let closest=null,dist=3.1;for(const n of npcs){const d=p.distanceTo(n.group.position);if(d<dist){dist=d;closest=n}}
@@ -911,7 +909,11 @@ function animate(now=0){requestAnimationFrame(animate);const dt=Math.min(clock.g
  floorBadge.textContent=floorName;
 if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40);}
+ if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);
+  // Keep every passenger inside Blackwood House and its connected east wing.
+  p.position.x=THREE.MathUtils.clamp(p.position.x,-9.35,17.35);
+  p.position.z=THREE.MathUtils.clamp(p.position.z,-7.15,7.15);
+ }
  // Keep the avatar grounded on the current storey and follow either stair flight.
  const onFirstStairs=p.position.x>12.05&&p.position.x<14.45&&p.position.z>-5.95&&p.position.z<5.95;
  const onSecondStairs=p.position.x>15.35&&p.position.x<17.15&&p.position.z>-5.95&&p.position.z<5.95;
