@@ -257,6 +257,40 @@ addClue('BRASS KEY','A heavy key with the number 314 engraved on it.',5,4,0xc59a
 // East wing expansion: study, music room and conservatory.
 const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15,wallMat,18,1.9,0,house);box(8,3.8,.3,wallMat,14,1.9,-7.5,house);box(8,3.8,.3,wallMat,14,1.9,7.5,house);box(.22,3.8,4,wallMat,10,1.9,-5,house);box(.22,3.8,4,wallMat,10,1.9,5,house);addClue('DUSTY DIARY','A diary entry says the east wing was locked after the last storm.',12,-5,0x9b7655);addClue('MUSIC BOX','A tiny music box bears the initials B.H.',16,0,0xb88d53);addClue('SEALED LETTER','A sealed letter mentions a hidden passage.',12,5,0x7f9b9b);
 
+// SECRET ROOM: a concealed archive behind a bookshelf in the east wing.
+// The archive stays hidden until the player finds the brass key.
+const secretRoomGroup=new THREE.Group();secretRoomGroup.visible=false;house.add(secretRoomGroup);
+box(5.3,.18,5.0,mat(0x40372e),14.5,.04,-4.8,secretRoomGroup);
+box(.22,3.1,5.0,rawConcrete,11.85,1.55,-4.8,secretRoomGroup);
+box(.22,3.1,5.0,rawConcrete,17.15,1.55,-4.8,secretRoomGroup);
+box(5.3,3.1,.22,rawConcrete,14.5,1.55,-7.3,secretRoomGroup);
+box(5.3,.22,5.0,concrete,14.5,3.1,-4.8,secretRoomGroup);
+// Archive shelves, old records and a small writing desk.
+for(let i=0;i<3;i++){
+  box(.16,2.25,.16,wood,12.45+i*1.45,1.15,-6.95,secretRoomGroup);
+  for(let shelf=0;shelf<4;shelf++){
+    box(1.25,.09,.62,trim,12.45+i*1.45,.45+shelf*.52,-6.62,secretRoomGroup);
+    for(let book=0;book<4;book++)box(.16,.34,.38,mat([0x76513b,0x526b68,0x8a704c,0x594b68][(book+shelf+i)%4]),12.08+i*1.45+book*.22,.67+shelf*.52,-6.62,secretRoomGroup);
+  }
+}
+box(2.1,.16,1.0,wood,14.6,.9,-3.2,secretRoomGroup);
+box(.12,.8,.12,trim,13.7,.4,-3.2,secretRoomGroup);
+box(.12,.8,.12,trim,15.5,.4,-3.2,secretRoomGroup);
+box(.75,.1,.5,mat(0x9c805d),14.6,1.05,-3.2,secretRoomGroup);
+const archiveLamp=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:1.3}));
+archiveLamp.position.set(14.5,2.65,-4.8);secretRoomGroup.add(archiveLamp);
+const archiveLedger=new THREE.Group();archiveLedger.position.set(14.6,1.2,-3.2);secretRoomGroup.add(archiveLedger);
+const ledgerCover=new THREE.Mesh(new THREE.BoxGeometry(.62,.09,.46),mat(0x68442e));ledgerCover.rotation.y=-.12;archiveLedger.add(ledgerCover);
+const ledgerGlow=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),new THREE.MeshBasicMaterial({color:0xe7bd68}));ledgerGlow.position.y=.22;archiveLedger.add(ledgerGlow);
+// The concealed bookshelf and wall form the entrance until the brass key is used.
+const secretDoorWall=box(5.3,3.1,.22,wallMat,14.5,1.55,-2.25,house);
+const secretDoor=new THREE.Group();secretDoor.position.set(14.5,0,-2.4);house.add(secretDoor);
+box(1.9,2.65,.18,wood,0,1.33,0,secretDoor);
+for(let shelf=0;shelf<4;shelf++){
+  box(1.72,.09,.2,trim,0,.38+shelf*.58,.11,secretDoor);
+  for(let book=0;book<5;book++)box(.18,.38,.12,mat([0x76513b,0x526b68,0x8a704c,0x594b68][(book+shelf)%4]),-.72+book*.36,.62+shelf*.58,.1,secretDoor);
+}
+
 const sideMissionItems=[];
 let moleCoins=0;
 function updateCoins(){
@@ -945,7 +979,7 @@ document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.
 document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
-let cluesFound=0, exitUnlocked=false;
+let cluesFound=0, exitUnlocked=false, hasBrassKey=false, secretRoomOpen=false, secretLedgerFound=false;
 function updateObjective(){
  const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
  if(count)count.textContent=`CLUES FOUND: ${cluesFound} / 6`;
@@ -953,6 +987,16 @@ function updateObjective(){
 }
 function interact(){
  const p=player.group.position;
+ // The bookshelf in the east wing opens only after the brass key is collected.
+ if(currentFloor===0&&!secretRoomOpen&&Math.hypot(p.x-14.5,p.z+1.7)<2.6){
+  if(!hasBrassKey){notice('A hidden bookshelf is locked. Find the BRASS KEY in the house.');playCue();return;}
+  secretRoomOpen=true;secretDoor.visible=false;secretDoorWall.visible=false;secretRoomGroup.visible=true;
+  notice('SECRET ROOM UNLOCKED • The bookshelf slides aside. An old archive is hidden behind it.');playCue();return;
+ }
+ if(secretRoomOpen&&!secretLedgerFound&&Math.hypot(p.x-14.6,p.z+3.2)<2.2){
+  secretLedgerFound=true;archiveLedger.visible=false;
+  notice('HIDDEN LEDGER • The old records reveal that someone built a passage beneath Blackwood House.');playCue();return;
+ }
  if(currentFloor===2&&Math.hypot(p.x-suiteStation.x,p.z-suiteStation.z)<2.7){
   suiteThemeIndex=(suiteThemeIndex+1)%suiteThemes.length;
   localStorage.setItem('mole-suite-theme',suiteThemes[suiteThemeIndex].name);
@@ -967,7 +1011,7 @@ function interact(){
  let nearestClue=null,clueDist=2.4;
  for(const clue of clueItems){if(clue.collected)continue;const d=p.distanceTo(clue.group.position);if(d<clueDist){clueDist=d;nearestClue=clue}}
  if(nearestClue){
-  nearestClue.collected=true;scene.remove(nearestClue.group);cluesFound++;recordPlayerProgress('clues',1);updateObjective();
+  nearestClue.collected=true;nearestClue.group.parent?.remove(nearestClue.group);if(nearestClue.name==='BRASS KEY')hasBrassKey=true;cluesFound++;recordPlayerProgress('clues',1);updateObjective();
   notice(`${nearestClue.name} collected.`);
   if(cluesFound===6){exitUnlocked=false;notice('All six clues found. The house has revealed its secrets, but the front door remains sealed.');}
   return;
