@@ -499,9 +499,9 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  };
  // Slightly taller silhouette, narrower head and more human-like shoulders and limbs.
  capsule(.105,.17,skinMat,0,1.57,0);
- capsule(.255,.49,shirtMat,0,1.20,0,1.35,1,.92);
- sphere(.285,shirtMat,0,1.48,0,1.12,.42,.88);
- const head=sphere(.445,skinMat,0,2.12,0,.91,1.08,.88,48);
+ capsule(.285,.48,shirtMat,0,1.20,0,1.34,1,.94);
+ sphere(.31,shirtMat,0,1.48,0,1.12,.43,.90);
+ const head=sphere(.49,skinMat,0,2.12,0,.94,1.04,.91,48);
  // Soft jaw shape, restrained ears and natural facial planes.
  sphere(.315,skinMat,0,1.96,.075,1,.63,.83,40);
  for(const side of [-1,1]){
@@ -513,11 +513,11 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  sphere(.055,skinMat,0,1.985,.423,1,.78,.78);
  // Smaller eyes with shaped upper lids, irises and natural brows.
  for(const ex of [-.155,.155]){
-  sphere(.105,skinMat,ex,2.155,.345,1.05,1.12,.40);
-  sphere(.078,white,ex,2.148,.377,1,.98,.42);
-  sphere(.041,iris,ex+.006,2.145,.411,.92,1,.48);
-  sphere(.020,dark,ex+.006,2.145,.428,1,1,.48);
-  sphere(.012,white,ex-.010,2.163,.442,1,1,.45);
+  sphere(.112,skinMat,ex,2.155,.365,1.05,1.12,.42);
+  sphere(.087,white,ex,2.148,.397,1,.98,.42);
+  sphere(.045,iris,ex+.006,2.145,.431,.92,1,.48);
+  sphere(.022,dark,ex+.006,2.145,.448,1,1,.48);
+  sphere(.013,white,ex-.010,2.163,.462,1,1,.45);
   const brow=capsule(.017,.105,hairMat,ex,2.285,.345,1,1,.58);brow.rotation.z=ex<0?-.12:.12;
  }
  // Small, understated smile instead of an exaggerated cartoon grin.
@@ -542,20 +542,18 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  // Tailored clothing, restrained seams and more proportional hands and shoes.
  const collar=new THREE.Mesh(new THREE.ConeGeometry(.105,.12,5),detail);collar.position.set(0,1.545,.18);collar.rotation.y=Math.PI/5;g.add(collar);
  capsule(.012,.20,detail,0,1.23,.235,.8,1,.5);
- for(const side of [-1,1]){
-  const limb=new THREE.Group();limb.position.set(side*.355,1.43,0);
-  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.095,.34,8,18),shirtMat);sleeve.position.y=-.14;sleeve.rotation.z=-side*.08;sleeve.castShadow=true;limb.add(sleeve);
-  const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.087,.087,.035,20),detail);cuff.position.y=-.325;limb.add(cuff);
-  const hand=new THREE.Mesh(new THREE.SphereGeometry(.073,20,16),skinMat);hand.position.set(-side*.014,-.405,.025);limb.add(hand);
-  for(let f=0;f<3;f++){const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.013,.045,5,10),skinMat);finger.position.set(-side*.014+(f-1)*.026,-.455,.04);limb.add(finger);}
-  g.add(limb);
- }
  const limbs=[];
  for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.355,1.43,0);limbs.push(arm);
+  const limb=new THREE.Group();limb.position.set(side*.355,1.43,0);limbs.push(limb);
+  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.34,8,18),shirtMat);sleeve.position.y=-.14;sleeve.rotation.z=-side*.08;sleeve.castShadow=true;limb.add(sleeve);
+  const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.094,.094,.04,20),detail);cuff.position.y=-.325;limb.add(cuff);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.088,24,18),skinMat);hand.position.set(-side*.014,-.405,.035);hand.scale.set(1.08,.88,.78);limb.add(hand);
+  for(let f=0;f<4;f++){const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.016,.055,5,10),skinMat);finger.position.set(-side*.014+(f-1.5)*.031,-.468,.055);finger.rotation.z=(f-1.5)*-.08;limb.add(finger);}
+  const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.018,.045,5,10),skinMat);thumb.position.set(-side*.085,-.425,.035);thumb.rotation.z=side*.7;limb.add(thumb);
+  g.add(limb);
   const leg=new THREE.Group();leg.position.set(side*.145,.66,0);
-  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.112,.47,8,18),pantsMat);trouser.position.y=-.235;trouser.castShadow=true;leg.add(trouser);
-  const knee=new THREE.Mesh(new THREE.SphereGeometry(.095,18,14),pantsMat);knee.position.set(0,-.405,.008);leg.add(knee);
+  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.125,.47,8,18),pantsMat);trouser.position.y=-.235;trouser.castShadow=true;leg.add(trouser);
+  const knee=new THREE.Mesh(new THREE.SphereGeometry(.105,18,14),pantsMat);knee.position.set(0,-.405,.008);leg.add(knee);
   const shoe=new THREE.Mesh(new THREE.CapsuleGeometry(.09,.15,7,16),shoeMat);shoe.scale.set(1,.68,1.42);shoe.position.set(0,-.535,.075);shoe.castShadow=true;leg.add(shoe);
   const sole=new THREE.Mesh(new THREE.CapsuleGeometry(.093,.16,7,16),detail);sole.scale.set(1,.20,1.42);sole.position.set(0,-.58,.08);leg.add(sole);
   g.add(leg);limbs.push(leg);
@@ -576,11 +574,12 @@ const avatarLooks={
 let selectedLook='sunset';
 function applyPlayerLook(key){
  const look=avatarLooks[key]||avatarLooks.sunset;
- player.appearance.skinMat.color.setHex(look.skin);
- player.appearance.hairMat.color.setHex(look.hair);
- player.appearance.shirtMat.color.setHex(look.shirt);
- player.appearance.pantsMat.color.setHex(look.pants);
+ player.appearance.skinMat.color.setHex(look.skin);player.appearance.hairMat.color.setHex(look.hair);
+ player.appearance.shirtMat.color.setHex(look.shirt);player.appearance.pantsMat.color.setHex(look.pants);
  selectedLook=key;
+ const values={'skin-choice':look.skin,'hair-choice':look.hair,'outfit-choice':look.shirt,'bottom-choice':look.pants};
+ Object.entries(values).forEach(([id,value])=>{const select=document.getElementById(id);if(select){select.value=Number(value).toString(16);select.dispatchEvent(new Event('change',{bubbles:true}));}});
+ if(typeof refreshAvatarPreview==='function')refreshAvatarPreview();
  document.querySelectorAll('.look-option').forEach(button=>button.classList.toggle('selected',button.dataset.look===key));
  const feedback=document.querySelector('#look-feedback');if(feedback)feedback.textContent='Selected: '+look.name;
 }
@@ -887,6 +886,7 @@ function enterGuest(){
   const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
   document.querySelector('#auth-screen').classList.add('hidden');
   document.querySelector('#avatar-screen').classList.remove('hidden');
+  requestAnimationFrame(()=>requestAnimationFrame(renderAvatarPreview));
   notice('Welcome, '+chosenName+'. Guest mode is local play; online rooms need account setup.');
 }
 document.querySelector('#continue-guest')?.addEventListener('click',enterGuest);
@@ -904,6 +904,7 @@ function enterAccount(user,session){
  const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
  document.querySelector('#auth-screen').classList.add('hidden');
  document.querySelector('#avatar-screen').classList.remove('hidden');
+ requestAnimationFrame(()=>requestAnimationFrame(renderAvatarPreview));
 }
 authForm.addEventListener('submit',async event=>{
  event.preventDefault();
@@ -1546,27 +1547,43 @@ document.querySelector('.avatar-card .look-grid')?.after(studio);
 const previewPerson=document.querySelector('#preview-person');
 const previewStage=document.querySelector('.boutique-stage');
 const previewCanvas=document.createElement('canvas');previewCanvas.className='avatar-3d-preview';previewCanvas.setAttribute('aria-label','Interactive 3D full-body avatar preview');
-previewStage?.append(previewCanvas);if(previewPerson)previewPerson.hidden=true;
 const avatarPreviewScene=new THREE.Scene();avatarPreviewScene.background=new THREE.Color(0x304b46);
 avatarPreviewScene.add(new THREE.HemisphereLight(0xf4e6d2,0x263b3b,2.0));
 const previewKey=new THREE.DirectionalLight(0xffe2bd,2.3);previewKey.position.set(-3,6,5);avatarPreviewScene.add(previewKey);
 const previewFill=new THREE.DirectionalLight(0xa8c8ff,1.0);previewFill.position.set(4,3,-4);avatarPreviewScene.add(previewFill);
-const avatarPreviewCamera=new THREE.PerspectiveCamera(32,1,.1,50);avatarPreviewCamera.position.set(3.15,2.15,5.8);avatarPreviewCamera.lookAt(0,1.35,0);
-const avatarPreviewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:false,antialias:true});
-avatarPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));avatarPreviewRenderer.shadowMap.enabled=true;avatarPreviewRenderer.shadowMap.type=THREE.PCFSoftShadowMap;
-avatarPreviewRenderer.outputColorSpace=THREE.SRGBColorSpace;avatarPreviewRenderer.toneMapping=THREE.ACESFilmicToneMapping;avatarPreviewRenderer.toneMappingExposure=1.15;
+const avatarPreviewCamera=new THREE.PerspectiveCamera(31,1,.1,50);avatarPreviewCamera.position.set(2.15,2.0,7.1);avatarPreviewCamera.lookAt(0,1.36,0);
 const previewAvatar=makeAvatar('YOU',0xc96f62,0x9a674b,0x211b1a,0,0,false,avatarPreviewScene);
-previewAvatar.group.scale.setScalar(.96);previewAvatar.group.rotation.y=-.12;
+previewAvatar.group.scale.setScalar(1.02);previewAvatar.group.rotation.y=-.12;
+let avatarPreviewRenderer=null,avatarPreviewReady=false;
+try{
+ avatarPreviewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:false,antialias:true,powerPreference:'low-power'});
+ avatarPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));avatarPreviewRenderer.shadowMap.enabled=false;
+ avatarPreviewRenderer.outputColorSpace=THREE.SRGBColorSpace;avatarPreviewRenderer.toneMapping=THREE.ACESFilmicToneMapping;avatarPreviewRenderer.toneMappingExposure=1.15;
+ previewStage?.append(previewCanvas);avatarPreviewReady=!!previewStage;
+ if(previewPerson&&avatarPreviewReady)previewPerson.hidden=true;
+}catch(error){console.warn('3D avatar preview unavailable; using the built-in preview.',error);previewCanvas.remove();}
 function renderAvatarPreview(){
- if(!previewStage)return;
- const w=Math.max(1,previewStage.clientWidth),h=Math.max(1,previewStage.clientHeight);
+ if(!avatarPreviewRenderer||!previewStage)return;
+ const rect=previewStage.getBoundingClientRect(),w=Math.floor(rect.width),h=Math.floor(rect.height);
+ if(w<40||h<80)return;
  avatarPreviewRenderer.setSize(w,h,false);avatarPreviewCamera.aspect=w/h;avatarPreviewCamera.updateProjectionMatrix();
  avatarPreviewRenderer.render(avatarPreviewScene,avatarPreviewCamera);
 }
-previewCanvas.addEventListener('pointerdown',e=>{previewCanvas.dataset.dragX=String(e.clientX);});
-previewCanvas.addEventListener('pointermove',e=>{if(e.buttons&&previewCanvas.dataset.dragX){const dx=e.clientX-Number(previewCanvas.dataset.dragX);previewAvatar.group.rotation.y+=dx*.012;previewCanvas.dataset.dragX=String(e.clientX);renderAvatarPreview();}});
-window.addEventListener('pointerup',()=>{delete previewCanvas.dataset.dragX;});window.addEventListener('resize',renderAvatarPreview);
-function refreshAvatarPreview(){previewAvatar.appearance.skinMat.color.setHex(parseInt(document.querySelector('#skin-choice').value,16));previewAvatar.appearance.hairMat.color.setHex(parseInt(document.querySelector('#hair-choice').value,16));previewAvatar.appearance.shirtMat.color.setHex(parseInt(document.querySelector('#outfit-choice').value,16));previewAvatar.appearance.pantsMat.color.setHex(parseInt(document.querySelector('#bottom-choice').value,16));previewAvatar.appearance.shoeMat.color.setHex(parseInt(document.querySelector('#shoe-choice').value,16));renderAvatarPreview();}
+if(avatarPreviewReady){
+ previewCanvas.addEventListener('pointerdown',e=>{previewCanvas.dataset.dragX=String(e.clientX);previewCanvas.setPointerCapture?.(e.pointerId);});
+ previewCanvas.addEventListener('pointermove',e=>{if(e.buttons&&previewCanvas.dataset.dragX){const dx=e.clientX-Number(previewCanvas.dataset.dragX);previewAvatar.group.rotation.y+=dx*.012;previewCanvas.dataset.dragX=String(e.clientX);renderAvatarPreview();}});
+ previewCanvas.addEventListener('pointerup',()=>{delete previewCanvas.dataset.dragX;});
+ window.addEventListener('resize',renderAvatarPreview);
+ if(typeof ResizeObserver!=='undefined'){const avatarPreviewObserver=new ResizeObserver(()=>renderAvatarPreview());avatarPreviewObserver.observe(previewStage);}
+}
+function refreshAvatarPreview(){
+ const value=id=>document.getElementById(id)?.value;
+ const apply=(material,id)=>{const v=value(id);if(v!==undefined&&v!==null)material.color.setHex(parseInt(v,16));};
+ apply(previewAvatar.appearance.skinMat,'skin-choice');apply(previewAvatar.appearance.hairMat,'hair-choice');
+ apply(previewAvatar.appearance.shirtMat,'outfit-choice');apply(previewAvatar.appearance.pantsMat,'bottom-choice');apply(previewAvatar.appearance.shoeMat,'shoe-choice');
+ if(avatarPreviewReady)renderAvatarPreview();
+ else if(previewPerson){previewPerson.style.setProperty('--preview-skin','#'+value('skin-choice'));previewPerson.style.setProperty('--preview-hair','#'+value('hair-choice'));previewPerson.style.setProperty('--preview-shirt','#'+value('outfit-choice'));}
+}
 document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
 document.querySelector('#hair-choice')?.addEventListener('change',e=>{player.appearance.hairMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.hairMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>{player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
