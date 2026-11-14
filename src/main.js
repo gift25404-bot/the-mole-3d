@@ -693,12 +693,13 @@ document.querySelector('#confirm-look')?.addEventListener('click',()=>{
  document.querySelector('#avatar-screen').classList.add('hidden');
  notice(look.name+' look selected. Welcome to Blackwood.');
 });
-let arrivalActive=false,arrivalComplete=false,arrivalStartedAt=0;
+let arrivalActive=false,arrivalComplete=false,arrivalStartedAt=0,arrivalPassengerTargets=[];
 const arrivalStartBusX=-24,arrivalEndBusX=-13;
 const arrivalCaption=document.querySelector('#arrival-caption');
 const arrivalSkip=document.querySelector('#skip-arrival');
 function finishArrival(){
  arrivalActive=false;arrivalComplete=true;bus.position.x=arrivalEndBusX;
+ npcs.forEach((n,i)=>{const target=arrivalPassengerTargets[i];if(target)n.group.position.copy(target);});
  if(arrivalCaption)arrivalCaption.textContent='BLACKWOOD HOUSE. NO ONE KNOWS WHY THE BUS STOPPED HERE.';
  if(arrivalSkip)arrivalSkip.hidden=true;
  const start=document.querySelector('#begin-game');
@@ -707,6 +708,8 @@ function finishArrival(){
 function startArrival(){
  if(arrivalActive||arrivalComplete)return;
  arrivalActive=true;arrivalStartedAt=elapsed;
+ arrivalPassengerTargets=npcs.map(n=>n.group.position.clone());
+ npcs.forEach((n,i)=>n.group.position.set(arrivalStartBusX+(i-2)*.52,0,8));
  bus.position.set(arrivalStartBusX,0,8);
  camera.position.set(-23,6,22);camera.lookAt(-13,1.5,8);
  if(arrivalCaption)arrivalCaption.textContent='THE LAST BUS OF THE NIGHT…';
@@ -935,8 +938,13 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
    shotPos=new THREE.Vector3(-23,6,22);shotTarget=new THREE.Vector3(bus.position.x,1.4,8);
    caption='THE LAST BUS OF THE NIGHT…';
   }else if(t<8){
+   const exitProgress=smooth((t-4)/4);
+   npcs.forEach((n,i)=>{
+    const target=arrivalPassengerTargets[i];
+    if(target){n.group.position.x=THREE.MathUtils.lerp(arrivalStartBusX+(i-2)*.52,target.x,exitProgress);n.group.position.z=THREE.MathUtils.lerp(8,target.z,exitProgress);}
+   });
    shotPos=new THREE.Vector3(-17,4.2,14);shotTarget=new THREE.Vector3(-13,1.5,8);
-   caption='A sudden jolt. The engine falls silent.';
+   caption='A sudden jolt. The engine falls silent. Passengers step into the rain.';
   }else if(t<12){
    shotPos=new THREE.Vector3(15,10,22);shotTarget=new THREE.Vector3(0,4,0);
    caption='Through the rain, a strange building appears…';
