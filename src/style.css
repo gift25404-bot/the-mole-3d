@@ -563,3 +563,10 @@ html,body,#game{background:#243b46;color:#fff2d8}
   .phone-content p { font-size:10px; }
   .phone-notes { min-height:75px; }
 }
+
+
+/* Put the directional arrow pad on the far right for easier thumb reach. */
+@media (max-width:800px), (pointer:coarse) {
+  .mobile-move-grid { order:2; }
+  .mobile-action-stack { order:1; }
+}
