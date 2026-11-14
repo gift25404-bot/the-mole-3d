@@ -140,6 +140,38 @@ for(let i=0;i<16;i++){
  box(.10,.22,.8,stairEdge,15.43,rise-.11,z,house);
 }
 
+// Finished stairway details: sturdy handrails, support posts and lit landings.
+function stairBeam(a,b,radius,material,parent=house){
+ const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),delta=end.clone().sub(start);
+ const beam=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,delta.length(),7),material);
+ beam.position.copy(start).add(end).multiplyScalar(.5);
+ beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
+ beam.castShadow=!isMobileDevice;parent.add(beam);return beam;
+}
+const railMat=mat(0x554b40,.82),railTop=mat(0x806347,.72),postMat=mat(0x77766f,.95);
+function addStairRails(x,fromZ,toZ,fromY,toY,width){
+ for(const side of [-1,1]){
+  const railX=x+side*width;
+  stairBeam([railX,fromY+.98,fromZ],[railX,toY+.98,toZ],.075,railTop);
+  const count=9;
+  for(let i=0;i<=count;i++){
+   const t=i/count,z=THREE.MathUtils.lerp(fromZ,toZ,t),y=THREE.MathUtils.lerp(fromY,toY,t);
+   stairBeam([railX,y+.08,z],[railX,y+.96,z],.045,postMat);
+  }
+ }
+}
+addStairRails(13.25,5.55,-5.65,0,7.8,1.12);
+addStairRails(16.25,-5.55,5.65,7.8,11.6,.78);
+// Broad landings make the turn between the two flights easy to see and walk across.
+box(4.1,.2,2.2,stairConcrete,14.75,7.72,-5.9,house);
+box(3.2,.2,2.0,stairConcrete,14.75,11.52,5.9,house);
+// Warm marker lamps identify each level of the stairwell.
+for(const [x,y,z] of [[11.95,2.1,0],[15.15,9.2,0],[17.35,11.9,5.9]]){
+ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.14,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:1.1}));
+ lamp.position.set(x,y,z);house.add(lamp);
+ if(!isMobileDevice){const glow=new THREE.PointLight(0xffc477,2.5,4);glow.position.set(x,y,z);house.add(glow);}
+}
+
 // Construction clutter: stacked blocks, timber planks and cement sacks.
 for(let i=0;i<5;i++){box(.75,.38,.55,blockwork,-8+i*.82,.2,10.8,house);box(1.8,.12,.22,wood,5+i*.45,.15,11.2,house);}
 for(let i=0;i<3;i++){const sack=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xaaa18a));sack.scale.set(1,.55,.72);sack.position.set(8+i*.7,.28,11.5);sack.castShadow=true;house.add(sack);}
