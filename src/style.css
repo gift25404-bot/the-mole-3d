@@ -404,3 +404,16 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .game-phone-button{top:50%;bottom:auto;right:0;transform:translateY(-50%);padding:12px 7px}
  .game-phone{top:50%;bottom:auto;right:43px;transform:translateY(-50%);height:min(540px,calc(100dvh - 24px));width:min(340px,calc(100vw - 58px));min-height:320px}
 }
+
+
+/* Player progression records */
+.record-summary{display:flex;align-items:center;gap:12px;padding:13px 15px;margin:12px 0;background:linear-gradient(120deg,rgba(194,151,89,.18),rgba(37,52,60,.7));border:1px solid rgba(209,173,112,.35);border-radius:12px}
+.record-summary b{font-size:26px;color:#e6c58f}.record-summary span,.record-card small{font:9px 'DM Mono',monospace;letter-spacing:1.2px;color:#b4b9b8}
+.record-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0 15px}
+.record-stats>div{padding:10px 5px;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:9px}
+.record-stats b{display:block;font-size:20px;color:#f0d3a4}.record-stats small{font:8px 'DM Mono',monospace;color:#a9b1b2}
+.record-card{padding:12px;margin:9px 0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);border-radius:10px}
+.record-card>div{display:flex;justify-content:space-between;gap:8px;align-items:center}.record-card>div b{font-size:11px;letter-spacing:1px}.record-card>div span{font:9px 'DM Mono',monospace;color:#d2b47e}
+.record-card p{margin:7px 0;color:#b8c0bf;font-size:11px}.record-track{height:5px;background:rgba(255,255,255,.1);border-radius:9px;overflow:hidden;margin:9px 0}
+.record-track i{display:block;height:100%;background:linear-gradient(90deg,#9d7448,#e4c58f);border-radius:9px}
+.record-card.record-complete{border-color:rgba(208,176,119,.4);background:rgba(183,139,74,.09)}
