@@ -280,7 +280,7 @@ const rain=new THREE.Points(rainGeometry,new THREE.PointsMaterial({color:0xb9d5d
 scene.add(rain);
 const lightning=new THREE.DirectionalLight(0xc7d9ff,0);lightning.position.set(-20,25,-10);scene.add(lightning);
 let nextStormFlash=9+Math.random()*12,flashRemaining=0,nextSpookyEvent=24+Math.random()*18;
-const bus=new THREE.Group();scene.add(bus);bus.position.set(-13,0,8);
+const bus=new THREE.Group();scene.add(bus);bus.position.set(-24,0,8);
 box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);
 box(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
 for(const x of [-1.35,-.35,.65,1.55])box(.65,.58,.05,glass,x,2.05,1.06,bus);
@@ -693,11 +693,35 @@ document.querySelector('#confirm-look')?.addEventListener('click',()=>{
  document.querySelector('#avatar-screen').classList.add('hidden');
  notice(look.name+' look selected. Welcome to Blackwood.');
 });
+let arrivalActive=false,arrivalComplete=false,arrivalStartedAt=0;
+const arrivalStartBusX=-24,arrivalEndBusX=-13;
+const arrivalCaption=document.querySelector('#arrival-caption');
+const arrivalSkip=document.querySelector('#skip-arrival');
+function finishArrival(){
+ arrivalActive=false;arrivalComplete=true;bus.position.x=arrivalEndBusX;
+ if(arrivalCaption)arrivalCaption.textContent='BLACKWOOD HOUSE. NO ONE KNOWS WHY THE BUS STOPPED HERE.';
+ if(arrivalSkip)arrivalSkip.hidden=true;
+ const start=document.querySelector('#begin-game');
+ if(start){start.textContent='ENTER THE HOUSE';start.dataset.phase='enter';}
+}
+function startArrival(){
+ if(arrivalActive||arrivalComplete)return;
+ arrivalActive=true;arrivalStartedAt=elapsed;
+ bus.position.set(arrivalStartBusX,0,8);
+ camera.position.set(-23,6,22);camera.lookAt(-13,1.5,8);
+ if(arrivalCaption)arrivalCaption.textContent='THE LAST BUS OF THE NIGHT…';
+ speak('It is almost midnight. The last bus rattles along an empty road. The rain is getting heavier.');
+}
 document.querySelector('#begin-game')?.addEventListener('click',()=>{
+ if(!arrivalComplete){startArrival();return;}
  document.querySelector('#bus-intro')?.classList.add('intro-hidden');
  speak('The bus has broken down. The road is empty. Ahead, a house stands beneath the storm. Stay together. Your role is being revealed.');
  setAmbience(true);
  showRole();
+});
+arrivalSkip?.addEventListener('click',()=>{
+ if(!arrivalActive&&!arrivalComplete)startArrival();
+ finishArrival();
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
@@ -901,11 +925,38 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  warm.intensity=35+Math.sin(elapsed*8)*2+(Math.sin(elapsed*23)>.985?-22:0);
  // Send player movement at a modest rate when connected to an online room.
  if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
- // Camera rigs
- const target=new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z);
- if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,p.position.y+.7,p.position.z)}
- else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2+p.position.y,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
- else {const eye=new THREE.Vector3(p.position.x,p.position.y+1.72,p.position.z);camera.position.lerp(eye,.25);camera.rotation.set(0,p.rotation.y,0);camera.rotateY(Math.PI)}
+ // Cinematic arrival camera: bus approach, breakdown, then reveal Blackwood House.
+ if(arrivalActive){
+  const t=elapsed-arrivalStartedAt;
+  const smooth=v=>{v=THREE.MathUtils.clamp(v,0,1);return v*v*(3-2*v)};
+  bus.position.x=THREE.MathUtils.lerp(arrivalStartBusX,arrivalEndBusX,smooth(t/4));
+  let shotPos,shotTarget,caption;
+  if(t<4){
+   shotPos=new THREE.Vector3(-23,6,22);shotTarget=new THREE.Vector3(bus.position.x,1.4,8);
+   caption='THE LAST BUS OF THE NIGHT…';
+  }else if(t<8){
+   shotPos=new THREE.Vector3(-17,4.2,14);shotTarget=new THREE.Vector3(-13,1.5,8);
+   caption='A sudden jolt. The engine falls silent.';
+  }else if(t<12){
+   shotPos=new THREE.Vector3(15,10,22);shotTarget=new THREE.Vector3(0,4,0);
+   caption='Through the rain, a strange building appears…';
+  }else if(t<16){
+   shotPos=new THREE.Vector3(4,6,17);shotTarget=new THREE.Vector3(0,4,0);
+   caption='BLACKWOOD HOUSE. THE ONLY SHELTER FOR MILES.';
+  }else{
+   finishArrival();
+  }
+  if(arrivalActive){
+   camera.position.lerp(shotPos,.035);camera.lookAt(shotTarget);
+   if(arrivalCaption&&arrivalCaption.textContent!==caption)arrivalCaption.textContent=caption;
+  }
+ }else{
+  // Normal player camera rigs
+  const target=new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z);
+  if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,p.position.y+.7,p.position.z)}
+  else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2+p.position.y,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
+  else {const eye=new THREE.Vector3(p.position.x,p.position.y+1.72,p.position.z);camera.position.lerp(eye,.25);camera.rotation.set(0,p.rotation.y,0);camera.rotateY(Math.PI)}
+ }
  // labels face camera
  all.forEach(a=>a.group.children.forEach(c=>{if(c.isSprite)c.quaternion.copy(camera.quaternion)}));
  renderer.render(scene,camera);
