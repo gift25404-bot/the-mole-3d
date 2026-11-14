@@ -472,3 +472,35 @@ html,body,#game{background:#243b46;color:#fff2d8}
   .social-tools button { padding:6px;font-size:6px; }
   .game-phone { right:36px;width:calc(100vw - 44px); }
 }
+
+
+/* One-hand thumb controls: movement, sprint and interaction grouped together. */
+.mobile-pad { display:none; }
+@media (max-width:800px), (pointer:coarse) {
+ .mobile-pad {
+   display:flex;position:fixed;z-index:12;left:auto;right:12px;bottom:12px;
+   align-items:flex-end;gap:9px;touch-action:none;user-select:none;
+ }
+ .mobile-move-grid { display:flex;flex-direction:column;align-items:center;gap:3px; }
+ .mobile-move-grid>div { display:flex;gap:3px; }
+ .mobile-pad button {
+   display:grid;place-items:center;margin:0;width:43px;height:43px;
+   border:1px solid #d4b47e;border-radius:13px;
+   background:rgba(17,28,33,.9);color:#fff0d4;
+   font:700 15px 'DM Mono',monospace;box-shadow:0 3px 10px #0008;
+   touch-action:none;-webkit-user-select:none;user-select:none;
+ }
+ .mobile-pad button:active { background:#87663c;border-color:#f2d49c; }
+ .mobile-action-stack { display:flex;flex-direction:column;gap:6px; }
+ .mobile-pad .mobile-run,.mobile-pad .mobile-interact {
+   width:76px;height:39px;padding:4px;font-size:8px;letter-spacing:.04em;
+ }
+ .mobile-pad .mobile-interact { background:#9a713e;color:#fff7e8; }
+ .mobile-pad .mobile-run { background:#263c40; }
+ .chat-panel { max-width:calc(100vw - 120px); }
+}
+@media (max-width:380px) {
+ .mobile-pad { right:7px;bottom:8px;gap:5px; }
+ .mobile-pad button { width:37px;height:38px;border-radius:11px; }
+ .mobile-pad .mobile-run,.mobile-pad .mobile-interact { width:66px;height:36px;font-size:7px; }
+}
