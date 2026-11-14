@@ -486,8 +486,8 @@ for(const x of [-1.5,1.5])for(const z of [-1,1]){const w=new THREE.Mesh(new THRE
 const doorPivot=new THREE.Group();doorPivot.position.set(0,0,8.32);house.add(doorPivot);const door=box(1.65,2.9,.16,wood,.82,1.45,0,doorPivot);
 let doorOpen=false;
 // Characters: cute low-poly Bitmoji-ish avatars with animated arms/legs.
-function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
- const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
+ const g=new THREE.Group();g.position.set(x,0,z);targetScene.add(g);
  const skinMat=mat(skin,.48),hairMat=mat(hair,.9),shirtMat=mat(shirt,.52),pantsMat=mat(0x30343b,.62),shoeMat=mat(0x17191c,.48);
  const dark=mat(0x241714,.42),white=mat(0xfffaf2,.22),iris=mat(0x493027,.3),lip=mat(0x75483f,.5),detail=mat(0xe9dfcf,.65);
  const sphere=(radius,material,px,py,pz,sx=1,sy=1,sz=1,segments=24)=>{
@@ -1550,16 +1550,39 @@ document.querySelector('.avatar-card .look-grid')?.after(studio);
  document.querySelector('.avatar-card .look-grid')?.setAttribute('hidden','');
 
 const previewPerson=document.querySelector('#preview-person');
-function refreshAvatarPreview(){if(!previewPerson)return;previewPerson.style.setProperty('--preview-skin','#'+document.querySelector('#skin-choice').value);previewPerson.style.setProperty('--preview-hair','#'+document.querySelector('#hair-choice').value);previewPerson.style.setProperty('--preview-shirt','#'+document.querySelector('#outfit-choice').value);previewPerson.style.setProperty('--preview-pants','#'+document.querySelector('#bottom-choice').value);previewPerson.style.setProperty('--preview-shoes','#'+document.querySelector('#shoe-choice').value);previewPerson.dataset.hair=document.querySelector('#hair-style').value;previewPerson.dataset.accessory=document.querySelector('#accessory-choice').value;}
-document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
-document.querySelector('#hair-choice')?.addEventListener('change',e=>{player.appearance.hairMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
-document.querySelector('#outfit-choice')?.addEventListener('change',e=>{player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
-document.querySelector('#bottom-choice')?.addEventListener('change',e=>{player.appearance.pantsMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
-document.querySelector('#shoe-choice')?.addEventListener('change',e=>{player.appearance.shoeMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+const previewStage=document.querySelector('.boutique-stage');
+const previewCanvas=document.createElement('canvas');previewCanvas.className='avatar-3d-preview';previewCanvas.setAttribute('aria-label','Interactive 3D full-body avatar preview');
+previewStage?.append(previewCanvas);if(previewPerson)previewPerson.hidden=true;
+const avatarPreviewScene=new THREE.Scene();avatarPreviewScene.background=new THREE.Color(0x304b46);
+avatarPreviewScene.add(new THREE.HemisphereLight(0xf4e6d2,0x263b3b,2.0));
+const previewKey=new THREE.DirectionalLight(0xffe2bd,2.3);previewKey.position.set(-3,6,5);avatarPreviewScene.add(previewKey);
+const previewFill=new THREE.DirectionalLight(0xa8c8ff,1.0);previewFill.position.set(4,3,-4);avatarPreviewScene.add(previewFill);
+const avatarPreviewCamera=new THREE.PerspectiveCamera(32,1,.1,50);avatarPreviewCamera.position.set(3.15,2.15,5.8);avatarPreviewCamera.lookAt(0,1.35,0);
+const avatarPreviewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:false,antialias:true});
+avatarPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));avatarPreviewRenderer.shadowMap.enabled=true;avatarPreviewRenderer.shadowMap.type=THREE.PCFSoftShadowMap;
+avatarPreviewRenderer.outputColorSpace=THREE.SRGBColorSpace;avatarPreviewRenderer.toneMapping=THREE.ACESFilmicToneMapping;avatarPreviewRenderer.toneMappingExposure=1.15;
+const previewAvatar=makeAvatar('YOU',0xc96f62,0x9a674b,0x211b1a,0,0,false,avatarPreviewScene);
+previewAvatar.group.scale.setScalar(.96);previewAvatar.group.rotation.y=-.12;
+function renderAvatarPreview(){
+ if(!previewStage)return;
+ const w=Math.max(1,previewStage.clientWidth),h=Math.max(1,previewStage.clientHeight);
+ avatarPreviewRenderer.setSize(w,h,false);avatarPreviewCamera.aspect=w/h;avatarPreviewCamera.updateProjectionMatrix();
+ avatarPreviewRenderer.render(avatarPreviewScene,avatarPreviewCamera);
+}
+previewCanvas.addEventListener('pointerdown',e=>{previewCanvas.dataset.dragX=String(e.clientX);});
+previewCanvas.addEventListener('pointermove',e=>{if(e.buttons&&previewCanvas.dataset.dragX){const dx=e.clientX-Number(previewCanvas.dataset.dragX);previewAvatar.group.rotation.y+=dx*.012;previewCanvas.dataset.dragX=String(e.clientX);renderAvatarPreview();}});
+window.addEventListener('pointerup',()=>{delete previewCanvas.dataset.dragX;});window.addEventListener('resize',renderAvatarPreview);
+function refreshAvatarPreview(){previewAvatar.appearance.skinMat.color.setHex(parseInt(document.querySelector('#skin-choice').value,16));previewAvatar.appearance.hairMat.color.setHex(parseInt(document.querySelector('#hair-choice').value,16));previewAvatar.appearance.shirtMat.color.setHex(parseInt(document.querySelector('#outfit-choice').value,16));previewAvatar.appearance.pantsMat.color.setHex(parseInt(document.querySelector('#bottom-choice').value,16));previewAvatar.appearance.shoeMat.color.setHex(parseInt(document.querySelector('#shoe-choice').value,16));renderAvatarPreview();}
+document.querySelector('#skin-choice')?.addEventListener('change',e=>{player.appearance.skinMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.skinMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#hair-choice')?.addEventListener('change',e=>{player.appearance.hairMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.hairMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#outfit-choice')?.addEventListener('change',e=>{player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.shirtMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#bottom-choice')?.addEventListener('change',e=>{player.appearance.pantsMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.pantsMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
+document.querySelector('#shoe-choice')?.addEventListener('change',e=>{player.appearance.shoeMat.color.setHex(parseInt(e.target.value,16));previewAvatar.appearance.shoeMat.color.setHex(parseInt(e.target.value,16));refreshAvatarPreview()});
 // Build extra hairstyle silhouettes once, then switch them instantly from the studio.
-const hairstyleMeshes={};
-function addHairShape(style,geometry,x,y,z,sx=1,sy=1,sz=1){
- const mesh=new THREE.Mesh(geometry,player.appearance.hairMat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;mesh.visible=false;player.group.add(mesh);(hairstyleMeshes[style]??=[]).push(mesh);return mesh;
+const hairstyleMeshes={player:{},preview:{}};
+function addHairShape(style,geometry,x,y,z,sx=1,sy=1,sz=1,target=player){
+ const mesh=new THREE.Mesh(geometry,target.appearance.hairMat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;mesh.visible=false;target.group.add(mesh);
+ const bucket=target===player?hairstyleMeshes.player:hairstyleMeshes.preview;(bucket[style]??=[]).push(mesh);return mesh;
 }
 addHairShape('curly',new THREE.SphereGeometry(.46,16,12),0,2.13,-.015,1.12,.92,1.04);
 for(let side of [-1,1]){
@@ -1571,14 +1594,24 @@ for(let side of [-1,1]){
 addHairShape('bun',new THREE.SphereGeometry(.19,12,10),0,2.37,-.24,1,1,1);
 addHairShape('ponytail',new THREE.SphereGeometry(.15,12,10),0,2.12,-.35,1,1,1);
 addHairShape('ponytail',new THREE.CapsuleGeometry(.09,.42,4,8),0,1.82,-.4,1,1,1);
+addHairShape('curly',new THREE.SphereGeometry(.46,16,12),0,2.13,-.015,1.12,.92,1.04,previewAvatar);
+for(let side of [-1,1])for(let i=0;i<4;i++){
+ addHairShape('braids',new THREE.CapsuleGeometry(.045,.38,4,8),side*(.31+i*.035),1.88-i*.08,.04,.9,1,.9,previewAvatar);
+ addHairShape('locs',new THREE.CapsuleGeometry(.065,.43,4,8),side*(.31+i*.035),1.82-i*.07,.02,1,1,.95,previewAvatar);
+}
+addHairShape('bun',new THREE.SphereGeometry(.19,12,10),0,2.37,-.24,1,1,1,previewAvatar);
+addHairShape('ponytail',new THREE.SphereGeometry(.15,12,10),0,2.12,-.35,1,1,1,previewAvatar);
+addHairShape('ponytail',new THREE.CapsuleGeometry(.09,.42,4,8),0,1.82,-.4,1,1,1,previewAvatar);
 function setHairStyle(style){
- const parts=player.appearance.hairPieces;
- parts.forEach((part,i)=>{part.visible=style!=='curly'&&style!=='braids'&&style!=='locs'&&style!=='bun'&&style!=='ponytail'||i===0;});
- parts[0].scale.set(1,style==='short'||style==='fade'?.76:style==='long'?1.05:1.12,style==='short'||style==='fade'?.9:1.06);
- parts[1].visible=style==='long';parts[2].visible=style==='long';parts[3].visible=style==='long';
- parts[4].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
- parts[5].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
- Object.entries(hairstyleMeshes).forEach(([key,meshes])=>meshes.forEach(mesh=>mesh.visible=key===style));
+ for(const target of [player,previewAvatar]){
+  const parts=target.appearance.hairPieces;
+  parts.forEach((part,i)=>{part.visible=style!=='curly'&&style!=='braids'&&style!=='locs'&&style!=='bun'&&style!=='ponytail'||i===0;});
+  parts[0].scale.set(1,style==='short'||style==='fade'?.76:style==='long'?1.05:1.12,style==='short'||style==='fade'?.9:1.06);
+  parts[1].visible=style==='long';parts[2].visible=style==='long';parts[3].visible=style==='long';
+  parts[4].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
+  parts[5].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
+ }
+ Object.values(hairstyleMeshes).forEach(bucket=>Object.entries(bucket).forEach(([key,meshes])=>meshes.forEach(mesh=>mesh.visible=key===style)));
  refreshAvatarPreview();
 }
 document.querySelector('#hair-style')?.addEventListener('change',e=>setHairStyle(e.target.value));
