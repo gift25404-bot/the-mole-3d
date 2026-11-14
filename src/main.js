@@ -1141,7 +1141,24 @@ document.querySelector('#game').append(floorBadge);
  
 // THREE-STOP PASSENGER ELEVATOR — ground, second and third floors.
 const liftX=11.35,liftZ=.7,liftFloors=[0,7.8,11.6];
-const liftStructure=new THREE.Group();house.add(liftStructure);
+
+ // Cut clear lift-shaft openings through the east-wing upper-floor slabs.
+ for(const child of [...house.children]){
+  const g=child.geometry?.parameters;
+  if(!g||g.height!==.34)continue;
+  if(Math.abs(child.position.y-7.6)<.01&&Math.abs(child.position.x-11.05)<.02&&Math.abs(g.width-2.1)<.02){house.remove(child);
+   box(.25,.34,15,concrete,10.125,7.6,0,house);
+   box(1.85,.34,7.08,concrete,11.175,7.6,-3.96,house);
+   box(1.85,.34,5.68,concrete,11.175,7.6,4.66,house);
+  }
+  if(Math.abs(child.position.y-11.4)<.01&&Math.abs(child.position.x-12.65)<.02&&Math.abs(g.width-5.3)<.02){house.remove(child);
+   box(.25,.34,15,concrete,10.125,11.4,0,house);
+   box(2.2,.34,7.08,concrete,11.35,11.4,-3.96,house);
+   box(2.2,.34,5.68,concrete,11.35,11.4,4.66,house);
+   box(2.85,.34,15,concrete,13.875,11.4,0,house);
+  }
+ }
+ const liftStructure=new THREE.Group();house.add(liftStructure);
 const liftFrameMat=mat(0x394345,.72),liftGlass=new THREE.MeshStandardMaterial({color:0x607b7c,metalness:.28,roughness:.32,transparent:true,opacity:.28});
 for(const x of [10.25,12.45])for(const z of [-.42,1.82])box(.12,12.1,.12,liftFrameMat,x,6.05,z,liftStructure);
 for(const y of [.15,7.95,11.75]){
@@ -1161,7 +1178,7 @@ box(.9,.42,.08,mat(0x222b2d),9.98,2.15,.7,liftStructure);
 let liftTargetY=0;
 function chooseLiftFloor(floor){
  currentFloor=floor;liftTargetY=liftFloors[floor];
- player.group.position.set(liftX-1.05,liftTargetY,liftZ);
+ player.group.position.set(liftX,liftTargetY,liftZ-.35);
  player.group.rotation.y=Math.PI/2;
  document.querySelector('#floor-indicator').textContent=['GROUND FLOOR','SECOND FLOOR','THIRD FLOOR'][floor];
  closeModal();notice('ELEVATOR ARRIVED • '+['GROUND FLOOR','SECOND FLOOR','THIRD FLOOR'][floor]);
