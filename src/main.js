@@ -244,7 +244,60 @@ addClue('OLD PHOTOGRAPH','A family photograph. Someone has circled the library w
 addClue('TORN NOTE','The note reads: “The clock remembers what the doors forget.”',5,-5,0xc8b48b);
 addClue('BRASS KEY','A heavy key with the number 314 engraved on it.',5,4,0xc59a4d);
 // East wing expansion: study, music room and conservatory.
-const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15,wallMat,18,1.9,0,house);box(8,3.8,.3,wallMat,14,1.9,-7.5,house);box(8,3.8,.3,wallMat,14,1.9,7.5,house);box(.22,3.8,4,wallMat,10,1.9,-5,house);box(.22,3.8,4,wallMat,10,1.9,5,house);addClue('DUSTY DIARY','A diary entry says the east wing was locked after the last storm.',12,-5,0x9b7655);addClue('MUSIC BOX','A tiny music box bears the initials B.H.',16,0,0xb88d53);addClue('SEALED LETTER','A sealed letter mentions a hidden passage.',12,5,0x7f9b9b);
+const wingFloor=mat(0x393b38);box(8,.35,15,wingFloor,14,0,0,house);box(.3,3.8,15,wallMat,18,1.9,0,house);box(8,3.8,.3,wallMat,14,1.9,-7.5,house);box(8,3.8,.3,wallMat,14,1.9,7.5,house);box(.22,3.8,4,wallMat,10,1.9,-5,house);box(.22,3.8,4,wallMat,10,1.9,5,house);
+addClue('DUSTY DIARY','A diary entry says the east wing was locked after the last storm.',12,-5,0x9b7655);addClue('MUSIC BOX','A tiny music box bears the initials B.H.',16,0,0xb88d53);addClue('SEALED LETTER','A sealed letter mentions a hidden passage.',12,5,0x7f9b9b);
+// Abandoned cafeteria in the east wing: serving counter, tables and damaged seating.
+const cafeMetal=mat(0x343a39,.9),cafeWood=mat(0x4b4034,.96),cafeFloor=mat(0x292d2b,.98);
+box(7.5,.08,13,cafeFloor,14,.22,0,house);
+box(5.6,.85,.55,cafeMetal,14,1.05,-5.7,house);box(5.6,.12,.62,wood,14,1.53,-5.7,house);
+for(const [x,z] of [[12,-2.8],[15.8,-2.8],[12,2.2],[15.8,2.2]]){
+ box(1.8,.12,1.25,cafeWood,x,.95,z,house);
+ for(const dx of [-.72,.72])for(const dz of [-.45,.45])box(.12,.9,.12,cafeMetal,x+dx,.45,z+dz,house);
+ for(const dx of [-1.05,1.05]){box(.12,.62,.12,cafeMetal,x+dx,.53,z,house);box(.85,.12,.38,cafeWood,x+dx,.83,z,house);}
+}
+box(1.4,.55,.9,cafeMetal,17.1,.48,5.2,house).rotation.z=.22;
+box(1.1,.12,.7,cafeWood,17.1,.8,5.2,house).rotation.z=.22;
+
+// Dormitories on both upper floors, with bunk beds, lockers and discarded cases.
+const dormFrame=mat(0x3b4140,.9),dormMattress=mat(0x68645a,.98),dormBlanket=mat(0x4b5550,.98),dormLocker=mat(0x424947,.9);
+function addDormBed(x,y,z,rot=0){
+ const bed=new THREE.Group();bed.position.set(x,y,z);bed.rotation.y=rot;house.add(bed);
+ box(1.55,.14,2.25,dormFrame,0,.48,0,bed);box(1.42,.18,2.08,dormMattress,0,.62,0,bed);
+ box(1.42,.12,.82,dormBlanket,0,.78,.47,bed);box(.72,.16,.42,mat(0x9a907d),0,.79,-.72,bed);
+ for(const dx of [-.66,.66])for(const dz of [-.96,.96])box(.1,.5,.1,dormFrame,dx,.25,dz,bed);
+ box(1.62,.12,.12,dormFrame,0,1.05,-1.05,bed);box(.48,.36,.38,mat(0x393c3a),1.05,.22,.65,bed);
+}
+function addDormFloor(y){
+ for(const [x,z] of [[-7,-5],[-3.5,-5],[.5,-5],[4.5,-5],[-6,3],[-2,3],[2,3],[6,3]])addDormBed(x,y,z);
+ for(const x of [-8,-4,0,4,8]){
+  box(.72,1.75,.72,dormLocker,x,y+.88,6.35,house);
+  box(.05,.08,.04,mat(0xb39a69),x+.2,y+.92,5.97,house);
+ }
+ for(const [x,z] of [[-7,-1],[0,-1],[7,-1]]){
+  box(1.8,.12,.8,dormFrame,x,y+.82,z,house);
+  box(.12,.72,.12,dormFrame,x-.72,y+.38,z,house);box(.12,.72,.12,dormFrame,x+.72,y+.38,z,house);
+ }
+}
+addDormFloor(7.82);addDormFloor(11.62);
+
+// More abandoned-building detail: exposed pipes, fallen plaster, rubble and weak hanging lamps.
+const oldPipe=mat(0x343a38,.85),oldPlaster=mat(0x77756b,.98),rubble=mat(0x454640,.98);
+for(const y of [3.48,7.28,11.08])for(const x of [-8,-4,0,4,8]){
+ const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,8,7),oldPipe);pipe.rotation.z=Math.PI/2;pipe.position.set(x,y,-7.65);house.add(pipe);
+}
+for(const [x,z,a] of [[-8,-7,.2],[-3,7,-.35],[5,-7,.5],[8,6,-.2],[11,6,.35],[17,-6,-.4]]){
+ const shard=box(1.8,.09,.9,oldPlaster,x,.18,z,house);shard.rotation.y=a;shard.rotation.z=.12;
+}
+for(let i=0;i<18;i++){
+ const chunk=box(.16+Math.random()*.3,.08+Math.random()*.12,.15+Math.random()*.28,rubble,-8+Math.random()*25,.12,-7+Math.random()*14,house);
+ chunk.rotation.y=Math.random()*Math.PI;
+}
+for(const [x,y,z] of [[-7,3.45,0],[3,7.25,1],[7,11.05,-2]]){
+ const cable=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.9,6),oldPipe);cable.position.set(x,y,z);house.add(cable);
+ const shade=new THREE.Mesh(new THREE.ConeGeometry(.3,.22,8,1,true),mat(0x5a5547));shade.position.set(x,y-.48,z);shade.rotation.x=Math.PI;house.add(shade);
+ if(!isMobileDevice){const glow=new THREE.PointLight(0xffa35b,.35,5);glow.position.set(x,y-.6,z);house.add(glow);}
+}
+
 
 // SECRET ROOM: a concealed archive behind a bookshelf in the east wing.
 // The archive stays hidden until the player finds the brass key.
@@ -606,9 +659,9 @@ socket.on('room:update',room=>{
 });
 socket.on('round:role',data=>{
  onlineRole=data.role;playerRole=data.role;
- document.querySelector('#role-label').textContent=`ONLINE ${data.role}`;
- addChat('SYSTEM',`Your secret online role is ${data.role}.`,true);
- notice(`YOUR SECRET ROLE: ${data.role}`);
+ document.querySelector('#role-label').textContent=`ONLINE ${data.role==='MAFIA'?'MOLE':data.role}`;
+ addChat('SYSTEM',`Your secret online role is ${data.role==='MAFIA'?'THE MOLE':data.role}.`,true);
+ notice(`YOUR SECRET ROLE: ${data.role==='MAFIA'?'THE MOLE':data.role}`);
 });
 socket.on('round:started',()=>{document.querySelector('#phase').textContent='NIGHT 1';notice('The online round has started!');});
 socket.on('round:state',state=>{
@@ -868,17 +921,17 @@ for (let i=roleDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r
 roster.forEach((a,i)=>a.role=roleDeck[i]);
 let roundPhase='DAY', eliminated=[], protectedName=null, investigatedName=null, localPlayerDead=false;
 let playerRole=player.role;
-document.querySelector('#role-label').textContent=playerRole;
+document.querySelector('#role-label').textContent=playerRole==='MAFIA'?'THE MOLE':playerRole;
 document.querySelector('#phase').textContent='DAY 1';
 function living(){return roster.filter(a=>!eliminated.includes(a.name))}
 function updateStatus(){document.querySelector('#house-status').textContent=`PASSENGERS: ${living().length} • POWER: UNSTABLE`;}
 function roleDescription(){
- if(playerRole==='MAFIA') return 'You are the secret Mafia member. Blend in, misdirect the others and avoid being voted out.';
+ if(playerRole==='MAFIA') return 'You are the one hidden Mole in this round. Blend in, misdirect the others and avoid being voted out.';
  if(playerRole==='DETECTIVE') return 'You are the Detective. Use your ability at night to check one passenger. The result is private.';
  if(playerRole==='DOCTOR') return 'You are the Doctor. Choose one passenger to protect during the night.';
  return 'You are a Citizen. Listen carefully, compare stories and help identify the Mole.';
 }
-function showRole(){modal(`YOUR ROLE: ${playerRole}`,roleDescription(),'<button class="vote-option" id="role-ready">I UNDERSTAND</button>');document.querySelector('#role-ready').onclick=closeModal;}
+function showRole(){modal(`YOUR ROLE: ${playerRole==='MAFIA'?'THE MOLE':playerRole}`,roleDescription(),'<button class="vote-option" id="role-ready">I UNDERSTAND</button>');document.querySelector('#role-ready').onclick=closeModal;}
 function voteMeeting(){
  const candidates=living().filter(a=>a!==player);
  if(!candidates.length){notice('There is nobody else to question.');return;}
