@@ -177,6 +177,40 @@ const loungeStations=[
  {name:'HOUSE NOTICEBOARD',x:-5.7,z:-7.1,message:'Community notice: be kind, keep private details private, and help new passengers find their way.'},
  {name:'OLD RADIO',x:-8.25,z:-4.9,message:'The radio crackles with local news and a warm, original instrumental tune.'}
 ];
+// PERSONAL PLAYER SUITE on the rooftop floor; décor choice is saved on this device.
+const suiteBaseY=11.6;
+const suiteWall=mat(0x756d60), suiteWood=mat(0x614632), suiteMetal=mat(0x34383a);
+box(5.8,.08,5.8,mat(0x554b40),-5.8,suiteBaseY+.04,-3.4,house);
+box(5.8,2.6,.16,suiteWall,-5.8,suiteBaseY+1.3,-6.3,house);
+box(.16,2.6,5.8,suiteWall,-8.7,suiteBaseY+1.3,-3.4,house);
+box(.16,2.6,5.8,suiteWall,-2.9,suiteBaseY+1.3,-3.4,house);
+box(2.1,.38,3.1,suiteWood,-6.9,suiteBaseY+.5,-3.3,house);
+box(2.25,.18,3.2,mat(0x7d7568),-6.9,suiteBaseY+.78,-3.3,house);
+box(2.1,.18,.35,mat(0x9c866c),-6.9,suiteBaseY+1.02,-4.55,house);
+box(1.3,.65,.75,suiteWood,-4.2,suiteBaseY+.38,-5.2,house);
+box(1.45,.08,.85,mat(0x9b805d),-4.2,suiteBaseY+.75,-5.2,house);
+box(.08,1.2,.08,suiteMetal,-4.8,suiteBaseY+.6,-5.2,house);
+box(.08,1.2,.08,suiteMetal,-3.6,suiteBaseY+.6,-5.2,house);
+for(let i=0;i<3;i++)box(1.05,.07,.42,suiteWood,-4.2,suiteBaseY+.35+i*.42,-1.3,house);
+const suiteBoard=box(.9,1.15,.12,suiteWood,-5.8,suiteBaseY+1.55,-6.17,house);
+const suiteBoardFace=box(.68,.82,.035,mat(0xc6ad83),-5.8,suiteBaseY+1.55,-6.08,house);
+const suiteThemes=[
+ {name:'WARM WOOD',rug:0x72543c,bed:0x9a8060,accent:0xd4a45e},
+ {name:'OCEAN BLUE',rug:0x315d68,bed:0x537e88,accent:0x8fc4ca},
+ {name:'ROYAL PURPLE',rug:0x514064,bed:0x78628a,accent:0xc2a2dc},
+ {name:'LAGOS SUNSET',rug:0x9a553d,bed:0xc17b55,accent:0xf0b66d}
+];
+let suiteThemeIndex=Math.max(0,suiteThemes.findIndex(t=>t.name===localStorage.getItem('mole-suite-theme')));
+function applySuiteTheme(){
+ const t=suiteThemes[suiteThemeIndex];
+ house.children.forEach(o=>{
+  if(o.position.x===-5.8&&o.position.z===-3.4&&o.geometry?.type==='BoxGeometry')o.material.color.setHex(t.rug);
+  if(o.position.x===-6.9&&o.position.z===-3.3&&o.geometry?.type==='BoxGeometry')o.material.color.setHex(t.bed);
+  if(o.position.x===-5.8&&o.position.z===-6.08&&o.geometry?.type==='BoxGeometry')o.material.color.setHex(t.accent);
+ });
+}
+applySuiteTheme();
+const suiteStation={name:'MY PLAYER ROOM',x:-5.8,z:-6.05};
 // Collectible story clues. These are safe, non-graphic environmental story items.
 const clueItems=[];
 function addClue(name,description,x,z,color){
@@ -886,6 +920,12 @@ function updateObjective(){
 }
 function interact(){
  const p=player.group.position;
+ if(currentFloor===2&&Math.hypot(p.x-suiteStation.x,p.z-suiteStation.z)<2.7){
+  suiteThemeIndex=(suiteThemeIndex+1)%suiteThemes.length;
+  localStorage.setItem('mole-suite-theme',suiteThemes[suiteThemeIndex].name);
+  applySuiteTheme();notice('YOUR ROOM • '+suiteThemes[suiteThemeIndex].name+' décor selected. Your choice is saved on this device.');playCue();return;
+ }
+
  let station=null,stationDistance=2.5;
  for(const item of loungeStations){const d=Math.hypot(p.x-item.x,p.z-item.z);if(d<stationDistance){stationDistance=d;station=item;}}
  if(station){notice(station.name+' • '+station.message);playCue();return;}
