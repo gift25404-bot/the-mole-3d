@@ -10,6 +10,23 @@ const allowedOrigins=[...new Set(['http://localhost:5173','https://the-mole-3d.v
 const io=new Server(httpServer,{
   cors:{origin:allowedOrigins,methods:['GET','POST']}
 });
+// Every multiplayer socket must present a valid Supabase access token.
+const supabaseUrl=(process.env.SUPABASE_URL||'').replace(/\/$/,'');
+const supabaseAnonKey=process.env.SUPABASE_ANON_KEY||'';
+io.use(async(socket,next)=>{
+  try{
+    const token=socket.handshake.auth?.accessToken;
+    if(!supabaseUrl||!supabaseAnonKey||!token)return next(new Error('Please sign in to play online.'));
+    const response=await fetch(supabaseUrl+'/auth/v1/user',{headers:{apikey:supabaseAnonKey,Authorization:'Bearer '+token}});
+    if(!response.ok)return next(new Error('Your sign-in has expired. Please sign in again.'));
+    const user=await response.json();
+    const displayName=String(user.user_metadata?.display_name||user.email?.split('@')[0]||'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'PLAYER';
+    socket.data.account={id:user.id,email:user.email};
+    socket.data.displayName=displayName;
+    next();
+  }catch(error){next(new Error('Could not verify your account. Please try again.'));}
+});
+const accountName=socket=>cleanName(socket.data.displayName);
 const rooms=new Map();
 const boardPosts=[];
 const BOARD_ROOM='public-discussion-board';
@@ -143,7 +160,7 @@ io.on('connection',socket=>{
     const now=Date.now();
     if(now-(socket.data.lastBoardPost||0)<BOARD_COOLDOWN_MS)return ack({ok:false,error:'Please wait a moment before posting again.'});
     socket.data.lastBoardPost=now;
-    const post={id:randomInt(1,0x7fffffff),name:cleanName(payload?.name),message,at:now};
+    const post={id:randomInt(1,0x7fffffff),name:accountName(socket),message,at:now};
     boardPosts.push(post);
     if(boardPosts.length>BOARD_LIMIT)boardPosts.splice(0,boardPosts.length-BOARD_LIMIT);
     io.to(BOARD_ROOM).emit('board:new-post',post);
@@ -153,7 +170,7 @@ io.on('connection',socket=>{
     removePlayer(socket);
     let code;do{code=randomInt(100000,999999).toString();}while(rooms.has(code));
     const room={code,hostId:socket.id,started:false,phase:'LOBBY',day:0,players:new Map(),votes:new Map(),actions:new Map(),timer:null};
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
+    room.players.set(socket.id,{id:socket.id,name:accountName(socket),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
     rooms.set(code,room);socket.join(code);socket.data.roomCode=code;
     ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
@@ -163,7 +180,7 @@ io.on('connection',socket=>{
     if(room.started)return ack({ok:false,error:'This round has already started.'});
     if(room.players.size>=MAX_PLAYERS)return ack({ok:false,error:'This room is full.'});
     removePlayer(socket);
-    room.players.set(socket.id,{id:socket.id,name:cleanName(payload.name),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
+    room.players.set(socket.id,{id:socket.id,name:accountName(socket),ready:true,alive:true,role:null,x:0,y:0,z:5,rotation:0});
     socket.join(code);socket.data.roomCode=code;
     ack({ok:true,room:publicRoom(room),yourId:socket.id});sendState(room);
   });
