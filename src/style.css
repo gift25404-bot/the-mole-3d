@@ -278,3 +278,15 @@ html,body,#game{background:#243b46;color:#fff2d8}
 #auth-username-wrap.hidden{display:none!important}
 #auth-submit:disabled{opacity:.6;cursor:wait}
 #auth-form input[type=password]{letter-spacing:2px}
+
+
+/* Expanded Lagos streetwear wardrobe controls and live full-body colour preview. */
+.avatar-customizer{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.avatar-customizer label{display:flex;flex-direction:column;min-width:0}
+.avatar-customizer select{width:100%;min-width:0}
+.preview-person{--preview-pants:#30343b;--preview-shoes:#17191c}
+.preview-leg{background:var(--preview-pants)}
+.preview-leg i{background:color-mix(in srgb,var(--preview-pants),white 12%)}
+.preview-shoe{background:var(--preview-shoes);border-bottom-color:#d6b779}
+@media(max-width:760px){.avatar-customizer{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.avatar-customizer{grid-template-columns:1fr 1fr;gap:8px}.avatar-customizer select{font-size:10px;padding:9px 7px}}
