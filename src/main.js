@@ -911,7 +911,8 @@ updateStatus();
 
 document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')switchCamera();if(e.key.toLowerCase()==='e')interact();if(e.key.toLowerCase()==='f'&&!e.repeat)toggleFlashlight()});
 document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',()=>keys[k]=true);['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
 let cluesFound=0, exitUnlocked=false;
 function updateObjective(){
  const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
