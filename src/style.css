@@ -290,3 +290,6 @@ html,body,#game{background:#243b46;color:#fff2d8}
 .preview-shoe{background:var(--preview-shoes);border-bottom-color:#d6b779}
 @media(max-width:760px){.avatar-customizer{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.avatar-customizer{grid-template-columns:1fr 1fr;gap:8px}.avatar-customizer select{font-size:10px;padding:9px 7px}}
+
+.continue-guest{width:100%;margin:2px 0 16px;padding:12px;background:transparent;border:1px solid #b88d53;color:#f1d7a3;font:700 10px 'DM Mono';letter-spacing:1.2px;cursor:pointer}
+.continue-guest:hover{background:#ffffff12}
