@@ -257,6 +257,11 @@ for(const [x,z] of [[12,-2.8],[15.8,-2.8],[12,2.2],[15.8,2.2]]){
 }
 box(1.4,.55,.9,cafeMetal,17.1,.48,5.2,house).rotation.z=.22;
 box(1.1,.12,.7,cafeWood,17.1,.8,5.2,house).rotation.z=.22;
+// A dusty security console with four small CRT screens beside the cafeteria.
+const cctvCabinet=mat(0x252d2e,.82),cctvScreen=new THREE.MeshStandardMaterial({color:0x243c3b,emissive:0x18302d,emissiveIntensity:.5,roughness:.3});
+box(1.55,1.05,.62,cctvCabinet,16.55,.72,2.65,house);box(1.42,.76,.08,cctvScreen,16.55,1.55,2.32,house);
+for(let i=0;i<4;i++){box(.57,.29,.035,cctvScreen,16.18+(i%2)*.72,1.55+Math.floor(i/2)*.34,2.265,house);}
+box(1.65,.08,.72,wood,16.55,1.22,2.65,house);
 
 // Dormitories on both upper floors, with bunk beds, lockers and discarded cases.
 const dormFrame=mat(0x3b4140,.9),dormMattress=mat(0x68645a,.98),dormBlanket=mat(0x4b5550,.98),dormLocker=mat(0x424947,.9);
@@ -301,12 +306,14 @@ for(const [x,y,z] of [[-7,3.45,0],[3,7.25,1],[7,11.05,-2]]){
 
 // SECRET ROOM: a concealed archive behind a bookshelf in the east wing.
 // The archive stays hidden until the player finds the brass key.
-const secretRoomGroup=new THREE.Group();secretRoomGroup.visible=false;house.add(secretRoomGroup);
+const secretRoomGroup=new THREE.Group();secretRoomGroup.visible=false;secretRoomGroup.position.y=-3.4;house.add(secretRoomGroup);
 box(5.3,.18,5.0,mat(0x40372e),14.5,.04,-4.8,secretRoomGroup);
 box(.22,3.1,5.0,rawConcrete,11.85,1.55,-4.8,secretRoomGroup);
 box(.22,3.1,5.0,rawConcrete,17.15,1.55,-4.8,secretRoomGroup);
 box(5.3,3.1,.22,rawConcrete,14.5,1.55,-7.3,secretRoomGroup);
 box(5.3,.22,5.0,concrete,14.5,3.1,-4.8,secretRoomGroup);
+// A narrow concrete stair drops from the bookshelf entrance into the cellar.
+for(let step=0;step<9;step++)box(2.05,.18,.48,stairConcrete,14.5,2.75-step*.34,-2.65-step*.43,secretRoomGroup);
 // Archive shelves, old records and a small writing desk.
 for(let i=0;i<3;i++){
   box(.16,2.25,.16,wood,12.45+i*1.45,1.15,-6.95,secretRoomGroup);
@@ -950,7 +957,7 @@ arrivalSkip?.addEventListener('click',()=>{
 });
 function switchCamera(){cameraMode=(cameraMode+1)%3;document.querySelector('#camera').textContent='CAMERA: '+modes[cameraMode];notice('CAMERA MODE: '+modes[cameraMode])}
 document.querySelector('#camera').onclick=switchCamera;
-document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div><div>10 — SECOND FLOOR</div><div>11 — THIRD FLOOR / ROOFTOP</div><div>12 — EAST WING STAIRCASE</div><div>13 — ABANDONED CAFETERIA</div><div>14 — SECOND-FLOOR DORMITORIES</div><div>15 — THIRD-FLOOR DORMITORIES</div></div>`);
+document.querySelector('#map').onclick=()=>modal('HOUSE MAP','You are inside Blackwood House. Explore the rooms and speak to the other passengers.',`<div class="room-list"><div>01 — ENTRY HALL</div><div>02 — LIVING ROOM</div><div>03 — LIBRARY</div><div>04 — KITCHEN</div><div>05 — EAST BEDROOM</div><div>06 — STORAGE</div><div>07 — EAST STUDY</div><div>08 — MUSIC ROOM</div><div>09 — SEALED CONSERVATORY</div><div>10 — SECOND FLOOR</div><div>11 — THIRD FLOOR / ROOFTOP</div><div>12 — EAST WING STAIRCASE</div><div>13 — ABANDONED CAFETERIA</div><div>14 — SECOND-FLOOR DORMITORIES</div><div>15 — THIRD-FLOOR DORMITORIES</div><div>16 — HIDDEN CELLAR ARCHIVE</div><div>17 — SECURITY CAMERA CONSOLE</div></div>`);
 
 // Local social-deduction round: one hidden Mole, one Detective, one Doctor.
 const roster = [player, ...npcs];
@@ -1193,7 +1200,7 @@ function animate(now=0){requestAnimationFrame(animate);
   flashRemaining=.5;nextSpookyEvent=elapsed+28+Math.random()*28;
  }
  const p=player.group;let dx=0,dz=0;
- const floorName=p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
+ const floorName=p.position.y<-1?'HIDDEN CELLAR':p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
  floorBadge.textContent=floorName;
 if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=(dx!==0||dz!==0)&&!localPlayerDead;const speed=keys.shift?5.2:3.1;
@@ -1202,10 +1209,13 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
   p.position.x=THREE.MathUtils.clamp(p.position.x,-9.35,17.35);
   p.position.z=THREE.MathUtils.clamp(p.position.z,-7.15,7.15);
  }
- // Keep the avatar grounded on the current storey and follow either stair flight.
+ // Keep the avatar grounded on the current storey, including the hidden cellar stair.
+ const inCellarApproach=secretRoomOpen&&p.position.x>12.2&&p.position.x<16.8&&p.position.z<-2.35&&p.position.z>-7.05;
+ if(inCellarApproach){const descent=THREE.MathUtils.clamp((-p.position.z-2.35)/4.7,0,1);p.position.y=-3.4*descent;}
  const onFirstStairs=p.position.x>12.05&&p.position.x<14.45&&p.position.z>-5.95&&p.position.z<5.95;
  const onSecondStairs=p.position.x>15.35&&p.position.x<17.15&&p.position.z>-5.95&&p.position.z<5.95;
- if(onFirstStairs&&currentFloor<=1){
+ if(inCellarApproach){/* cellar height was set by the hidden stair ramp above */}
+ else if(onFirstStairs&&currentFloor<=1){
   const progress=THREE.MathUtils.clamp((5.6-p.position.z)/11.2,0,1);
   p.position.y=progress*7.8;
   if(progress<.025)currentFloor=0;else if(progress>.975)currentFloor=1;
