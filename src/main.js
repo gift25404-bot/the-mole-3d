@@ -313,7 +313,7 @@ box(.22,3.1,5.0,rawConcrete,17.15,1.55,-4.8,secretRoomGroup);
 box(5.3,3.1,.22,rawConcrete,14.5,1.55,-7.3,secretRoomGroup);
 box(5.3,.22,5.0,concrete,14.5,3.1,-4.8,secretRoomGroup);
 // A narrow concrete stair drops from the bookshelf entrance into the cellar.
-for(let step=0;step<9;step++)box(2.05,.18,.48,stairConcrete,14.5,2.75-step*.34,-2.65-step*.43,secretRoomGroup);
+for(let step=0;step<11;step++)box(2.05,.18,.48,stairConcrete,14.5,3.1-step*.31,-2.65-step*.43,secretRoomGroup);
 // Archive shelves, old records and a small writing desk.
 for(let i=0;i<3;i++){
   box(.16,2.25,.16,wood,12.45+i*1.45,1.15,-6.95,secretRoomGroup);
@@ -1203,7 +1203,7 @@ function animate(now=0){requestAnimationFrame(animate);
  const floorName=p.position.y<-1?'HIDDEN CELLAR':p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
  floorBadge.textContent=floorName;
 if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
- const moving=(dx!==0||dz!==0)&&!localPlayerDead;const speed=keys.shift?5.2:3.1;
+ const moving=(dx!==0||dz!==0)&&!localPlayerDead&&!cctvActive;const speed=keys.shift?5.2:3.1;
  if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);
   // Keep every passenger inside Blackwood House and its connected east wing.
   p.position.x=THREE.MathUtils.clamp(p.position.x,-9.35,17.35);
