@@ -12,7 +12,7 @@ const deviceMemoryGB=navigator.deviceMemory||4;
 const cpuCores=navigator.hardwareConcurrency||4;
 // Three quality tiers let budget Android phones use simpler rendering.
 const lowPowerDevice=isMobileDevice&&(deviceMemoryGB<=4||cpuCores<=4);
-const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 0.85 : 1.05):1.7);
+const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 0.9 : 1.15):1.7);
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
@@ -1017,7 +1017,12 @@ for(const floor of [0,1,2]){
 
 
 let lastMobileRender=0;
-function animate(now=0){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+function animate(now=0){requestAnimationFrame(animate);
+ // On phones, throttle the whole simulation to 30 updates per second, not just drawing.
+ // This reduces CPU work for budget Android devices while keeping motion consistent.
+ if(isMobileDevice&&now-lastMobileRender<33)return;
+ if(isMobileDevice)lastMobileRender=now;
+ const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  // Animate the rain around the world and occasionally illuminate the skyline.
  const rainPos=rain.geometry.attributes.position;
  for(let i=0;i<rainCount;i++){
@@ -1117,10 +1122,10 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  }
  // labels face camera
  all.forEach(a=>a.group.children.forEach(c=>{if(c.isSprite)c.quaternion.copy(camera.quaternion)}));
- if(!isMobileDevice||now-lastMobileRender>=33){renderer.render(scene,camera);lastMobileRender=now;}
+ renderer.render(scene,camera);
 }
 animate();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice?.85:1.05):1.7))});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 0.9 : 1.15):1.7))});
 notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
 
 
