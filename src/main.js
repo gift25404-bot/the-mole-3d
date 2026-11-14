@@ -6,20 +6,23 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x243b46);
 scene.fog = new THREE.FogExp2(0x243b46, 0.012);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// Detect phones/tablets early and select a lighter renderer profile.
+const isMobileDevice=matchMedia('(max-width: 800px), (pointer: coarse)').matches;
+const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?1.2:1.7);
+const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
+renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
+renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping;
 document.querySelector('#game').appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xffd7a0,0x4b3a2b,2.0));
-const moon=new THREE.DirectionalLight(0xffd6a0,2.5); moon.position.set(-9,18,8); moon.castShadow=true; moon.shadow.mapSize.set(2048,2048); scene.add(moon);
+const moon=new THREE.DirectionalLight(0xffd6a0,2.5); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 const warm=new THREE.PointLight(0xffb35c,30,18); warm.position.set(0,3,0); scene.add(warm);
 const hallLight=new THREE.PointLight(0xffd18a,16,10); hallLight.position.set(0,3,-8); scene.add(hallLight);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const floorMat=mat(0x75634b), wallMat=mat(0xb7a58a), darkMat=mat(0x343a38), wood=mat(0x68442e), trim=mat(0x3b3028), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
-function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!isMobileDevice;o.receiveShadow=!isMobileDevice;parent.add(o);return o}
 function plane(w,d,m,x,y,z){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,d),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o}
 plane(90,90,mat(0x75684f),0,-.16,0);
 // Lagos-inspired roadside setting: warm streetlights, kiosks, palms and overhead wires.
@@ -268,7 +271,7 @@ for(let x=-40;x<=40;x+=10){
 
 // minibus
 // Live rain particles and a distant lightning flash make the night storm visible.
-const rainCount=950, rainPositions=new Float32Array(rainCount*3);
+const rainCount=isMobileDevice?220:700, rainPositions=new Float32Array(rainCount*3);
 for(let i=0;i<rainCount;i++){
  rainPositions[i*3]=(Math.random()-.5)*86;
  rainPositions[i*3+1]=Math.random()*25;
@@ -970,7 +973,7 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  renderer.render(scene,camera);
 }
 animate();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2))});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileDevice?1.2:1.7))});
 notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
 
 
