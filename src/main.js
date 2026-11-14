@@ -506,6 +506,12 @@ socket.on('round:state',state=>{
  if(state.phase==='LOBBY'||state.phase==='ENDED')onlinePromptKey='';
  renderPhoneTab();
 });
+socket.on('round:hazard',data=>{
+ onlineRole='GHOST';playerRole='GHOST';document.querySelector('#role-label').textContent='ELIMINATED';
+ notice(data?.message||'A cursed floor trap has eliminated you.');
+ modal('CAUGHT BY THE HOUSE','You stepped on a cursed floor trap. You are out of this round, but can spectate.');
+ renderPhoneTab();
+});
 socket.on('round:notice',data=>notice(data.message));
 socket.on('round:actionCount',data=>notice(`NIGHT ACTIONS: ${data.count}/${data.total}`));
 socket.on('round:investigation',data=>modal('DETECTIVE REPORT',`${data.name} is ${data.result}.`,'<p>This result is private to you.</p>'));
