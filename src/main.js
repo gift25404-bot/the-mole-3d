@@ -482,7 +482,7 @@ socket.on('connect',()=>{document.querySelector('#online').textContent='ONLINE L
 socket.on('connect_error',()=>{document.querySelector('#online').textContent='OFFLINE MODE';});
 socket.on('disconnect',()=>{remoteAvatars.forEach(a=>scene.remove(a.group));remoteAvatars.clear();});
 socket.on('room:update',room=>{
- onlineRoom=room;
+ onlineRoom=room;renderPhoneTab();
  const list=room.players.map(p=>`<div class="passenger-row"><span class="passenger-dot"></span><b>${p.name}</b><small>${p.id===room.hostId?'HOST':'PLAYER'}</small></div>`).join('');
  const content=`<div class="lobby-code">ROOM CODE <strong>${room.code}</strong></div><div class="passenger-list">${list}</div>${room.hostId===socket.id?'<button class="vote-option" id="host-start">START ROUND (4+ PLAYERS)</button>':''}<button class="vote-option" id="leave-room">LEAVE ROOM</button>`;
  if(!document.querySelector('#modal').classList.contains('hidden') && document.querySelector('#modal-title').textContent==='ONLINE LOBBY'){
@@ -988,7 +988,9 @@ const phonePanel=document.querySelector('#game-phone');
 const phoneContent=document.querySelector('#phone-content');
 function phoneEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function openGamePhone(tab='vote'){
- phoneActiveTab=tab;phonePanel?.classList.remove('hidden');phoneButton?.classList.add('phone-open');renderPhoneTab();
+ phoneActiveTab=tab;phonePanel?.classList.remove('hidden');phoneButton?.classList.add('phone-open');
+ if(tab==='messages'){const badge=document.querySelector('#phone-unread');if(badge){badge.textContent='0';badge.classList.add('hidden');}}
+ renderPhoneTab();
 }
 function closeGamePhone(){phonePanel?.classList.add('hidden');phoneButton?.classList.remove('phone-open');}
 phoneButton?.addEventListener('click',()=>phonePanel?.classList.contains('hidden')?openGamePhone():closeGamePhone());
