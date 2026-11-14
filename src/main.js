@@ -12,7 +12,7 @@ const deviceMemoryGB=navigator.deviceMemory||4;
 const cpuCores=navigator.hardwareConcurrency||4;
 // Three quality tiers let budget Android phones use simpler rendering.
 const lowPowerDevice=isMobileDevice&&(deviceMemoryGB<=4||cpuCores<=4);
-const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice?.85:1.05):1.7);
+const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 0.85 : 1.05):1.7);
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
