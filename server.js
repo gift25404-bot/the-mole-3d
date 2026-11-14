@@ -11,6 +11,10 @@ const io=new Server(httpServer,{
   cors:{origin:allowedOrigins,methods:['GET','POST']}
 });
 const rooms=new Map();
+const boardPosts=[];
+const BOARD_ROOM='public-discussion-board';
+const BOARD_LIMIT=100;
+const BOARD_COOLDOWN_MS=2500;
 const MAX_PLAYERS=12, MIN_PLAYERS=4, DISCUSSION_MS=25000, RESULTS_MS=8000;
 const cleanName=value=>String(value||'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'PLAYER';
 const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=randomInt(i+1);[list[i],list[j]]=[list[j],list[i]];}return list;};
@@ -129,6 +133,22 @@ function resolveVote(room){
 }
 io.on('connection',socket=>{
   socket.emit('server:hello',{message:'Connected to THE MOLE game server'});
+  socket.on('board:join',()=>{
+    socket.join(BOARD_ROOM);
+    socket.emit('board:history',boardPosts);
+  });
+  socket.on('board:post',(payload={},ack=()=>{})=>{
+    const message=String(payload?.message||'').replace(/\\s+/g,' ').trim().slice(0,500);
+    if(!message)return ack({ok:false,error:'Write a message first.'});
+    const now=Date.now();
+    if(now-(socket.data.lastBoardPost||0)<BOARD_COOLDOWN_MS)return ack({ok:false,error:'Please wait a moment before posting again.'});
+    socket.data.lastBoardPost=now;
+    const post={id:randomInt(1,0x7fffffff),name:cleanName(payload?.name),message,at:now};
+    boardPosts.push(post);
+    if(boardPosts.length>BOARD_LIMIT)boardPosts.splice(0,boardPosts.length-BOARD_LIMIT);
+    io.to(BOARD_ROOM).emit('board:new-post',post);
+    ack({ok:true});
+  });
   socket.on('room:create',(payload={},ack=()=>{})=>{
     removePlayer(socket);
     let code;do{code=randomInt(100000,999999).toString();}while(rooms.has(code));
