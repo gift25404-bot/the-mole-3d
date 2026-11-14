@@ -19,11 +19,11 @@ renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFSha
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.86;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x758b96,0x090d0c,0.42));
 const moon=new THREE.DirectionalLight(0x8095a5,.78); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 // Only weak pools of light reach the abandoned interior; the corners stay dark.
 const warm=new THREE.PointLight(0xffb35c,7,13); warm.position.set(0,3,0); scene.add(warm);
 const hallLight=new THREE.PointLight(0xffd18a,3.5,8); hallLight.position.set(0,3,-8); scene.add(hallLight);
+const houseAmbient=new THREE.HemisphereLight(0x758b96,0x090d0c,0.42); scene.add(houseAmbient);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const floorMat=mat(0x302e29), wallMat=mat(0x555751), darkMat=mat(0x171d1c), wood=mat(0x45352a), trim=mat(0x292724), glass=new THREE.MeshStandardMaterial({color:0x263c43,transparent:true,opacity:.42,roughness:.35});
@@ -195,7 +195,7 @@ box(.5,.3,.025,mat(0x9c7548),0,.08,.205,radio);
 for(let i=0;i<5;i++){const knob=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.035,8),mat(0xd2b17d));knob.rotation.x=Math.PI/2;knob.position.set(-.23+i*.115,-.18,.23);radio.add(knob);}
 const loungeStations=[
  {name:'COMMUNITY TABLE',x:-5.8,z:-2.8,message:'Take a seat, meet the other passengers and share your theories.'},
- {name:'HOUSE NOTICEBOARD',x:-5.7,z:-7.1,message:'Community notice: be kind, keep private details private, and help new passengers find their way.'},
+ {name:'HOUSE NOTICEBOARD',x:-5.7,z:-7.1,message:'Open the evidence board and record alibis.'},
  {name:'OLD RADIO',x:-8.25,z:-4.9,message:'The radio crackles with local news and a warm, original instrumental tune.'}
 ];
 // PERSONAL PLAYER SUITE on the rooftop floor; décor choice is saved on this device.
@@ -319,6 +319,15 @@ box(2.1,.16,1.0,wood,14.6,.9,-3.2,secretRoomGroup);
 box(.12,.8,.12,trim,13.7,.4,-3.2,secretRoomGroup);
 box(.12,.8,.12,trim,15.5,.4,-3.2,secretRoomGroup);
 box(.75,.1,.5,mat(0x9c805d),14.6,1.05,-3.2,secretRoomGroup);
+// The concealed archive is dressed as a forgotten cellar beneath the house.
+for(let i=0;i<4;i++){
+ const pipe=box(.12,.12,4.1,rustSteel,12.2+i*.18,2.82,-4.8,secretRoomGroup);pipe.rotation.z=.015*i;
+ box(.72,.52,.58,wood,12.35+i*1.35,.38,-4.35,secretRoomGroup);
+ box(.62,.08,.48,trim,12.35+i*1.35,.68,-4.35,secretRoomGroup);
+}
+for(let i=0;i<5;i++){
+ const support=box(.18,2.8,.18,deadWood,12.1+i*1.08,1.35,-2.55,secretRoomGroup);support.rotation.z=(i%2?-.025:.025);
+}
 const archiveLamp=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:.55}));
 archiveLamp.position.set(14.5,2.65,-4.8);secretRoomGroup.add(archiveLamp);
 const archiveLedger=new THREE.Group();archiveLedger.position.set(14.6,1.2,-3.2);secretRoomGroup.add(archiveLedger);
@@ -761,6 +770,35 @@ document.querySelector('#online').onclick=openOnlineLobby;
 function modal(title,copy,content=''){document.querySelector('#modal-title').textContent=title;document.querySelector('#modal-copy').textContent=copy;document.querySelector('#modal-content').innerHTML=content;document.querySelector('#modal').classList.remove('hidden')}
 function closeModal(){document.querySelector('#modal').classList.add('hidden')}
 document.querySelector('#close-modal').onclick=closeModal;
+
+// Personal evidence and alibi notebook. Entries stay on this device and are not shared.
+const evidenceLog=[];
+let alibiNotes=[];
+try{const savedAlibis=JSON.parse(localStorage.getItem('mole-alibi-notes-v1')||'[]');if(Array.isArray(savedAlibis))alibiNotes=savedAlibis.slice(0,30);}catch{}
+function showEvidenceBoard(){
+ const evidence=evidenceLog.length?evidenceLog.map((item,i)=>`<div class="evidence-entry"><b>${i+1}. ${phoneEscape(item.name)}</b><small>${phoneEscape(item.time)}</small><p>${phoneEscape(item.description)}</p></div>`).join(''):'<p class="phone-muted">No evidence collected yet. Search the rooms for glowing objects.</p>';
+ const notes=alibiNotes.length?alibiNotes.map((note,i)=>`<div class="evidence-entry"><b>ALIBI NOTE ${i+1}</b><p>${phoneEscape(note)}</p></div>`).join(''):'<p class="phone-muted">No alibi notes recorded.</p>';
+ modal('BLACKWOOD EVIDENCE BOARD','Compare what you discover with what passengers tell you. Your notes are private to this device.',`<div class="evidence-board"><h3>COLLECTED EVIDENCE</h3>${evidence}<h3>ALIBI NOTES</h3>${notes}<form id="alibi-note-form"><input id="alibi-note-input" maxlength="180" placeholder="Record a passenger’s alibi…"/><button class="vote-option" type="submit">SAVE PRIVATE NOTE</button></form><small class="phone-muted">Alibi notes are your own observations, not verified player statements.</small></div>`);
+ document.querySelector('#alibi-note-form')?.addEventListener('submit',event=>{event.preventDefault();const input=document.querySelector('#alibi-note-input');const value=input?.value.trim();if(!value)return;alibiNotes.unshift(value);alibiNotes=alibiNotes.slice(0,30);try{localStorage.setItem('mole-alibi-notes-v1',JSON.stringify(alibiNotes));}catch{}showEvidenceBoard();});
+}
+
+// CCTV console: switch between fixed live viewpoints in the 3D house.
+const cctvViews=[
+ {name:'ENTRY HALL',position:[0,3.2,6.8],target:[0,1,0]},
+ {name:'CAFETERIA',position:[17.2,3.4,6.2],target:[14,1,0]},
+ {name:'SECOND FLOOR',position:[1.5,10.5,6.5],target:[0,8,0]},
+ {name:'DORMITORIES',position:[17,13.5,5.8],target:[14,12,0]}
+];
+let cctvActive=false,cctvIndex=0;
+const cctvPanel=document.createElement('div');cctvPanel.id='cctv-panel';cctvPanel.className='cctv-panel hidden';
+cctvPanel.innerHTML='<div class="cctv-head"><span>BLACKWOOD CCTV</span><b id="cctv-view-name">ENTRY HALL</b></div><div class="cctv-controls"><button id="cctv-prev" type="button">◀ PREVIOUS</button><button id="cctv-next" type="button">NEXT ▶</button><button id="cctv-close" type="button">EXIT CAMERAS</button></div><small>LIVE HOUSE FEED · CAMERA VIEW ONLY</small>';
+document.querySelector('#game').append(cctvPanel);
+function setCctvView(index){cctvIndex=(index+cctvViews.length)%cctvViews.length;document.querySelector('#cctv-view-name').textContent=cctvViews[cctvIndex].name;}
+function openCctv(){cctvActive=true;setCctvView(0);cctvPanel.classList.remove('hidden');notice('SECURITY ROOM • Live camera system connected.');}
+function closeCctv(){cctvActive=false;cctvPanel.classList.add('hidden');notice('Security camera view closed.');}
+document.querySelector('#cctv-prev').onclick=()=>setCctvView(cctvIndex-1);
+document.querySelector('#cctv-next').onclick=()=>setCctvView(cctvIndex+1);
+document.querySelector('#cctv-close').onclick=closeCctv;
 document.querySelector('#rules-button')?.addEventListener('click',()=>modal('HOW TO PLAY','Find clues, explore Blackwood House and work out who the hidden Mole is.', '<div class="room-list"><div>THE MOLE — the single hidden player</div><div>DETECTIVE — investigates a player</div><div>DOCTOR — protects a player</div><div>CITIZEN — studies clues and votes</div></div>'));
 document.querySelector('#chat-button')?.addEventListener('click',()=>{
  modal('MESSAGES','Group chat is available when you join an online room.', '<div id="chat-log" class="chat-log"></div><form id="chat-form"><input id="chat-input" maxlength="180" placeholder="Write a group message" autocomplete="off"><button type="submit">SEND</button></form>');
@@ -1018,7 +1056,7 @@ document.querySelector('#ability').onclick=()=>{
 updateStatus();
 // The role reveal is shown after the player enters the house from the bus scene.
 
-document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k===' ')e.preventDefault();keys[k===' '?'space':k]=true;if(k==='c')switchCamera();if(k==='e')interact();if(k==='f'&&!e.repeat)toggleFlashlight()});
+document.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k===' ')e.preventDefault();keys[k===' '?'space':k]=true;if(k==='c')switchCamera();if(k==='e')interact();if(k==='f'&&!e.repeat)toggleFlashlight();if(k==='escape'&&cctvActive)closeCctv()});
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
@@ -1030,6 +1068,8 @@ function updateObjective(){
 }
 function interact(){
  const p=player.group.position;
+ if(cctvActive){closeCctv();return;}
+ if(currentFloor===0&&Math.hypot(p.x-16.5,p.z-2.6)<2.7){openCctv();return;}
  // The bookshelf in the east wing opens only after the brass key is collected.
  if(currentFloor===0&&!secretRoomOpen&&Math.hypot(p.x-14.5,p.z+1.7)<2.6){
   if(!hasBrassKey){notice('A hidden bookshelf is locked. Find the BRASS KEY in the house.');playCue();return;}
@@ -1048,13 +1088,13 @@ function interact(){
 
  let station=null,stationDistance=2.5;
  for(const item of loungeStations){const d=Math.hypot(p.x-item.x,p.z-item.z);if(d<stationDistance){stationDistance=d;station=item;}}
- if(station){notice(station.name+' • '+station.message);playCue();return;}
+ if(station){if(station.name==='HOUSE NOTICEBOARD'){showEvidenceBoard();playCue();return;}notice(station.name+' • '+station.message);playCue();return;}
 
  // Pick up the nearest clue.
  let nearestClue=null,clueDist=2.4;
  for(const clue of clueItems){if(clue.collected)continue;const d=p.distanceTo(clue.group.position);if(d<clueDist){clueDist=d;nearestClue=clue}}
  if(nearestClue){
-  nearestClue.collected=true;nearestClue.group.parent?.remove(nearestClue.group);if(nearestClue.name==='BRASS KEY')hasBrassKey=true;cluesFound++;playSfx('clue');recordPlayerProgress('clues',1);updateObjective();
+  nearestClue.collected=true;nearestClue.group.parent?.remove(nearestClue.group);if(nearestClue.name==='BRASS KEY')hasBrassKey=true;cluesFound++;evidenceLog.unshift({name:nearestClue.name,description:nearestClue.description,time:new Date().toLocaleTimeString()});playSfx('clue');recordPlayerProgress('clues',1);updateObjective();
   notice(`${nearestClue.name} collected.`);
   if(cluesFound===6){exitUnlocked=false;notice('All six clues found. The house has revealed its secrets, but the front door remains sealed.');}
   return;
@@ -1118,13 +1158,16 @@ dustGeometry.setAttribute('position',new THREE.BufferAttribute(dustPositions,3))
 const dust=new THREE.Points(dustGeometry,new THREE.PointsMaterial({color:0xd7c5a3,size:isMobileDevice?.035:.045,transparent:true,opacity:.3,depthWrite:false,sizeAttenuation:true}));
 scene.add(dust);
 
-let lastMobileRender=0;
+let lastMobileRender=0,nextPowerOutage=42+Math.random()*28,powerOutageRemaining=0,powerOutageActive=false;
 function animate(now=0){requestAnimationFrame(animate);
  // On phones, throttle the whole simulation to 30 updates per second, not just drawing.
  // This reduces CPU work for budget Android devices while keeping motion consistent.
  if(isMobileDevice&&now-lastMobileRender<33)return;
  if(isMobileDevice)lastMobileRender=now;
  const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ // Random short power failures: lights dim, then return with a generator flicker.
+ if(!powerOutageActive&&elapsed>=nextPowerOutage){powerOutageActive=true;powerOutageRemaining=4.5+Math.random()*3.5;warm.userData.savedIntensity=7;hallLight.userData.savedIntensity=3.5;houseAmbient.userData.savedIntensity=.42;notice('POWER FAILURE • The generator has cut out. Stay alert.');playCue();}
+ if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?.45:.08;warm.intensity=flicker;hallLight.intensity=flicker*.55;houseAmbient.intensity=.12;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=7;hallLight.intensity=3.5;houseAmbient.intensity=.42;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The lights are back on.');playCue();}}
  // Slow drifting dust is deliberately lightweight for budget phones.
  const dustPos=dust.geometry.attributes.position;
  for(let i=0;i<dustCount;i++){
@@ -1228,9 +1271,10 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
    if(arrivalCaption&&arrivalCaption.textContent!==caption)arrivalCaption.textContent=caption;
   }
  }else{
-  // Normal player camera rigs
+  // Normal player camera rigs, or a fixed CCTV viewpoint while the console is open.
   const target=new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z);
-  if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,p.position.y+.7,p.position.z)}
+  if(cctvActive){const view=cctvViews[cctvIndex];camera.position.lerp(new THREE.Vector3(...view.position),.16);camera.lookAt(new THREE.Vector3(...view.target));}
+  else if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,p.position.y+.7,p.position.z)}
   else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2+p.position.y,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
   else {const eye=new THREE.Vector3(p.position.x,p.position.y+1.72,p.position.z);camera.position.lerp(eye,.25);camera.rotation.set(0,p.rotation.y,0);camera.rotateY(Math.PI)}
  }
