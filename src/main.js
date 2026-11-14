@@ -501,11 +501,10 @@ socket.on('round:state',state=>{
  document.querySelector('#phase').textContent=state.phase==='LOBBY'?'GATHERING':state.phase==='ENDED'?'ROUND OVER':state.phase+(state.day?' '+state.day:'');
  const alive=state.players.filter(p=>p.alive).length;
  document.querySelector('#house-status').textContent=`PLAYERS: ${alive}/${state.players.length} • ONLINE`;
- if(state.phase==='NIGHT')showOnlineNightAction(state);
- if(state.phase==='DISCUSSION')showOnlineDiscussion(state);
- if(state.phase==='VOTE')showOnlineVote(state);
+ renderPhoneTab();
  if(state.phase==='RESULTS'&&onlinePromptKey!==`RESULTS:${state.day}`){onlinePromptKey=`RESULTS:${state.day}`;modal('VOTE COMPLETE','The group decision is being revealed. The next night begins shortly.','<p>Stay alert. Watch who changes their story.</p>');}
  if(state.phase==='LOBBY'||state.phase==='ENDED')onlinePromptKey='';
+ renderPhoneTab();
 });
 socket.on('round:notice',data=>notice(data.message));
 socket.on('round:actionCount',data=>notice(`NIGHT ACTIONS: ${data.count}/${data.total}`));
@@ -982,17 +981,68 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
 
 
-// Private player messages (online rooms only).
-const privateButton=document.createElement('button');privateButton.id='private-chat-button';privateButton.textContent='✉ PRIVATE';document.querySelector('.social-tools')?.append(privateButton);
-privateButton.onclick=()=>{
- if(!onlineRoom||!socket.connected){notice('Join an online room before sending private messages.');return;}
- const others=onlineRoom.players.filter(p=>p.id!==socket.id);if(!others.length){notice('No other players are in this room yet.');return;}
- modal('PRIVATE MESSAGES','Only you and the selected player receive this message.','<label class="private-label">MESSAGE PLAYER</label><select id="private-target" class="private-input"></select><div id="private-thread" class="private-thread"></div><form id="private-form"><input id="private-input" class="private-input" maxlength="180" placeholder="Write a private message"><button>SEND</button></form>');
- const select=document.querySelector('#private-target');others.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;select.append(o)});
- document.querySelector('#private-form').onsubmit=e=>{e.preventDefault();const input=document.querySelector('#private-input'),message=input.value.trim();if(message){socket.emit('chat:private',{to:select.value,message});input.value=''}};
-};
-socket.on('chat:private',packet=>{const thread=document.querySelector('#private-thread');if(!thread){notice('New private message from '+packet.from+'.');return;}const p=document.createElement('p');p.textContent=packet.from+' → '+packet.to+': '+packet.message;thread.append(p);thread.scrollTop=thread.scrollHeight;});
-
+// Player phone: private messages, live voting, player list and personal notes.
+let phoneActiveTab='vote',phoneMessages=[],phoneNotes='';
+const phoneButton=document.querySelector('#game-phone-button');
+const phonePanel=document.querySelector('#game-phone');
+const phoneContent=document.querySelector('#phone-content');
+function phoneEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function openGamePhone(tab='vote'){
+ phoneActiveTab=tab;phonePanel?.classList.remove('hidden');phoneButton?.classList.add('phone-open');renderPhoneTab();
+}
+function closeGamePhone(){phonePanel?.classList.add('hidden');phoneButton?.classList.remove('phone-open');}
+phoneButton?.addEventListener('click',()=>phonePanel?.classList.contains('hidden')?openGamePhone():closeGamePhone());
+document.querySelector('#phone-close')?.addEventListener('click',closeGamePhone);
+document.querySelectorAll('[data-phone-tab]').forEach(button=>button.addEventListener('click',()=>{phoneActiveTab=button.dataset.phoneTab;renderPhoneTab();}));
+function renderPhoneTab(){
+ if(!phoneContent)return;
+ document.querySelectorAll('[data-phone-tab]').forEach(b=>b.classList.toggle('active',b.dataset.phoneTab===phoneActiveTab));
+ if(phoneActiveTab==='vote'){
+  if(!onlineRoom||!socket.connected){phoneContent.innerHTML='<div class="phone-empty"><b>NO ROOM CONNECTED</b><p>Join an online room to vote with other players.</p><button id="phone-open-lobby" class="phone-action">OPEN ONLINE LOBBY</button></div>';document.querySelector('#phone-open-lobby')?.addEventListener('click',openOnlineLobby);return;}
+  const state=onlineRoundState||onlineRoom,phase=state.phase||'LOBBY',players=state.players||[];
+  let html='<div class="phone-section-kicker">ROUND CONTROL</div><h3>'+phoneEscape(phase==='VOTE'?'Emergency vote':phase==='NIGHT'?'Night actions':phase==='DISCUSSION'?'Discussion':'Room status')+'</h3><p class="phone-muted">ROOM '+phoneEscape(state.code||onlineRoom.code)+' · DAY '+(state.day||0)+'</p>';
+  if(phase==='LOBBY'){html+='<p>Waiting for the host to begin the round.</p>'+(onlineRoom.hostId===socket.id?'<button id="phone-start-round" class="phone-action">START ROUND</button>':'');}
+  else if(phase==='NIGHT'){
+   if(onlineRole==='GHOST')html+='<p>You are spectating. You cannot use night actions.</p>';
+   else if(['MAFIA','DETECTIVE','DOCTOR'].includes(onlineRole)){
+    html+='<p>Your role: <b>'+phoneEscape(onlineRole)+'</b>. Choose a player for your secret action.</p>';
+    const targets=players.filter(p=>p.alive&&(onlineRole==='DOCTOR'||p.id!==socket.id));
+    html+=targets.map(p=>'<button class="phone-player-action" data-phone-night="'+phoneEscape(p.id)+'">'+phoneEscape(p.name)+'</button>').join('')||'<p>No available targets.</p>';
+   }else html+='<p>Stay alert. Your role has no night action.</p>';
+  }else if(phase==='DISCUSSION'){
+   html+='<p>Talk with the room and compare what everyone knows.</p><button id="phone-open-vote" class="phone-action">OPEN VOTING</button>';
+  }else if(phase==='VOTE'){
+   if(onlineRole==='GHOST')html+='<p>You are spectating and cannot vote.</p>';
+   else if(state.votedIds?.includes(socket.id))html+='<p class="phone-success">✓ Your vote has been submitted.</p><p>Waiting for the other players…</p>';
+   else {html+='<p>Choose one living player. Your vote is private.</p>'+players.filter(p=>p.alive&&p.id!==socket.id).map(p=>'<button class="phone-player-action" data-phone-vote="'+phoneEscape(p.id)+'">VOTE FOR '+phoneEscape(p.name)+'</button>').join('')+'<button class="phone-skip" data-phone-vote="SKIP">SKIP THIS VOTE</button>';}
+  }else if(phase==='RESULTS')html+='<p>The votes have been counted. Watch for the result.</p>';
+  else if(phase==='ENDED')html+='<p>The round has ended. Check the game announcement.</p>';
+  phoneContent.innerHTML=html;
+  document.querySelector('#phone-start-round')?.addEventListener('click',()=>socket.emit('round:start',res=>{if(!res?.ok)notice(res?.error||'Could not start round.');}));
+  document.querySelector('#phone-open-vote')?.addEventListener('click',()=>socket.emit('round:meeting',res=>{if(!res?.ok)notice(res?.error||'Voting is not ready.');}));
+  document.querySelectorAll('[data-phone-night]').forEach(b=>b.addEventListener('click',()=>socket.emit('round:action',{targetId:b.dataset.phoneNight},res=>{if(!res?.ok)notice(res?.error||'Action not accepted.');else{notice('Your secret action has been submitted.');renderPhoneTab();}})));
+  document.querySelectorAll('[data-phone-vote]').forEach(b=>b.addEventListener('click',()=>socket.emit('round:castVote',{targetId:b.dataset.phoneVote},res=>{if(!res?.ok)notice(res?.error||'Vote not accepted.');else{notice('Your vote has been submitted.');renderPhoneTab();}})));
+ }else if(phoneActiveTab==='messages'){
+  const others=(onlineRoom?.players||[]).filter(p=>p.id!==socket.id);
+  const selected=others[0]?.id||'';
+  const messages=phoneMessages.map(m=>'<article class="phone-message '+(m.fromId===socket.id?'sent':'received')+'"><b>'+phoneEscape(m.from)+'</b><p>'+phoneEscape(m.message)+'</p><small>'+new Date(m.at||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</small></article>').join('');
+  phoneContent.innerHTML='<div class="phone-section-kicker">PRIVATE INBOX</div><h3>Your messages</h3><div class="phone-thread">'+(messages||'<p class="phone-muted">Your private conversations will appear here.</p>')+'</div>'+(others.length?'<form id="phone-message-form" class="phone-message-form"><label for="phone-message-to">MESSAGE PLAYER</label><select id="phone-message-to">'+others.map(p=>'<option value="'+phoneEscape(p.id)+'">'+phoneEscape(p.name)+'</option>').join('')+'</select><textarea id="phone-message-text" maxlength="180" rows="2" placeholder="Write a private message…"></textarea><button class="phone-action" type="submit">SEND MESSAGE</button></form>':'<p class="phone-muted">Join a room with other players to message them.</p>')+'<button id="phone-group-chat" class="phone-secondary">OPEN ROOM GROUP CHAT</button>';
+  document.querySelector('#phone-message-form')?.addEventListener('submit',e=>{e.preventDefault();const message=document.querySelector('#phone-message-text').value.trim(),to=document.querySelector('#phone-message-to').value;if(message&&to&&socket.connected){socket.emit('chat:private',{to,message});document.querySelector('#phone-message-text').value='';}});
+  document.querySelector('#phone-group-chat')?.addEventListener('click',()=>document.querySelector('#chat-button')?.click());
+ }else if(phoneActiveTab==='players'){
+  const players=onlineRoom?.players||[];
+  phoneContent.innerHTML='<div class="phone-section-kicker">ROOM DIRECTORY</div><h3>Passengers</h3>'+(players.length?players.map(p=>'<div class="phone-contact"><span class="phone-contact-avatar">'+phoneEscape((p.name||'?').slice(0,1).toUpperCase())+'</span><div><b>'+phoneEscape(p.name)+'</b><small>'+(p.id===onlineRoom.hostId?'ROOM HOST':'PLAYER')+'</small></div><span class="'+(p.alive===false?'phone-offline':'phone-alive')+'">'+(p.alive===false?'OUT':'IN')+'</span></div>').join(''):'<p class="phone-muted">Join an online room to see its players.</p>');
+ }else if(phoneActiveTab==='notes'){
+  phoneContent.innerHTML='<div class="phone-section-kicker">PERSONAL NOTEBOOK</div><h3>Your investigation notes</h3><p class="phone-muted">Only saved on this device. Do not write passwords or personal contact details here.</p><textarea id="phone-notes" class="phone-notes" maxlength="1500" placeholder="Write down clues, timelines and suspicions…">'+phoneEscape(phoneNotes)+'</textarea><small class="phone-muted">Notes are private to this browser session.</small>';
+  document.querySelector('#phone-notes')?.addEventListener('input',e=>{phoneNotes=e.target.value;});
+ }
+}
+socket.on('chat:private',packet=>{
+ phoneMessages.push({...packet,fromId:packet.from===onlineName?socket.id:null});
+ if(phoneMessages.length>60)phoneMessages.shift();
+ if(phonePanel?.classList.contains('hidden')){const badge=document.querySelector('#phone-unread');if(badge){badge.textContent=String(Number(badge.textContent||0)+1);badge.classList.remove('hidden');}}
+ if(phoneActiveTab==='messages')renderPhoneTab();
+});
 // Public community discussion board, separate from private game-room chat.
 const boardButton=document.createElement('button');
 boardButton.id='discussion-board-button';
