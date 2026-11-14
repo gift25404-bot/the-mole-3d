@@ -12,8 +12,8 @@ const deviceMemoryGB=navigator.deviceMemory||4;
 const cpuCores=navigator.hardwareConcurrency||4;
 // Three quality tiers let budget Android phones use simpler rendering.
 const lowPowerDevice=isMobileDevice&&(deviceMemoryGB<=4||cpuCores<=4);
-const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 0.9 : 1.15):1.7);
-const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
+const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 1.0 : 1.3):1.7);
+const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice||!lowPowerDevice,powerPreference:lowPowerDevice?'low-power':'high-performance',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.86;
@@ -1258,9 +1258,14 @@ function animate(now=0){requestAnimationFrame(animate);
  const p=player.group;let dx=0,dz=0;
  const floorName=p.position.y<-1?'HIDDEN CELLAR':p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
  floorBadge.textContent=floorName;
-if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
+if(keys.w||keys.arrowup)dz-=1;if(keys.s||keys.arrowdown)dz+=1;if(keys.a||keys.arrowleft)dx-=1;if(keys.d||keys.arrowright)dx+=1;
  const moving=(dx!==0||dz!==0)&&!localPlayerDead&&!cctvActive;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);
+ if(moving){const inputLen=Math.hypot(dx,dz);dx/=inputLen;dz/=inputLen;
+  // WASD and touch arrows follow the current camera direction, not fixed world axes.
+  let forwardX,forwardZ;
+  if(cameraMode===0){forwardX=-.646;forwardZ=-.763;}else{forwardX=Math.sin(p.rotation.y);forwardZ=Math.cos(p.rotation.y);}
+  const rightX=forwardZ,rightZ=-forwardX,moveX=rightX*dx-forwardX*dz,moveZ=rightZ*dx-forwardZ*dz;
+  p.position.x+=moveX*speed*dt;p.position.z+=moveZ*speed*dt;p.rotation.y=Math.atan2(moveX,moveZ);
   // Keep every passenger inside Blackwood House and its connected east wing.
   p.position.x=THREE.MathUtils.clamp(p.position.x,-9.35,17.35);
   p.position.z=THREE.MathUtils.clamp(p.position.z,-7.15,7.15);
