@@ -639,3 +639,73 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .phone-content .board-post-form textarea{min-height:38px;padding:7px}
  .phone-content .board-post-form button{padding:7px}
 }
+
+
+/* BLACKWOOD ACCESS GATE — haunted sign-in atmosphere */
+.auth-screen{
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 50% 12%,rgba(112,24,28,.22),transparent 42%),
+    radial-gradient(ellipse at 50% 100%,rgba(0,0,0,.92),transparent 62%),
+    linear-gradient(145deg,#030608 0%,#101518 48%,#08090b 100%);
+}
+.auth-screen::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(210,220,215,.025) 4px,transparent 5px),
+    radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.72) 100%);
+  animation:gate-static 7s steps(2,end) infinite;
+}
+.auth-screen::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(94,13,18,.10) 48%,transparent 62%);
+  animation:gate-sweep 8s ease-in-out infinite;
+}
+.auth-card{
+  position:relative;
+  background:linear-gradient(160deg,rgba(12,17,20,.98),rgba(5,9,12,.99));
+  border:1px solid rgba(133,52,49,.72);
+  border-radius:3px;
+  box-shadow:0 25px 100px #000,0 0 34px rgba(111,18,23,.16),inset 0 0 35px rgba(0,0,0,.45);
+}
+.auth-card::before{
+  content:"RESTRICTED • BLACKWOOD PROPERTY";
+  display:block;margin:-9px 0 17px;padding:7px 8px;
+  border-top:1px solid #592326;border-bottom:1px solid #592326;
+  color:#b66a63;text-align:center;
+  font:8px 'DM Mono',monospace;letter-spacing:2px;
+}
+.auth-mark{
+  border:1px solid #9d3b3b;color:#e0a19a;
+  box-shadow:0 0 18px rgba(143,25,30,.3),inset 0 0 12px rgba(143,25,30,.16);
+  animation:mark-pulse 4.5s ease-in-out infinite;
+}
+.auth-card h1{color:#e4d2c4;text-shadow:0 0 18px rgba(151,35,39,.32);letter-spacing:4px}
+.auth-card>.eyebrow{color:#b46b63;letter-spacing:2px}
+.auth-intro{color:#a9a6a0}
+.auth-tabs{border-color:#45282a}
+.auth-tabs button.active{color:#e7a39a;border-bottom-color:#a83d40}
+#auth-form label{color:#c18d83}
+#auth-form input{
+  background:#070c0f;border:1px solid #493638;border-radius:0;
+  box-shadow:inset 0 2px 12px #0009;
+}
+#auth-form input:focus{border-color:#a84a4b;box-shadow:0 0 0 2px #8c252533}
+#auth-submit{
+  background:linear-gradient(100deg,#70282b,#a43c3d 55%,#70282b);
+  border:1px solid #c36b63;color:#fff0e9;
+  box-shadow:0 5px 18px #5b101533;letter-spacing:1.8px;
+}
+#auth-submit:hover{filter:brightness(1.16)}
+.auth-feedback{color:#d59a8e}
+.continue-guest{
+  width:100%;margin:0 0 14px;padding:11px;
+  background:#101619;border:1px solid #48504c;color:#c6c3b9;
+  font:9px 'DM Mono';letter-spacing:1.4px;cursor:pointer;
+}
+.continue-guest:hover{border-color:#9d5550;color:#f0d6ca}
+.auth-foot{color:#777b78}
+@keyframes mark-pulse{0%,92%,100%{box-shadow:0 0 12px #8f191e22}94%{box-shadow:0 0 24px #c3292d77}}
+@keyframes gate-static{0%,96%,100%{opacity:.55}97%{opacity:.9}98%{opacity:.35}}
+@keyframes gate-sweep{0%,100%{transform:translateY(-18%);opacity:.18}50%{transform:translateY(18%);opacity:.5}}
+@media(prefers-reduced-motion:reduce){.auth-screen::before,.auth-screen::after,.auth-mark{animation:none}}
