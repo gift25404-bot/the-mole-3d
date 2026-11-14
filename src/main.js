@@ -70,7 +70,20 @@ box(8,.25,2.5,wood,0,-.02,9.6,house);
 const concrete=mat(0x77766f,.98),rawConcrete=mat(0x96948a,.98),blockwork=mat(0x625f57,.98),rustSteel=mat(0x754c36,.8),scaffoldMat=mat(0x394b50,.8);
 const slab=(x,z,w,d,y)=>box(w,.34,d,concrete,x,y,z,house);
 slab(0,0,20,17,7.6);slab(0,0,20,17,11.4);
-slab(14,0,8,15,7.6);slab(14,0,8,15,11.4);
+// Stairwell openings keep both concrete flights clear through the floor slabs.
+const slabPanel=(x,z,w,d,y)=>slab(x,z,w,d,y);
+for(const y of [7.6]){
+  slabPanel(11.05,0,2.1,15,y);
+  slabPanel(16.2,0,3.6,15,y);
+  slabPanel(13.25,-6.65,2.3,1.7,y);
+  slabPanel(13.25,6.65,2.3,1.7,y);
+}
+for(const y of [11.4]){
+  slabPanel(12.65,0,5.3,15,y);
+  slabPanel(17.6,0,.8,15,y);
+  slabPanel(16.25,-6.65,1.9,1.7,y);
+  slabPanel(16.25,6.65,1.9,1.7,y);
+}
 // Reinforced-concrete columns at each structural bay.
 for(const y of [5.7,9.5]){
  for(const [x,z] of [[-9.55,-8.05],[-3.2,-8.05],[3.2,-8.05],[9.55,-8.05],[-9.55,0],[9.55,0],[-9.55,8.05],[-3.2,8.05],[3.2,8.05],[9.55,8.05],[10.2,-7],[17.8,-7],[10.2,7],[17.8,7]]){
@@ -769,6 +782,7 @@ function interact(){
  notice('Nothing to interact with here.');
 }
 updateObjective();
+let currentFloor=0;
 const clock=new THREE.Clock();let elapsed=0,lastNetworkMove=0;
 const floorBadge=document.createElement('div');
 floorBadge.id='floor-indicator';
@@ -797,21 +811,21 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  floorBadge.textContent=floorName;
 if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
- if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40);
- // Stair zones set the avatar's actual elevation, making both upper levels walkable.
+ if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);p.position.x=THREE.MathUtils.clamp(p.position.x,-42,42);p.position.z=THREE.MathUtils.clamp(p.position.z,-40,40);}
+ // Keep the avatar grounded on the current storey and follow either stair flight.
  const onFirstStairs=p.position.x>12.05&&p.position.x<14.45&&p.position.z>-5.95&&p.position.z<5.95;
  const onSecondStairs=p.position.x>15.35&&p.position.x<17.15&&p.position.z>-5.95&&p.position.z<5.95;
- if(onFirstStairs&&p.position.y<8.4){
+ if(onFirstStairs&&currentFloor<=1){
   const progress=THREE.MathUtils.clamp((5.6-p.position.z)/11.2,0,1);
   p.position.y=progress*7.8;
- }else if(onSecondStairs&&p.position.y>7.35){
+  if(progress<.025)currentFloor=0;else if(progress>.975)currentFloor=1;
+ }else if(onSecondStairs&&currentFloor>=1){
   const progress=THREE.MathUtils.clamp((p.position.z+5.6)/11.2,0,1);
   p.position.y=7.8+progress*3.8;
- }else if(p.position.y>7.2&&p.position.y<8.5&&p.position.x>9.8&&p.position.x<19&&p.position.z>-8&&p.position.z<8){
-  p.position.y=7.8;
- }else if(p.position.y>11.1){
-  p.position.y=11.6;
- }}
+  if(progress<.025)currentFloor=1;else if(progress>.975)currentFloor=2;
+ }else{
+  p.position.y=[0,7.8,11.6][currentFloor];
+ }
  player.limbs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(elapsed*10+i*Math.PI)*.65:Math.sin(elapsed*2+i)*.035});
  npcs.forEach((n,i)=>{n.phase+=dt;const t=n.phase; n.group.position.x+=Math.sin(t*.24+i)*.0015;n.group.position.z+=Math.cos(t*.22+i)*.0015;n.limbs.forEach((l,j)=>l.rotation.x=Math.sin(t*2+j)*.08)});
  sideMissionItems.forEach(item=>{if(!item.collected){item.group.position.y=.45+Math.sin(elapsed*2+item.phase)*.13;item.group.rotation.y+=dt*.8;}});
@@ -823,7 +837,7 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
  // Camera rigs
  const target=new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z);
- if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,0,p.position.z)}
+ if(cameraMode===0){const desired=new THREE.Vector3(p.position.x+11,12+p.position.y,p.position.z+13);camera.position.lerp(desired,.08);camera.lookAt(p.position.x,p.position.y+.7,p.position.z)}
  else if(cameraMode===1){const behind=new THREE.Vector3(p.position.x-Math.sin(p.rotation.y)*5,3.2+p.position.y,p.position.z-Math.cos(p.rotation.y)*5);camera.position.lerp(behind,.12);camera.lookAt(target)}
  else {const eye=new THREE.Vector3(p.position.x,p.position.y+1.72,p.position.z);camera.position.lerp(eye,.25);camera.rotation.set(0,p.rotation.y,0);camera.rotateY(Math.PI)}
  // labels face camera
