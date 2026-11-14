@@ -590,3 +590,12 @@ html,body,#game{background:#243b46;color:#fff2d8}
   #landscape-lock p { margin:0 auto 20px;max-width:290px;color:#d0c6b4;font-size:14px;line-height:1.6; }
   #landscape-lock span { display:inline-block;padding:9px 12px;border:1px solid #80633e;border-radius:999px;color:#e8c58d;font-size:10px;font-weight:800;letter-spacing:.14em; }
 }
+
+
+/* Portrait is allowed for account access and character setup; gameplay stays landscape-only. */
+@media (max-width:900px) and (orientation:portrait) {
+  #game:has(#auth-screen:not(.hidden)) #landscape-lock,
+  #game:has(#avatar-screen:not(.hidden)) #landscape-lock { display:none; }
+  #game:has(#auth-screen:not(.hidden)) > #auth-screen,
+  #game:has(#avatar-screen:not(.hidden)) > #avatar-screen { visibility:visible !important; }
+}
