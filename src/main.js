@@ -8,7 +8,11 @@ scene.fog = new THREE.FogExp2(0x243b46, 0.012);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
 // Detect phones/tablets early and select a lighter renderer profile.
 const isMobileDevice=matchMedia('(max-width: 800px), (pointer: coarse)').matches;
-const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?1.2:1.7);
+const deviceMemoryGB=navigator.deviceMemory||4;
+const cpuCores=navigator.hardwareConcurrency||4;
+// Three quality tiers let budget Android phones use simpler rendering.
+const lowPowerDevice=isMobileDevice&&(deviceMemoryGB<=4||cpuCores<=4);
+const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice?.85:1.05):1.7);
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
@@ -34,7 +38,7 @@ for(const side of [-1,1]){
   for(let x=-38;x<=38;x+=12){
     const pole=box(.16,6,.16,trim,x,3,side*16);
     box(1.5,.12,.12,trim,x+.65,5.8,side*16);
-    const glow=new THREE.PointLight(0xffc477,5,11);glow.position.set(x+.7,5.5,side*16);scene.add(glow);
+    if(!isMobileDevice){const glow=new THREE.PointLight(0xffc477,5,11);glow.position.set(x+.7,5.5,side*16);scene.add(glow);}
     // Small palm silhouettes along the road.
     const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,3.8,7),wood);trunk.position.set(x,1.8,side*25);scene.add(trunk);
     for(let f=0;f<6;f++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.24,3.2,5),palmMat);leaf.position.set(x+Math.cos(f*Math.PI/3)*1.15,3.7,side*25+Math.sin(f*Math.PI/3)*1.15);leaf.rotation.z=Math.cos(f*Math.PI/3)*.75;leaf.rotation.x=Math.sin(f*Math.PI/3)*.75;scene.add(leaf);}
@@ -181,7 +185,7 @@ addMissionPickup('OLD MARKET TOKEN',-34,18,0xd69b55);
 updateCoins();
 
 // hanging lamps
-for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}
+for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);if(!isMobileDevice){const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}}
 // exterior trees and fence-like silhouettes
 for(let i=0;i<22;i++){const a=i/22*Math.PI*2, r=14+Math.sin(i*4)*2,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.3,2.2,5),wood);trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,3.2,6),mat(0x263a35));crown.position.set(x,3.3,z);crown.castShadow=true;scene.add(crown)}
 // Fill the empty lots with overgrown trees and abandoned, weathered vehicles.
@@ -271,7 +275,7 @@ for(let x=-40;x<=40;x+=10){
 
 // minibus
 // Live rain particles and a distant lightning flash make the night storm visible.
-const rainCount=isMobileDevice?220:700, rainPositions=new Float32Array(rainCount*3);
+const rainCount=isMobileDevice?(lowPowerDevice?90:160):700, rainPositions=new Float32Array(rainCount*3);
 for(let i=0;i<rainCount;i++){
  rainPositions[i*3]=(Math.random()-.5)*86;
  rainPositions[i*3+1]=Math.random()*25;
@@ -885,7 +889,8 @@ floorBadge.id='floor-indicator';
 floorBadge.textContent='GROUND FLOOR';
 document.querySelector('#game').append(floorBadge);
 
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+let lastMobileRender=0;
+function animate(now=0){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  // Animate the rain around the world and occasionally illuminate the skyline.
  const rainPos=rain.geometry.attributes.position;
  for(let i=0;i<rainCount;i++){
@@ -970,10 +975,10 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  }
  // labels face camera
  all.forEach(a=>a.group.children.forEach(c=>{if(c.isSprite)c.quaternion.copy(camera.quaternion)}));
- renderer.render(scene,camera);
+ if(!isMobileDevice||now-lastMobileRender>=33){renderer.render(scene,camera);lastMobileRender=now;}
 }
 animate();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileDevice?1.2:1.7))});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice?.85:1.05):1.7))});
 notice('THE BUS HAS BROKEN DOWN — GATHER WITH THE PASSENGERS');
 
 
