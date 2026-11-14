@@ -422,18 +422,18 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
  const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0x30343b,.9),shoeMat=mat(0x17191c,.8);
  const dark=mat(0x211b1a,.6),white=mat(0xfff8ed,.45),iris=mat(0x30251f,.4);
  const sphere=(radius,material,px,py,pz,sx=1,sy=1,sz=1)=>{
-  const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,16,12),material);
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,24,18),material);
   mesh.position.set(px,py,pz);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;g.add(mesh);return mesh;
  };
  // Oversized rounded head and neck create a friendly cartoon silhouette.
  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.13,.15,.22,12),skinMat);neck.position.y=1.48;g.add(neck);
  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.37,.48,5,12),shirtMat);torso.position.y=1.12;torso.scale.set(1,.94,.72);torso.castShadow=true;g.add(torso);
- const head=sphere(.39,skinMat,0,1.94,0,1,.99,.88);
+ const head=sphere(.43,skinMat,0,1.97,0,1,.99,.9);
  // Ears and a small rounded nose.
  sphere(.105,skinMat,-.385,1.92,0,1,.9,.72);sphere(.105,skinMat,.385,1.92,0,1,.9,.72);
  sphere(.055,skinMat,0,1.84,.345,.85,.8,.8);
  // Hair cap, fringe and side locks.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.405,16,12,0,Math.PI*2,0,Math.PI*.57),hairMat);
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.445,24,16,0,Math.PI*2,0,Math.PI*.57),hairMat);
  cap.position.set(0,2.075,-.018);cap.castShadow=true;g.add(cap);
  const hairPieces=[cap];
  for(const [hx,hy,hz,scale] of [[-.22,2.08,.245,.78],[0,2.12,.29,.72],[.22,2.08,.245,.78]]){
@@ -442,19 +442,19 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false){
  hairPieces.push(sphere(.13,hairMat,-.34,1.91,-.015,.75,1.2,.8));
  hairPieces.push(sphere(.13,hairMat,.34,1.91,-.015,.75,1.2,.8));
  // Large bright eyes, pupils and expressive eyebrows.
- for(const ex of [-.145,.145]){
-  sphere(.092,white,ex,1.965,.306,1,.92,.5);
-  sphere(.046,iris,ex+.012,1.96,.35,.92,1,.55);
-  sphere(.019,dark,ex+.012,1.96,.372,1,1,.6);
-  sphere(.018,white,ex-.005,1.982,.385,1,1,.6);
-  const brow=new THREE.Mesh(new THREE.CapsuleGeometry(.018,.105,3,6),hairMat);
+ for(const ex of [-.155,.155]){
+  sphere(.108,white,ex,1.98,.333,1,.96,.56);
+  sphere(.054,iris,ex+.012,1.975,.38,.92,1,.58);
+  sphere(.023,dark,ex+.012,1.975,.402,1,1,.6);
+  sphere(.022,white,ex-.008,1.999,.418,1,1,.6);
+  const brow=new THREE.Mesh(new THREE.CapsuleGeometry(.024,.12,4,8),hairMat);
   brow.position.set(ex,2.105,.302);brow.rotation.z=ex<0?-.12:.12;g.add(brow);
  }
  // A small curved smile gives each passenger a friendly avatar expression.
  const smileCurve=new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-.09,1.755,.326),new THREE.Vector3(0,1.725,.35),new THREE.Vector3(.09,1.755,.326)
+  new THREE.Vector3(-.105,1.765,.345),new THREE.Vector3(0,1.73,.365),new THREE.Vector3(.105,1.765,.345)
  ]);
- const smile=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,12,.012,5,false),dark);g.add(smile);
+ const smile=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,16,.016,6,false),dark);g.add(smile);
  // Clothing details: collar, sleeves, hands, trousers and shoes.
  const collar=new THREE.Mesh(new THREE.ConeGeometry(.115,.13,4),mat(0xe5d6bc,.8));
  collar.position.set(0,1.48,.19);collar.rotation.y=Math.PI/4;g.add(collar);
@@ -1118,7 +1118,7 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  // clue items hover gently until collected
  clueItems.forEach(c=>{if(!c.collected)c.group.position.y=c.baseY+Math.sin(elapsed*2+c.phase)*.09;});
  // flicker the old house lights
- warm.intensity=35+Math.sin(elapsed*8)*2+(Math.sin(elapsed*23)>.985?-22:0);
+ warm.intensity=6.5+Math.sin(elapsed*8)*.65+(Math.sin(elapsed*23)>.985?-4.2:0);
  // Send player movement at a modest rate when connected to an online room.
  if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
  // Cinematic arrival camera: bus approach, breakdown, then reveal Blackwood House.
@@ -1188,7 +1188,7 @@ function openGamePhone(tab='vote'){
  if(tab==='messages'){const badge=document.querySelector('#phone-unread');if(badge){badge.textContent='0';badge.classList.add('hidden');}}
  renderPhoneTab();
 }
-function closeGamePhone(){phonePanel?.classList.add('hidden');phoneButton?.classList.remove('phone-open');}
+function closeGamePhone(){phonePanel?.classList.add('hidden');phoneButton?.classList.remove('phone-open');document.querySelector('#game')?.classList.remove('phone-mode');}
 phoneButton?.addEventListener('click',()=>phonePanel?.classList.contains('hidden')?openGamePhone():closeGamePhone());
 document.querySelector('#phone-close')?.addEventListener('click',closeGamePhone);
 document.querySelectorAll('[data-phone-tab]').forEach(button=>button.addEventListener('click',()=>{phoneActiveTab=button.dataset.phoneTab;renderPhoneTab();}));
@@ -1227,7 +1227,12 @@ function renderPhoneTab(){
   phoneContent.innerHTML='<div class="phone-section-kicker">PRIVATE INBOX</div><h3>Your messages</h3><div class="phone-thread">'+(messages||'<p class="phone-muted">Your private conversations will appear here.</p>')+'</div>'+(others.length?'<form id="phone-message-form" class="phone-message-form"><label for="phone-message-to">MESSAGE PLAYER</label><select id="phone-message-to">'+others.map(p=>'<option value="'+phoneEscape(p.id)+'">'+phoneEscape(p.name)+'</option>').join('')+'</select><textarea id="phone-message-text" maxlength="180" rows="2" placeholder="Write a private message…"></textarea><button class="phone-action" type="submit">SEND MESSAGE</button></form>':'<p class="phone-muted">Join a room with other players to message them.</p>')+'<button id="phone-group-chat" class="phone-secondary">OPEN ROOM GROUP CHAT</button>';
   document.querySelector('#phone-message-form')?.addEventListener('submit',e=>{e.preventDefault();const message=document.querySelector('#phone-message-text').value.trim(),to=document.querySelector('#phone-message-to').value;if(message&&to&&socket.connected){socket.emit('chat:private',{to,message});document.querySelector('#phone-message-text').value='';}});
   document.querySelector('#phone-group-chat')?.addEventListener('click',()=>document.querySelector('#chat-button')?.click());
- }else if(phoneActiveTab==='players'){
+ }else if(phoneActiveTab==='board'){
+   phoneContent.innerHTML='<div class="phone-section-kicker">BLACKWOOD COMMUNITY</div><h3>Public discussion board</h3><p class="phone-muted">Share theories and game ideas with the community. Never post private details.</p><div class="board-room-label">COMMUNITY ROOM · PUBLIC POSTS</div><div id="phone-board-post-list" class="board-post-list"></div><form id="phone-board-post-form" class="board-post-form"><textarea id="phone-board-post-input" maxlength="500" rows="2" placeholder="Share a theory or question…"></textarea><button type="submit">POST TO BOARD</button></form><p class="board-note">Latest 100 posts are kept while the game server is running.</p>';
+   if(socket.connected)socket.emit('board:join');
+   renderBoardPosts();
+   document.querySelector('#phone-board-post-form')?.addEventListener('submit',submitPhoneBoardPost);
+  }else if(phoneActiveTab==='players'){
   const players=onlineRoom?.players||[];
   phoneContent.innerHTML='<div class="phone-section-kicker">ROOM DIRECTORY</div><h3>Passengers</h3>'+(players.length?players.map(p=>'<div class="phone-contact"><span class="phone-contact-avatar">'+phoneEscape((p.name||'?').slice(0,1).toUpperCase())+'</span><div><b>'+phoneEscape(p.name)+'</b><small>'+(p.id===onlineRoom.hostId?'ROOM HOST':'PLAYER')+'</small></div><span class="'+(p.alive===false?'phone-offline':'phone-alive')+'">'+(p.alive===false?'OUT':'IN')+'</span></div>').join(''):'<p class="phone-muted">Join an online room to see its players.</p>');
  }else if(phoneActiveTab==='records'){
@@ -1250,50 +1255,32 @@ socket.on('chat:private',packet=>{
  if(phonePanel?.classList.contains('hidden')){const badge=document.querySelector('#phone-unread');if(badge){badge.textContent=String(Number(badge.textContent||0)+1);badge.classList.remove('hidden');}}
  if(phoneActiveTab==='messages')renderPhoneTab();
 });
-// Public community discussion board, separate from private game-room chat.
-const boardButton=document.createElement('button');
-boardButton.id='discussion-board-button';
-boardButton.textContent='▤ DISCUSSION BOARD';
-document.querySelector('.social-tools')?.append(boardButton);
+// Public community board now lives inside the player's phone.
 let boardPosts=[];
 function renderBoardPosts(){
- const list=document.querySelector('#board-post-list');
+ const list=document.querySelector('#phone-board-post-list')||document.querySelector('#board-post-list');
  if(!list)return;
  list.replaceChildren();
- if(!boardPosts.length){
-  const empty=document.createElement('p');empty.className='board-empty';empty.textContent='No posts yet. Start the conversation!';list.append(empty);return;
- }
+ if(!boardPosts.length){const empty=document.createElement('p');empty.className='board-empty';empty.textContent='No posts yet. Start the conversation!';list.append(empty);return;}
  boardPosts.forEach(post=>{
   const article=document.createElement('article');article.className='board-post';
   const head=document.createElement('div');head.className='board-post-head';
   const author=document.createElement('strong');author.textContent=post.name||'PLAYER';
   const time=document.createElement('time');time.textContent=new Date(post.at).toLocaleString();
-  head.append(author,time);
-  const body=document.createElement('p');body.textContent=post.message||'';
+  head.append(author,time);const body=document.createElement('p');body.textContent=post.message||'';
   article.append(head,body);list.append(article);
  });
  list.scrollTop=list.scrollHeight;
 }
 socket.on('board:history',posts=>{boardPosts=Array.isArray(posts)?posts:[];renderBoardPosts();});
-socket.on('board:new-post',post=>{
- if(!boardPosts.some(item=>item.id===post.id)){boardPosts.push(post);if(boardPosts.length>100)boardPosts.shift();}
- renderBoardPosts();
-});
-boardButton.onclick=()=>{
- if(!socket.connected){notice('The public discussion board needs the online server. Please try again when ONLINE LOBBY is showing.');return;}
- modal('PUBLIC DISCUSSION BOARD','Talk with the THE MOLE community. Keep posts friendly and do not share private information.','<div class="board-room-label">BLACKWOOD COMMUNITY ROOM · PUBLIC POSTS</div><div id="board-post-list" class="board-post-list"></div><form id="board-post-form" class="board-post-form"><textarea id="board-post-input" maxlength="500" rows="3" placeholder="Share a theory, question or game idea..."></textarea><button type="submit">POST MESSAGE</button></form><p class="board-note">Posts are visible to everyone who opens this board. Latest 100 posts are kept while the game server is running.</p>');
- socket.emit('board:join');
- renderBoardPosts();
- document.querySelector('#board-post-form')?.addEventListener('submit',event=>{
-  event.preventDefault();
-  const input=document.querySelector('#board-post-input'),message=input.value.trim();
-  if(!message)return;
-  socket.emit('board:post',{name:onlineName,message},result=>{
-   if(!result?.ok){notice(result?.error||'Your post could not be sent.');return;}
-   input.value='';
-  });
- });
-};
+socket.on('board:new-post',post=>{if(!boardPosts.some(item=>item.id===post.id)){boardPosts.push(post);if(boardPosts.length>100)boardPosts.shift();}renderBoardPosts();});
+function submitPhoneBoardPost(event){
+ event.preventDefault();
+ if(!socket.connected){notice('The community board is offline right now.');return;}
+ const input=document.querySelector('#phone-board-post-input'),message=input?.value.trim();
+ if(!message)return;
+ socket.emit('board:post',{message},result=>{if(!result?.ok){notice(result?.error||'Your post could not be sent.');return;}input.value='';});
+}
 
 // Additional avatar controls.
 const preview=document.createElement('div');preview.className='live-avatar-preview';preview.innerHTML='<div class="boutique-stage"><span class="stage-label">FULL LOOK</span><div class="preview-person" id="preview-person" data-hair="curly" data-accessory="none"><span class="preview-shadow"></span><span class="preview-hair"></span><span class="preview-face"><i></i><i></i><b></b></span><span class="preview-neck"></span><span class="preview-body"><i class="preview-collar"></i><i class="preview-seam"></i></span><span class="preview-arm preview-arm-left"><i></i></span><span class="preview-arm preview-arm-right"><i></i></span><span class="preview-leg preview-leg-left"><i></i></span><span class="preview-leg preview-leg-right"><i></i></span><span class="preview-shoe preview-shoe-left"></span><span class="preview-shoe preview-shoe-right"></span><span class="preview-accessory"></span></div><span class="stage-floor"></span></div><div class="preview-copy"><b>THE MOLE BOUTIQUE</b><strong>YOUR CHARACTER, HEAD TO TOE</strong><small>Try a complete look. Your choices update the passenger before you enter the game.</small><span class="preview-tag">STYLE STUDIO · LOOKBOOK 01</span></div>';
