@@ -734,3 +734,9 @@ html,body,#game{background:#243b46;color:#fff2d8}
 #lift-floor-0,#lift-floor-1,#lift-floor-2{display:block;width:100%;margin:8px 0;padding:13px 14px;text-align:left;border:1px solid #8d7652;background:linear-gradient(110deg,#172528,#263437);color:#f0dfc1;font:700 11px 'DM Mono',monospace;letter-spacing:1.1px;cursor:pointer}
 #lift-floor-0:hover,#lift-floor-1:hover,#lift-floor-2:hover{background:#45504a;border-color:#e2bd7c}
 @media(max-width:800px),(pointer:coarse){#lift-floor-0,#lift-floor-1,#lift-floor-2{padding:15px;font-size:12px}}
+
+/* Actual Three.js avatar replaces the old flat CSS mannequin in the fitting room. */
+.boutique-stage{position:relative;overflow:hidden}
+.avatar-3d-preview{position:absolute;inset:0;width:100%;height:100%;z-index:3;touch-action:pan-y;cursor:grab}
+.avatar-3d-preview:active{cursor:grabbing}
+.preview-person[hidden]{display:none!important}
