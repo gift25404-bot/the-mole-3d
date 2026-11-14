@@ -740,3 +740,10 @@ html,body,#game{background:#243b46;color:#fff2d8}
 .avatar-3d-preview{position:absolute;inset:0;width:100%;height:100%;z-index:3;touch-action:pan-y;cursor:grab}
 .avatar-3d-preview:active{cursor:grabbing}
 .preview-person[hidden]{display:none!important}
+
+
+/* Optional gender choice in the character studio. */
+.gender-section{grid-column:1/-1}
+.gender-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.gender-choices .creator-choice{justify-content:center;min-height:42px;text-align:center}
+@media(max-width:460px){.gender-choices{grid-template-columns:1fr}.gender-choices .creator-choice{justify-content:flex-start}}
