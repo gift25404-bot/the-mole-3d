@@ -624,6 +624,23 @@ async function authRequest(path,body,accessToken=''){
  if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'Account request failed. Please try again.');
  return data;
 }
+function enterGuest(){
+  const chosenName=String(authUsername.value.trim()||'GUEST').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'GUEST';
+  try{sessionStorage.removeItem('mole-refresh-token');localStorage.setItem('mole-player-name',chosenName);}catch{}
+  authSession=null;
+  onlineName=chosenName;
+  socket.auth={};
+  socket.disconnect();
+  document.querySelector('#player-name').textContent=onlineName.toUpperCase();
+  player.name=onlineName.toUpperCase();
+  const oldLabel=player.group.children.find(child=>child.isSprite);
+  if(oldLabel)player.group.remove(oldLabel);
+  const nameLabel=makeLabel(player.name);nameLabel.position.set(0,2.62,0);player.group.add(nameLabel);
+  document.querySelector('#auth-screen').classList.add('hidden');
+  document.querySelector('#avatar-screen').classList.remove('hidden');
+  notice('Welcome, '+chosenName+'. Guest mode is local play; online rooms need account setup.');
+}
+document.querySelector('#continue-guest')?.addEventListener('click',enterGuest);
 function enterAccount(user,session){
  const metadata=user?.user_metadata||{};
  const chosenName=String(metadata.display_name||authUsername.value.trim()||user?.email?.split('@')[0]||'PLAYER').replace(/[^a-zA-Z0-9 _-]/g,'').trim().slice(0,16)||'PLAYER';
