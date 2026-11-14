@@ -83,6 +83,18 @@
     </div>
     <div id="crosshair">＋</div>
     <div class="social-tools"><button id="rules-button" aria-label="Rules">📜 RULES</button><button id="chat-button" aria-label="Chat">💬 CHAT</button></div>
+    <button id="game-phone-button" class="game-phone-button" type="button" aria-label="Open player phone">📱 <span>MY PHONE</span><i id="phone-unread" class="phone-unread hidden">0</i></button>
+    <section id="game-phone" class="game-phone hidden" aria-label="Player phone">
+      <header class="phone-header"><div><small>BLACKWOOD NETWORK</small><h2>PLAYER PHONE</h2></div><button id="phone-close" type="button" aria-label="Close phone">×</button></header>
+      <nav class="phone-tabs" aria-label="Phone apps">
+        <button type="button" data-phone-tab="vote" class="active">🗳️<span>VOTE</span></button>
+        <button type="button" data-phone-tab="messages">✉️<span>MESSAGES</span></button>
+        <button type="button" data-phone-tab="players">👥<span>PLAYERS</span></button>
+        <button type="button" data-phone-tab="notes">📝<span>NOTES</span></button>
+      </nav>
+      <div id="phone-content" class="phone-content"></div>
+      <footer class="phone-footer"><span>THE MOLE • PRIVATE DEVICE</span><span id="phone-clock">11:48 PM</span></footer>
+    </section>
     <div id="bus-intro" class="bus-intro"><div class="intro-card arrival-card"><p class="eyebrow">THE NIGHT THE BUS STOPPED</p><h1>THE LAST BUS</h1><p id="arrival-caption" aria-live="polite">A late-night journey is about to take a strange turn.</p><div class="arrival-actions"><button id="begin-game">WATCH THE ARRIVAL</button><button id="skip-arrival" type="button">SKIP INTRO</button></div></div></div>
     <div class="hud-left"><div class="tag">YOUR CHARACTER</div><b id="player-name">ALEX</b><small id="role-label">PASSENGER</small></div>
     <div class="hud-right"><div class="tag">HOUSE STATUS</div><b id="house-status">POWER: UNSTABLE</b><small>Rain outside • 11:48 PM</small></div>
