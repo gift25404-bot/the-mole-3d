@@ -742,7 +742,7 @@ const roster = [player, ...npcs];
 const roleDeck = ['MAFIA','DETECTIVE','DOCTOR','CITIZEN','CITIZEN','CITIZEN'];
 for (let i=roleDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[roleDeck[i],roleDeck[j]]=[roleDeck[j],roleDeck[i]];}
 roster.forEach((a,i)=>a.role=roleDeck[i]);
-let roundPhase='DAY', eliminated=[], protectedName=null, investigatedName=null;
+let roundPhase='DAY', eliminated=[], protectedName=null, investigatedName=null, localPlayerDead=false;
 let playerRole=player.role;
 document.querySelector('#role-label').textContent=playerRole;
 document.querySelector('#phase').textContent='DAY 1';
@@ -886,6 +886,25 @@ floorBadge.id='floor-indicator';
 floorBadge.textContent='GROUND FLOOR';
 document.querySelector('#game').append(floorBadge);
 
+// Cursed floor patches: stepping on one eliminates a player from the round.
+const hazardSpots=[];
+for(const floor of [0,1,2]){
+ const y=[.035,7.835,11.635][floor];
+ for(const [x,z] of [[-6,-4],[5,-5],[6,4]]){
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.58,.98,28),new THREE.MeshBasicMaterial({color:0xb62935,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(x,y,z);scene.add(ring);
+  const core=new THREE.Mesh(new THREE.CircleGeometry(.57,24),new THREE.MeshBasicMaterial({color:0x671923,transparent:true,opacity:.22,side:THREE.DoubleSide,depthWrite:false}));
+  core.rotation.x=-Math.PI/2;core.position.set(x,y+.006,z);scene.add(core);
+  const crackMat=new THREE.MeshBasicMaterial({color:0xe65a50,transparent:true,opacity:.7});
+  for(const [cx,cz,angle] of [[-.28,0,-.55],[.22,.12,.6],[0,-.25,1.25]]){
+   const crack=new THREE.Mesh(new THREE.BoxGeometry(.62,.025,.055),crackMat);
+   crack.position.set(x+cx,y+.015,z+cz);crack.rotation.y=angle;scene.add(crack);
+  }
+  hazardSpots.push({x,z,floor,ring,core});
+ }
+}
+
+
 let lastMobileRender=0;
 function animate(now=0){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  // Animate the rain around the world and occasionally illuminate the skyline.
@@ -908,7 +927,7 @@ function animate(now=0){requestAnimationFrame(animate);const dt=Math.min(clock.g
  const floorName=p.position.y>11?'THIRD FLOOR':p.position.y>7?'SECOND FLOOR':'GROUND FLOOR';
  floorBadge.textContent=floorName;
 if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
- const moving=dx!==0||dz!==0;const speed=keys.shift?5.2:3.1;
+ const moving=(dx!==0||dz!==0)&&!localPlayerDead;const speed=keys.shift?5.2:3.1;
  if(moving){const len=Math.hypot(dx,dz);dx/=len;dz/=len;p.position.x+=dx*speed*dt;p.position.z+=dz*speed*dt;p.rotation.y=Math.atan2(dx,dz);
   // Keep every passenger inside Blackwood House and its connected east wing.
   p.position.x=THREE.MathUtils.clamp(p.position.x,-9.35,17.35);
@@ -927,6 +946,17 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
   if(progress<.025)currentFloor=1;else if(progress>.975)currentFloor=2;
  }else{
   p.position.y=[0,7.8,11.6][currentFloor];
+ }
+ // Animate the cursed marks and resolve local practice-round trap hits.
+ for(const spot of hazardSpots){
+  const pulse=.34+Math.sin(elapsed*3.2+spot.x+spot.z)*.12;
+  spot.ring.material.opacity=pulse;spot.core.material.opacity=pulse*.55;
+  if(!onlineRoom?.started&&!localPlayerDead&&arrivalComplete&&currentFloor===spot.floor&&Math.hypot(p.position.x-spot.x,p.position.z-spot.z)<.88){
+   localPlayerDead=true;eliminated.push(player.name);playerRole='GHOST';
+   document.querySelector('#role-label').textContent='ELIMINATED';updateStatus();
+   modal('CAUGHT BY THE HOUSE','You stepped on a cursed floor trap and are out of this round. You can watch the remaining passengers.');
+   notice('A cursed floor trap has eliminated you.');
+  }
  }
  player.limbs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(elapsed*10+i*Math.PI)*.65:Math.sin(elapsed*2+i)*.035});
  npcs.forEach((n,i)=>{n.phase+=dt;const t=n.phase; n.group.position.x+=Math.sin(t*.24+i)*.0015;n.group.position.z+=Math.cos(t*.22+i)*.0015;n.limbs.forEach((l,j)=>l.rotation.x=Math.sin(t*2+j)*.08)});
