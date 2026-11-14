@@ -957,7 +957,7 @@ if(keys.w)dz-=1;if(keys.s)dz+=1;if(keys.a)dx-=1;if(keys.d)dx+=1;
  for(const spot of hazardSpots){
   const pulse=.34+Math.sin(elapsed*3.2+spot.x+spot.z)*.12;
   spot.ring.material.opacity=pulse;spot.core.material.opacity=pulse*.55;
-  if(!onlineRoom?.started&&!localPlayerDead&&arrivalComplete&&currentFloor===spot.floor&&Math.hypot(p.position.x-spot.x,p.position.z-spot.z)<.88){
+  if(!onlineRoom&&!localPlayerDead&&arrivalComplete&&currentFloor===spot.floor&&Math.hypot(p.position.x-spot.x,p.position.z-spot.z)<.88){
    localPlayerDead=true;eliminated.push(player.name);playerRole='GHOST';
    document.querySelector('#role-label').textContent='ELIMINATED';updateStatus();
    modal('CAUGHT BY THE HOUSE','You stepped on a cursed floor trap and are out of this round. You can watch the remaining passengers.');
