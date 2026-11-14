@@ -939,7 +939,7 @@ restoreAccountSession();
 document.querySelectorAll('.look-option').forEach(button=>button.addEventListener('click',()=>applyPlayerLook(button.dataset.look)));
 document.querySelector('#confirm-look')?.addEventListener('click',()=>{
  const look=avatarLooks[selectedLook];
- try{localStorage.setItem('mole-avatar-look',selectedLook);localStorage.setItem('mole-player-name',onlineName);}catch{}
+ try{localStorage.setItem('mole-avatar-look',selectedLook);localStorage.setItem('mole-player-name',onlineName);localStorage.setItem('mole-player-gender',selectedGender);}catch{}
  document.querySelector('#avatar-screen').classList.add('hidden');
  notice(look.name+' look selected. Welcome to Blackwood.');
 });
@@ -1550,6 +1550,23 @@ document.querySelector('.avatar-card .look-grid')?.after(studio);
  }));
  document.querySelector('.avatar-card .look-grid')?.setAttribute('hidden','');
 
+// Gender is an optional profile choice and does not restrict hairstyles or outfits.
+const genderSection=document.createElement('section');genderSection.className='creator-section gender-section';
+const genderHeading=document.createElement('h3');genderHeading.textContent='GENDER';
+const genderChoices=document.createElement('div');genderChoices.className='creator-choices gender-choices';
+const savedGender=(()=>{try{return localStorage.getItem('mole-player-gender')||'rather-not-say'}catch{return 'rather-not-say'}})();
+let selectedGender=['male','female','rather-not-say'].includes(savedGender)?savedGender:'rather-not-say';
+[['male','Male'],['female','Female'],['rather-not-say','Rather not say']].forEach(([value,label])=>{
+ const button=document.createElement('button');button.type='button';button.className='creator-choice';button.textContent=label;
+ button.classList.toggle('active',selectedGender===value);button.setAttribute('aria-pressed',String(selectedGender===value));
+ button.addEventListener('click',()=>{
+  selectedGender=value;
+  genderChoices.querySelectorAll('button').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});
+ });
+ genderChoices.append(button);
+});
+genderSection.append(genderHeading,genderChoices);studio.insertBefore(genderSection,studio.firstChild);
+
 const previewPerson=document.querySelector('#preview-person');
 const previewStage=document.querySelector('.boutique-stage');
 const previewCanvas=document.createElement('canvas');previewCanvas.className='avatar-3d-preview';previewCanvas.setAttribute('aria-label','Interactive 3D full-body avatar preview');
@@ -1625,8 +1642,10 @@ function setHairStyle(style){
   parts.forEach((part,i)=>{part.visible=style!=='curly'&&style!=='braids'&&style!=='locs'&&style!=='bun'&&style!=='ponytail'||i===0;});
   parts[0].scale.set(1,style==='short'||style==='fade'?.76:style==='long'?1.05:1.12,style==='short'||style==='fade'?.9:1.06);
   parts[1].visible=style==='long';parts[2].visible=style==='long';parts[3].visible=style==='long';
-  parts[4].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
-  parts[5].scale.y=style==='long'?2:style==='short'||style==='fade'?.8:1.2;
+  // Keep the temple/side pieces short: stretching them with the long style
+  // made the hair colour cover the cheeks and lower half of the face.
+  parts[4].scale.y=1;
+  parts[5].scale.y=1;
  }
  Object.values(hairstyleMeshes).forEach(bucket=>Object.entries(bucket).forEach(([key,meshes])=>meshes.forEach(mesh=>mesh.visible=key===style)));
  refreshAvatarPreview();
