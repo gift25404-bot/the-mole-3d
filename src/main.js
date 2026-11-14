@@ -4,7 +4,7 @@ import './style.css';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x080f14);
-scene.fog = new THREE.FogExp2(0x101b20, 0.021);
+scene.fog = new THREE.FogExp2(0x0b1417, 0.026);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
 // Detect phones/tablets early and select a lighter renderer profile.
 const isMobileDevice=matchMedia('(max-width: 800px), (pointer: coarse)').matches;
@@ -16,44 +16,33 @@ const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevi
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice,powerPreference:'low-power',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
-renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.86;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x91a7b4,0x171b19,0.82));
-const moon=new THREE.DirectionalLight(0x9eb6ca,1.45); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
-const warm=new THREE.PointLight(0xffb35c,30,18); warm.position.set(0,3,0); scene.add(warm);
-const hallLight=new THREE.PointLight(0xffd18a,16,10); hallLight.position.set(0,3,-8); scene.add(hallLight);
+scene.add(new THREE.HemisphereLight(0x657985,0x090d0c,0.38));
+const moon=new THREE.DirectionalLight(0x8095a5,.78); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
+// Only weak pools of light reach the abandoned interior; the corners stay dark.
+const warm=new THREE.PointLight(0xffb35c,7,13); warm.position.set(0,3,0); scene.add(warm);
+const hallLight=new THREE.PointLight(0xffd18a,3.5,8); hallLight.position.set(0,3,-8); scene.add(hallLight);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
-const floorMat=mat(0x51483d), wallMat=mat(0x817b70), darkMat=mat(0x242b2b), wood=mat(0x68442e), trim=mat(0x3b3028), glass=new THREE.MeshStandardMaterial({color:0x7894a0,transparent:true,opacity:.28,roughness:.2});
+const floorMat=mat(0x302e29), wallMat=mat(0x555751), darkMat=mat(0x171d1c), wood=mat(0x45352a), trim=mat(0x292724), glass=new THREE.MeshStandardMaterial({color:0x263c43,transparent:true,opacity:.42,roughness:.35});
 function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!isMobileDevice;o.receiveShadow=!isMobileDevice;parent.add(o);return o}
 function plane(w,d,m,x,y,z){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,d),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o}
 plane(90,90,mat(0x75684f),0,-.16,0);
-// Lagos-inspired roadside setting: warm streetlights, kiosks, palms and overhead wires.
-const roadMat=mat(0x343b3d), curbMat=mat(0xc9b58b), stallBlue=mat(0x277c86), stallRed=mat(0xb94f3e), palmMat=mat(0x3c6848);
-box(90,.08,8,roadMat,0,-.105,17);
-for(let x=-42;x<44;x+=8) box(3,.025,.12,mat(0xe7d39a),x,-.055,17);
+// BLACKWOOD OUTSKIRTS: a deserted service road swallowed by old forest.
+const roadMat=mat(0x202629),roadCrack=mat(0x111719),roadEdge=mat(0x343b39),deadWood=mat(0x282b27),weedMat=mat(0x263329);
+box(90,.09,7,roadMat,0,-.105,17);
+for(let i=0;i<18;i++){const x=-42+i*4.8,z=14+(i%3)*1.1;const crack=box(.035,.012,1.8+(i%4)*.5,roadCrack,x,-.052,z);crack.rotation.y=(i%2?-.55:.42);}
 for(const side of [-1,1]){
-  box(90,.18,.45,curbMat,0,-.04,side*21);
-  for(let x=-38;x<=38;x+=12){
-    const pole=box(.16,6,.16,trim,x,3,side*16);
-    box(1.5,.12,.12,trim,x+.65,5.8,side*16);
-    if(!isMobileDevice){const glow=new THREE.PointLight(0xffc477,5,11);glow.position.set(x+.7,5.5,side*16);scene.add(glow);}
-    // Small palm silhouettes along the road.
-    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,3.8,7),wood);trunk.position.set(x,1.8,side*25);scene.add(trunk);
-    for(let f=0;f<6;f++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.24,3.2,5),palmMat);leaf.position.set(x+Math.cos(f*Math.PI/3)*1.15,3.7,side*25+Math.sin(f*Math.PI/3)*1.15);leaf.rotation.z=Math.cos(f*Math.PI/3)*.75;leaf.rotation.x=Math.sin(f*Math.PI/3)*.75;scene.add(leaf);}
-  }
+ box(90,.12,.24,roadEdge,0,-.07,side*20.7);
+ for(let i=0;i<24;i++){const x=-43+i*3.7,z=side*(23+(i%4)*2.3),h=.25+(i%5)*.12;const weed=new THREE.Mesh(new THREE.ConeGeometry(.12,h,4),weedMat);weed.position.set(x,h*.5,z);weed.rotation.z=(i%2?-.3:.25);scene.add(weed);}
 }
-// A few colourful roadside kiosks give the arrival area a recognisable city feel.
-for(const [x,z,color] of [[-22,12,stallBlue],[22,12,stallRed],[-25,23,stallRed],[25,23,stallBlue]]){
-  const kiosk=new THREE.Group();scene.add(kiosk);kiosk.position.set(x,0,z);
-  box(3.2,2.1,2.2,mat(0x9b7048),0,1,0,kiosk);
-  box(3.6,.16,2.6,mat(color),0,2.15,0,kiosk);
-  box(3.8,.12,2.8,mat(0xe7c46f),0,2.3,0,kiosk);
-  box(2.5,.9,.08,mat(0x293a3b),0,1.25,1.12,kiosk);
-}
-// Simple overhead utility wires across the street.
-for(const z of [14,19]){const wire=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,86,5),mat(0x25292a));wire.rotation.z=Math.PI/2;wire.position.set(0,7,z);scene.add(wire);}
+// Broken fence fragments and fallen timber make the roadside feel forgotten.
+for(const x of [-38,-34,-30,30,34,38]){const post=box(.16,1.45,.16,deadWood,x,.72,sideFenceZ(x));post.rotation.z=(x%2)*.12;}
+function sideFenceZ(x){return x<0?-23:23;}
+for(const x of [-36,-32,32,36]){const rail=box(4,.13,.13,deadWood,x,.75,x<0?-23:23);rail.rotation.z=x%2?.08:-.06;}
+for(const [x,z,rot] of [[-24,29,.7],[23,30,-.45],[-28,-27,-.25],[27,-29,.6]]){const log=new THREE.Mesh(new THREE.CylinderGeometry(.18,.24,5,7),deadWood);log.position.set(x,.2,z);log.rotation.z=Math.PI/2;log.rotation.y=rot;scene.add(log);}
 
 const house=new THREE.Group();scene.add(house);
 // House is split into connected rooms; door-sized gaps are left in the partitions.
