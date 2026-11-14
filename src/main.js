@@ -151,6 +151,32 @@ box(1.2,1.7,.15,wood,0,.85,-8.22,house); // cabinet
 for(let i=0;i<4;i++)box(1.4,.08,1.2,wood,5,.35+i*.36,2.8,house); // shelves
 box(2,.12,2,wood,-6,.8,4,house);box(.12,1.2,.12,trim,-6.8,.2,4,house);box(.12,1.2,.12,trim,-5.2,.2,4,house);
 
+// BLACKWOOD COMMON ROOM: a cosy social corner inside the house.
+const loungeRug=mat(0x51433a), loungeFabric=mat(0x526b69), loungeCushion=mat(0xb98556), loungeMetal=mat(0x292f31);
+box(5.2,.08,4.2,loungeRug,-5.7,.22,-3.9,house);
+box(2.5,.58,.85,loungeFabric,-6.7,.58,-5.1,house);
+box(.18,.82,.9,loungeFabric,-7.95,.82,-5.1,house);
+box(.18,.82,.9,loungeFabric,-5.45,.82,-5.1,house);
+box(2.15,.16,.68,loungeCushion,-6.7,.94,-5.1,house);
+for(const x of [-7.45,-5.95])box(.58,.12,.5,loungeCushion,x,1.08,-5.1,house);
+box(1.35,.18,.9,wood,-5.8,.58,-2.8,house);
+for(const x of [-6.35,-5.25])for(const z of [-3.15,-2.45])box(.12,.55,.12,loungeMetal,x,.27,z,house);
+box(1.15,.08,.72,mat(0x92704d),-5.8,.72,-2.8,house);
+box(1.05,.06,.08,mat(0xd2b17d),-5.8,.77,-2.8,house);
+box(.12,1.65,.12,loungeMetal,-8.4,.9,-2.6,house);
+const loungeShade=new THREE.Mesh(new THREE.ConeGeometry(.42,.48,10),mat(0xd3a45f));loungeShade.position.set(-8.4,1.95,-2.6);house.add(loungeShade);
+box(2.2,1.35,.12,wood,-5.7,2.2,-8.1,house);
+box(1.85,.95,.05,mat(0x283b3b),-5.7,2.2,-8.02,house);
+for(let i=0;i<3;i++)box(.035,.65,.035,loungeCushion,-6.35+i*.65,2.2,-7.98,house);
+const radio=new THREE.Group();radio.position.set(-8.25,.65,-4.9);house.add(radio);
+box(.72,.62,.38,loungeMetal,0,0,0,radio);
+box(.5,.3,.025,mat(0x9c7548),0,.08,.205,radio);
+for(let i=0;i<5;i++){const knob=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.035,8),mat(0xd2b17d));knob.rotation.x=Math.PI/2;knob.position.set(-.23+i*.115,-.18,.23);radio.add(knob);}
+const loungeStations=[
+ {name:'COMMUNITY TABLE',x:-5.8,z:-2.8,message:'Take a seat, meet the other passengers and share your theories.'},
+ {name:'HOUSE NOTICEBOARD',x:-5.7,z:-7.1,message:'Community notice: be kind, keep private details private, and help new passengers find their way.'},
+ {name:'OLD RADIO',x:-8.25,z:-4.9,message:'The radio crackles with local news and a warm, original instrumental tune.'}
+];
 // Collectible story clues. These are safe, non-graphic environmental story items.
 const clueItems=[];
 function addClue(name,description,x,z,color){
@@ -860,6 +886,10 @@ function updateObjective(){
 }
 function interact(){
  const p=player.group.position;
+ let station=null,stationDistance=2.5;
+ for(const item of loungeStations){const d=Math.hypot(p.x-item.x,p.z-item.z);if(d<stationDistance){stationDistance=d;station=item;}}
+ if(station){notice(station.name+' • '+station.message);playCue();return;}
+
  // Pick up the nearest clue.
  let nearestClue=null,clueDist=2.4;
  for(const clue of clueItems){if(clue.collected)continue;const d=p.distanceTo(clue.group.position);if(d<clueDist){clueDist=d;nearestClue=clue}}
