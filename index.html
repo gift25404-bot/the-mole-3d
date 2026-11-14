@@ -40,13 +40,16 @@
         <p class="auth-intro">Sign in or create your player account before boarding the bus.</p>
         <div class="auth-tabs"><button type="button" id="auth-tab-signin" class="active">SIGN IN</button><button type="button" id="auth-tab-signup">CREATE ACCOUNT</button></div>
         <form id="auth-form">
-          <label for="auth-email">GMAIL ADDRESS</label>
-          <input id="auth-email" type="email" autocomplete="email" placeholder="you@gmail.com" required>
-          <label for="auth-username">USERNAME</label>
-          <input id="auth-username" type="text" autocomplete="username" minlength="3" maxlength="16" placeholder="Choose a player name" required>
-          <p class="auth-feedback">Demo access only. Secure accounts are not connected yet, so do not enter a real password.</p>
-          <button id="auth-submit" type="submit">CONTINUE TO CHARACTER STUDIO</button>
-          <p id="auth-feedback" class="auth-feedback" aria-live="polite">Use a Gmail address and a display name. No password is needed for this demo.</p>
+          <label for="auth-email">EMAIL ADDRESS</label>
+          <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          <div id="auth-username-wrap">
+            <label for="auth-username">PLAYER USERNAME</label>
+            <input id="auth-username" type="text" autocomplete="username" minlength="3" maxlength="16" placeholder="Choose a player name">
+          </div>
+          <label for="auth-password">PASSWORD</label>
+          <input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="72" placeholder="At least 8 characters" required>
+          <button id="auth-submit" type="submit">SIGN IN TO THE GAME</button>
+          <p id="auth-feedback" class="auth-feedback" aria-live="polite">Use your account email and password. New players can create an account.</p>
         </form>
         <small class="auth-foot">Your account details are private. Never share your password with other players.</small>
       </div>
