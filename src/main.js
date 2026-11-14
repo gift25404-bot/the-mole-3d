@@ -63,7 +63,7 @@ box(8,.25,2.5,wood,0,-.02,9.6,house);
 // THREE-STOREY UNFINISHED CONCRETE BUILDING: open upper floors, exposed columns,
 // unfinished blockwork, scaffolding and reinforcing bars. The ground floor
 // remains the playable interior; upper levels form the visible construction shell.
-const concrete=mat(0x77766f,.98),rawConcrete=mat(0x96948a,.98),blockwork=mat(0x625f57,.98),rustSteel=mat(0x754c36,.8),scaffoldMat=mat(0x394b50,.8);
+const concrete=mat(0x494b48,.98),rawConcrete=mat(0x66665e,.98),blockwork=mat(0x45443f,.98),rustSteel=mat(0x583a2d,.8),scaffoldMat=mat(0x293638,.8);
 const slab=(x,z,w,d,y)=>box(w,.34,d,concrete,x,y,z,house);
 slab(0,0,20,17,7.6);slab(0,0,20,17,11.4);
 // Stairwell openings keep both concrete flights clear through the floor slabs.
@@ -156,9 +156,9 @@ box(4.1,.2,2.2,stairConcrete,14.75,7.72,-5.9,house);
 box(3.2,.2,2.0,stairConcrete,14.75,11.52,5.9,house);
 // Warm marker lamps identify each level of the stairwell.
 for(const [x,y,z] of [[11.95,2.1,0],[15.15,9.2,0],[17.35,11.9,5.9]]){
- const lamp=new THREE.Mesh(new THREE.SphereGeometry(.14,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:1.1}));
+ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.14,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:.45}));
  lamp.position.set(x,y,z);house.add(lamp);
- if(!isMobileDevice){const glow=new THREE.PointLight(0xffc477,2.5,4);glow.position.set(x,y,z);house.add(glow);}
+ if(!isMobileDevice){const glow=new THREE.PointLight(0xffc477,.85,3);glow.position.set(x,y,z);house.add(glow);}
 }
 
 // Construction clutter: stacked blocks, timber planks and cement sacks.
@@ -237,7 +237,7 @@ const clueItems=[];
 function addClue(name,description,x,z,color){
  const group=new THREE.Group();group.position.set(x,.72,z);scene.add(group);
  const body=new THREE.Mesh(new THREE.BoxGeometry(.42,.08,.3),mat(color));body.rotation.y=.25;body.castShadow=true;group.add(body);
- const glow=new THREE.PointLight(0xd5ad6b,2.4,2.4);glow.position.y=.3;group.add(glow);
+ const glow=new THREE.PointLight(0xd5ad6b,.8,2);glow.position.y=.3;group.add(glow);
  clueItems.push({name,description,group,collected:false,baseY:.72,phase:Math.random()*6});
 }
 addClue('OLD PHOTOGRAPH','A family photograph. Someone has circled the library window.',-6,-5,0xd7c7a3);
@@ -266,7 +266,7 @@ box(2.1,.16,1.0,wood,14.6,.9,-3.2,secretRoomGroup);
 box(.12,.8,.12,trim,13.7,.4,-3.2,secretRoomGroup);
 box(.12,.8,.12,trim,15.5,.4,-3.2,secretRoomGroup);
 box(.75,.1,.5,mat(0x9c805d),14.6,1.05,-3.2,secretRoomGroup);
-const archiveLamp=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:1.3}));
+const archiveLamp=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xffa33d,emissiveIntensity:.55}));
 archiveLamp.position.set(14.5,2.65,-4.8);secretRoomGroup.add(archiveLamp);
 const archiveLedger=new THREE.Group();archiveLedger.position.set(14.6,1.2,-3.2);secretRoomGroup.add(archiveLedger);
 const ledgerCover=new THREE.Mesh(new THREE.BoxGeometry(.62,.09,.46),mat(0x68442e));ledgerCover.rotation.y=-.12;archiveLedger.add(ledgerCover);
@@ -291,7 +291,7 @@ function addMissionPickup(name,x,z,color){
  const g=new THREE.Group();g.position.set(x,.45,z);scene.add(g);
  const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.42),mat(color,.35));
  gem.castShadow=true;g.add(gem);
- const halo=new THREE.PointLight(color,1.8,4);halo.position.y=.3;g.add(halo);
+ const halo=new THREE.PointLight(color,.7,3);halo.position.y=.3;g.add(halo);
  sideMissionItems.push({name,group:g,collected:false,phase:Math.random()*6});
 }
 addMissionPickup('GENERATOR FUSE',-25,3,0xf2bd45);
@@ -300,7 +300,7 @@ addMissionPickup('OLD MARKET TOKEN',-34,18,0xd69b55);
 updateCoins();
 
 // hanging lamps
-for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);if(!isMobileDevice){const l=new THREE.PointLight(0xffb45e,9,6);l.position.set(x,2.5,z);house.add(l)}}
+for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);if(!isMobileDevice){const l=new THREE.PointLight(0xffb45e,2.2,4);l.position.set(x,2.5,z);house.add(l)}}
 // exterior trees and fence-like silhouettes
 for(let i=0;i<22;i++){const a=i/22*Math.PI*2, r=14+Math.sin(i*4)*2,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.3,2.2,5),wood);trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,3.2,6),mat(0x263a35));crown.position.set(x,3.3,z);crown.castShadow=true;scene.add(crown)}
 // Fill the empty lots with overgrown trees and abandoned, weathered vehicles.
