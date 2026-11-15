@@ -578,19 +578,20 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  // Natural, balanced full-body proportions with a narrow waist and long relaxed legs.
  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.205,.43,8,32),innerMat);torso.position.set(0,1.25,0);torso.scale.set(1,.94,.78);torso.castShadow=true;g.add(torso);
  const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.245,.43,8,32),shirtMat);jacket.position.set(0,1.26,-.008);jacket.scale.set(1.02,.96,.82);jacket.castShadow=true;g.add(jacket);
- addSphere(g,.155,innerMat,0,1.36,.192,1,.98,.36);
+ // No raised chest orb: use a flat, tailored inner shirt under the open jacket.
+ const shirtFront=new THREE.Mesh(new THREE.BoxGeometry(.16,.34,.025),innerMat);shirtFront.position.set(0,1.34,.205);g.add(shirtFront);
  const lapelL=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelL.position.set(-.075,1.34,.205);lapelL.rotation.z=-.16;g.add(lapelL);
  const lapelR=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelR.position.set(.075,1.34,.205);lapelR.rotation.z=.16;g.add(lapelR);
  for(let y=1.2;y<=1.4;y+=.1)addSphere(g,.009,detail,0,y,.224,.8,.8,.5);
  const limbs=[];
  for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.235,1.43,-.015);
+  const arm=new THREE.Group();arm.position.set(side*.235,1.43,-.12);
   const sleeve=addCapsule(arm,.072,.28,shirtMat,side*.025,-.16,-.025,1,1.05,.95);sleeve.rotation.z=-side*.28;
   const fore=addCapsule(arm,.048,.23,skinMat,-side*.055,-.35,-.13);fore.rotation.z=side*.22;
-  addSphere(arm,.047,skinMat,-side*.095,-.45,-.18,.95,.85,.85);
+  addSphere(arm,.043,skinMat,-side*.095,-.45,-.27,.95,.85,.85);
   g.add(arm);limbs.push(arm);
  }
- addSphere(g,.055,skinMat,0,.88,-.235,1.4,.8,.65);
+ addSphere(g,.045,skinMat,0,.88,-.34,1.25,.8,.6);
  const waistband=new THREE.Mesh(new THREE.CylinderGeometry(.19,.205,.12,32),pantsMat);waistband.position.set(0,.96,0);waistband.castShadow=true;g.add(waistband);
  for(const side of [-1,1]){
   const leg=new THREE.Group();leg.position.set(side*.112,.91,0);
@@ -600,26 +601,26 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   const sole=new THREE.Mesh(new THREE.SphereGeometry(.107,24,16),detail);sole.scale.set(1,.14,1.48);sole.position.set(0,-.865,.095);leg.add(sole);
   g.add(leg);limbs.push(leg);
  }
- const headGroup=new THREE.Group();headGroup.position.set(0,2.12,0);headGroup.scale.setScalar(.70);g.add(headGroup);
+ const headGroup=new THREE.Group();headGroup.position.set(0,2.12,0);headGroup.scale.setScalar(.60);g.add(headGroup);
  const face=(r,material,x,y,z,sx=1,sy=1,sz=1)=>addSphere(headGroup,r,material,x,y,z,sx,sy,sz,40);
  const faceCapsule=(r,len,material,x,y,z,sx=1,sy=1,sz=1)=>addCapsule(headGroup,r,len,material,x,y,z,sx,sy,sz);
  face(.43,skinMat,0,0,.015,.9,1.05,.88);
  face(.22,skinMat,0,-.15,.11,1,.55,.7);
  for(const side of [-1,1]){
   face(.06,skinMat,side*.385,-.025,.005,.8,1,.7);
-  face(.062,skinMat,side*.18,-.13,.36,1,.55,.24);
-  face(.034,mat(0xc9877e,.88),side*.24,-.18,.33,1,.55,.2);
+  face(.048,skinMat,side*.18,-.13,.345,1,.48,.2);
+  face(.024,mat(0xc9877e,.88),side*.24,-.18,.32,1,.45,.16);
  }
  for(const ex of [-.155,.155]){
-  face(.062,white,ex,.055,.385,1.2,.78,.3);
-  face(.032,iris,ex+.003,.052,.408,1,1,.35);
-  face(.015,dark,ex+.003,.052,.423,1,1,.35);
-  face(.009,white,ex-.01,.066,.434,1,1,.35);
+  face(.05,white,ex,.055,.365,1.18,.72,.24);
+  face(.027,iris,ex+.003,.052,.385,1,1,.28);
+  face(.013,dark,ex+.003,.052,.398,1,1,.28);
+  face(.008,white,ex-.01,.066,.407,1,1,.28);
   const brow=faceCapsule(.01,.075,hairMat,ex,.15,.35);brow.rotation.z=ex<0?-.06:.06;
  }
- face(.02,skinMat,0,-.035,.425,.8,1.1,.8);
- face(.028,skinMat,0,-.075,.435,1,.7,.65);
- const mouthMat=mat(0x8b514d,.72);face(.036,mouthMat,0,-.17,.399,1,.18,.16);face(.032,skinMat,0,-.155,.411,1,.14,.13);
+ face(.015,skinMat,0,-.035,.405,.8,1.1,.8);
+ face(.022,skinMat,0,-.075,.412,1,.7,.65);
+ const mouthMat=mat(0x8b514d,.72);face(.028,mouthMat,0,-.17,.38,1,.16,.14);face(.026,skinMat,0,-.155,.392,1,.12,.12);
  const cap=new THREE.Mesh(new THREE.SphereGeometry(.45,48,32,0,Math.PI*2,0,Math.PI*.52),hairMat);cap.position.set(0,.14,-.07);cap.castShadow=true;headGroup.add(cap);
  const hairPieces=[cap];
  hairPieces.push(faceCapsule(.29,.72,hairMat,0,-.37,-.15,1,.98,.48)); // 1: back hair
@@ -1591,7 +1592,7 @@ function submitPhoneBoardPost(event){
 // Additional avatar controls.
 const preview=document.createElement('div');preview.className='live-avatar-preview';preview.innerHTML='<div class="boutique-stage"><span class="stage-label">FULL LOOK</span><div class="preview-person" id="preview-person" data-hair="curly" data-accessory="none"><span class="preview-shadow"></span><span class="preview-hair"></span><span class="preview-face"><i></i><i></i><b></b></span><span class="preview-neck"></span><span class="preview-body"><i class="preview-collar"></i><i class="preview-seam"></i></span><span class="preview-arm preview-arm-left"><i></i></span><span class="preview-arm preview-arm-right"><i></i></span><span class="preview-leg preview-leg-left"><i></i></span><span class="preview-leg preview-leg-right"><i></i></span><span class="preview-shoe preview-shoe-left"></span><span class="preview-shoe preview-shoe-right"></span><span class="preview-accessory"></span></div><span class="stage-floor"></span></div><div class="preview-copy"><b>THE MOLE BOUTIQUE</b><strong>YOUR CHARACTER, HEAD TO TOE</strong><small>Try a complete look. Your choices update the passenger before you enter the game.</small><span class="preview-tag">STYLE STUDIO · LOOKBOOK 01</span></div>';
 document.querySelector('.avatar-card .look-grid')?.before(preview);
-const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="603b2d">Deep espresso</option><option value="70452f">Rich brown</option><option value="815238">Cocoa</option><option value="9a674b" selected>Warm brown</option><option value="ad7654">Caramel</option><option value="bd8967">Copper</option><option value="d49b76">Golden</option><option value="e0b99a">Light beige</option><option value="f0c9a8">Fair peach</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Natural black</option><option value="39251d">Dark brown</option><option value="573522">Chestnut</option><option value="743d27">Auburn</option><option value="c79b55">Golden blonde</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option><option value="343b62">Blue-black</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly afro</option><option value="short">Short crop</option><option value="fade">Low fade</option><option value="braids">Braids</option><option value="locs">Locs</option><option value="bun">High bun</option><option value="ponytail">Ponytail</option><option value="long">Long sides</option></select></label><label>OUTFIT<select id="outfit-choice"><option value="c96f62">Coral hoodie</option><option value="477caa">Blue jacket</option><option value="527b5c">Forest green</option><option value="8064a6">Violet sweater</option><option value="39858a">Teal streetwear</option><option value="252d3c">Midnight black</option><option value="e2d6c4">Cream sweatshirt</option><option value="b48a42">Mustard jacket</option><option value="a94f4f">Red varsity</option><option value="48606a">Slate denim</option><option value="6b4b3b">Earth brown</option><option value="d28caa">Pink jacket</option></select></label><label>BOTTOMS<select id="bottom-choice"><option value="30343b">Classic joggers</option><option value="222936">Cargo trousers</option><option value="4a5260">Blue denim</option><option value="5c493c">Brown cargos</option><option value="e0d5c1">Cream trousers</option><option value="263f38">Olive cargos</option><option value="4b345f">Purple trousers</option></select></label><label>SHOES<select id="shoe-choice"><option value="17191c">Black trainers</option><option value="eee5d4">White sneakers</option><option value="a94f35">Red sneakers</option><option value="c59a4d">Gold high-tops</option><option value="344c68">Blue runners</option><option value="654b38">Brown boots</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
+const studio=document.createElement('div');studio.className='avatar-customizer';studio.innerHTML='<label>SKIN TONE<select id="skin-choice"><option value="603b2d">Deep espresso</option><option value="70452f">Rich brown</option><option value="815238">Cocoa</option><option value="9a674b" selected>Warm brown</option><option value="ad7654">Caramel</option><option value="bd8967">Copper</option><option value="d49b76">Golden</option><option value="e0b99a">Light beige</option><option value="f0c9a8">Fair peach</option><option value="9b7957">Olive</option></select></label><label>HAIR COLOUR<select id="hair-choice"><option value="211b1a">Natural black</option><option value="39251d">Dark brown</option><option value="573522" selected>Chestnut</option><option value="743d27">Auburn</option><option value="c79b55">Golden blonde</option><option value="9aa4ad">Silver</option><option value="9b526e">Rose</option><option value="343b62">Blue-black</option></select></label><label>HAIR STYLE<select id="hair-style"><option value="curly">Curly afro</option><option value="short">Short crop</option><option value="fade">Low fade</option><option value="braids">Braids</option><option value="locs">Locs</option><option value="bun">High bun</option><option value="ponytail">Ponytail</option><option value="long" selected>Long straight</option></select></label><label>OUTFIT<select id="outfit-choice"><option value="c96f62">Coral hoodie</option><option value="477caa">Blue jacket</option><option value="527b5c">Forest green</option><option value="8064a6">Violet sweater</option><option value="39858a">Teal streetwear</option><option value="252d3c">Midnight black</option><option value="e2d6c4" selected>Cream jacket</option><option value="b48a42">Mustard jacket</option><option value="a94f4f">Red varsity</option><option value="48606a">Slate denim</option><option value="6b4b3b">Earth brown</option><option value="d28caa">Pink jacket</option></select></label><label>BOTTOMS<select id="bottom-choice"><option value="30343b">Classic joggers</option><option value="222936">Cargo trousers</option><option value="4a5260">Blue denim</option><option value="5c493c">Brown cargos</option><option value="e0d5c1" selected>Cream trousers</option><option value="263f38">Olive cargos</option><option value="4b345f">Purple trousers</option></select></label><label>SHOES<select id="shoe-choice"><option value="17191c">Black trainers</option><option value="eee5d4" selected>White sneakers</option><option value="a94f35">Red sneakers</option><option value="c59a4d">Gold high-tops</option><option value="344c68">Blue runners</option><option value="654b38">Brown boots</option></select></label><label>ACCESSORY<select id="accessory-choice"><option value="none">None</option><option value="cap">Explorer cap</option><option value="crown">Mystery crown</option></select></label>';
 document.querySelector('.avatar-card .look-grid')?.after(studio);
  // Turn the old dropdown wardrobe into a visual, Lagos-inspired character creator.
  const pickerGroups=[
@@ -1744,6 +1745,7 @@ function setHairStyle(style){
  refreshAvatarPreview();
 }
 document.querySelector('#hair-style')?.addEventListener('change',e=>setHairStyle(e.target.value));
+document.querySelector('#hair-style').value='long';
 setHairStyle('long');
 refreshAvatarPreview();
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
