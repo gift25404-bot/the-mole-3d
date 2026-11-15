@@ -15,12 +15,12 @@ const lowPowerDevice=isMobileDevice&&(deviceMemoryGB<=4||cpuCores<=4);
 const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevice ? 1.0 : 1.3):1.7);
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice||!lowPowerDevice,powerPreference:lowPowerDevice?'low-power':'high-performance',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
-renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
+renderer.shadowMap.enabled=!lowPowerDevice; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
 renderer.domElement.style.touchAction='none';
 
-const moon=new THREE.DirectionalLight(0xc2a77f,.42); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
+const moon=new THREE.DirectionalLight(0xc2a77f,.42); moon.position.set(-9,18,8); moon.castShadow=!lowPowerDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 // Warm amber lighting keeps the abandoned house readable while preserving its eerie night mood.
 const warm=new THREE.PointLight(0xffb85f,20,28); warm.position.set(0,3,0); scene.add(warm);
 const hallLight=new THREE.PointLight(0xffc77e,13,23); hallLight.position.set(0,3,-8); scene.add(hallLight);
@@ -33,7 +33,7 @@ for(const [x,y,z] of [[-6,3,-3],[6,3,-3],[-6,3,5],[6,3,5],[13,3,0],[-6,7.9,-2],[
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const floorMat=mat(0x302e29), wallMat=mat(0x555751), darkMat=mat(0x171d1c), wood=mat(0x45352a), trim=mat(0x292724), glass=new THREE.MeshStandardMaterial({color:0x263c43,transparent:true,opacity:.42,roughness:.35});
-function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!isMobileDevice;o.receiveShadow=!isMobileDevice;parent.add(o);return o}
+function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!lowPowerDevice;o.receiveShadow=!lowPowerDevice;parent.add(o);return o}
 function plane(w,d,m,x,y,z){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,d),m);o.rotation.x=-Math.PI/2;o.position.set(x,y,z);o.receiveShadow=true;scene.add(o);return o}
 plane(90,90,mat(0x75684f),0,-.16,0);
 // BLACKWOOD OUTSKIRTS: a deserted service road swallowed by old forest.
