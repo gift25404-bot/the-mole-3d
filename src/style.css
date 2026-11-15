@@ -881,3 +881,6 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .live-avatar-preview .boutique-stage{height:320px}
  .live-avatar-preview .preview-person{transform:scale(.88);transform-origin:bottom center}
 }
+
+.live-avatar-preview .preview-body:before,.live-avatar-preview .preview-body:after,.live-avatar-preview .preview-seam:before,.live-avatar-preview .preview-seam:after{content:none!important;display:none!important}
+.live-avatar-preview .preview-body i{display:none!important}
