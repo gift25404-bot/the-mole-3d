@@ -559,7 +559,9 @@ scene.add(rain);
 const lightning=new THREE.DirectionalLight(0xc7d9ff,0);lightning.position.set(-20,25,-10);scene.add(lightning);
 let nextStormFlash=9+Math.random()*12,flashRemaining=0,nextSpookyEvent=24+Math.random()*18;
 const bus=new THREE.Group();scene.add(bus);bus.position.set(-24,0,8);
-box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);
+const busPaint=new THREE.MeshStandardMaterial({color:0xd9a91e,roughness:.38,metalness:.2});
+const busRoofPaint=new THREE.MeshStandardMaterial({color:0xe7c65f,roughness:.42,metalness:.12});
+box(4.5,1.8,2.1,busPaint,0,1,0,bus);box(3.6,.65,2.08,busRoofPaint,-.15,2.05,0,bus);
 box(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
 for(const x of [-1.35,-.35,.65,1.55])box(.65,.58,.05,glass,x,2.05,1.06,bus);
 for(const x of [-1.5,1.5])for(const z of [-1,1]){
@@ -1130,6 +1132,7 @@ const arrivalStartBusX=-24,arrivalEndBusX=-13;
 const arrivalCaption=document.querySelector('#arrival-caption');
 const arrivalSkip=document.querySelector('#skip-arrival');
 function finishArrival(){
+ playSfx('door');
  arrivalActive=false;arrivalComplete=true;document.querySelector('#bus-intro')?.classList.remove('cinematic-playing');bus.position.x=arrivalEndBusX;
  player.group.position.set(0,0,6.7);
  npcs.forEach((n,i)=>{const target=arrivalPassengerTargets[i];if(target)n.group.position.copy(target);});
@@ -1140,6 +1143,8 @@ function finishArrival(){
 }
 function startArrival(){
  if(arrivalActive||arrivalComplete)return;
+ setAmbience(true);
+ playBusArrivalSound();
  arrivalActive=true;arrivalStartedAt=elapsed;
  document.querySelector('#bus-intro')?.classList.add('cinematic-playing');
  arrivalPassengerTargets=npcs.map(n=>n.group.position.clone());
