@@ -171,6 +171,54 @@ for(const [x,y,z] of [[11.95,2.1,0],[15.15,9.2,0],[17.35,11.9,5.9]]){
 for(let i=0;i<5;i++){box(.75,.38,.55,blockwork,-8+i*.82,.2,10.8,house);box(1.8,.12,.22,wood,5+i*.45,.15,11.2,house);}
 for(let i=0;i<3;i++){const sack=new THREE.Mesh(new THREE.SphereGeometry(.34,10,8),mat(0xaaa18a));sack.scale.set(1,.55,.72);sack.position.set(8+i*.7,.28,11.5);sack.castShadow=true;house.add(sack);}
 
+// ABANDONED HOUSE WEATHERING: water stains, cracked plaster, climbing vines,
+// boarded windows and scattered rubble. Kept lightweight for mobile devices.
+const dampStain=new THREE.MeshStandardMaterial({color:0x303a35,roughness:1});
+const fadedPlaster=new THREE.MeshStandardMaterial({color:0x77766a,roughness:1});
+const rustStain=new THREE.MeshStandardMaterial({color:0x604536,roughness:1});
+const boardMat=mat(0x29251f,.98),leafMat=mat(0x344432,.98),leafDry=mat(0x66543a,.98);
+for(const [x,y,w,h] of [[-8.8,2.1,.65,2.8],[-4.4,1.2,.48,1.7],[4.7,2.5,.72,2.1],[8.7,1.45,.55,2.5],[-1.5,3.1,.38,1.1]]){
+ const stain=box(w,h,.025,dampStain,x,y,8.69,house);stain.rotation.z=(x%2)*.045;
+}
+for(const [x,y,w,h] of [[-9.1,2.6,.85,.12],[-4.4,.72,.7,.1],[4.5,3.15,.9,.12],[8.9,1.1,.75,.1],[-7.5,3.15,.5,.1]]){
+ const patch=box(w,h,.035,fadedPlaster,x,y,8.7,house);patch.rotation.z=(x%2)*.08;
+}
+for(const x of [-9.72,-6.2,6.4,9.72]){
+ for(let i=0;i<3;i++){
+  const streak=box(.045,.45+i*.22,.028,rustStain,x,2.9-i*.58,8.69,house);streak.rotation.z=(i-1)*.025;
+ }
+}
+// Long, irregular vine stems and scattered leaves climb the old front wall.
+function addVine(x,z,height,phase){
+ const points=[];for(let i=0;i<7;i++){const t=i/6;points.push(new THREE.Vector3(x+Math.sin(t*7+phase)*.22,.18+t*height,z));}
+ const curve=new THREE.CatmullRomCurve3(points);
+ const stem=new THREE.Mesh(new THREE.TubeGeometry(curve,24,.035,5,false),deadWood);house.add(stem);
+ for(let i=1;i<13;i++){
+  const t=i/13,p=curve.getPoint(t),side=i%2?1:-1;
+  const leaf=new THREE.Mesh(new THREE.SphereGeometry(.105,7,5),i%3?leafMat:leafDry);
+  leaf.position.set(p.x+side*.12,p.y,p.z-.015);leaf.scale.set(1.35,.55,.7);leaf.rotation.z=side*.42;house.add(leaf);
+ }
+}
+addVine(-9.1,8.72,3.35,.3);addVine(-4.15,8.72,2.55,1.4);addVine(4.25,8.72,3.05,2.1);addVine(9.05,8.72,3.5,.8);
+// A few old boards partly cover the rear windows; gaps remain visible.
+for(const x of [-7,-3,3,7]){
+ for(let i=0;i<2;i++){
+  const plank=box(1.55,.12,.09,boardMat,x,2.1+i*.48,-8.08,house);plank.rotation.z=(x+i)%2?.12:-.09;
+ }
+}
+// Broken plaster and loose masonry around the entrance and outer corners.
+for(let i=0;i<24;i++){
+ const x=-9.5+(i*1.73)%19,z=9.05+(i%5)*.58;
+ const rubble=new THREE.Mesh(new THREE.DodecahedronGeometry(.12+(i%3)*.045,0),i%3?concrete:rawConcrete);
+ rubble.position.set(x,.1+(i%2)*.035,z);rubble.rotation.set(i*.7,i*1.3,i*.4);rubble.scale.set(1,.55,.8);house.add(rubble);
+}
+for(const [x,z] of [[-9.7,7.5],[-8.9,-7.8],[9.4,7.4],[9.6,-7.5]]){
+ for(let i=0;i<4;i++){
+  const chunk=new THREE.Mesh(new THREE.DodecahedronGeometry(.17,0),blockwork);
+  chunk.position.set(x+(i%2)*.22,.13+(i%3)*.07,z+Math.floor(i/2)*.2);chunk.rotation.set(i,.5*i,.8);house.add(chunk);
+ }
+}
+
 // furniture and room details
 box(4,.45,2,wood,-6,.5,-5,house);box(.15,1.1,.15,trim,-7.7,.25,-5,house);box(.15,1.1,.15,trim,-4.3,.25,-5,house);
 box(2,.7,1.1,mat(0x58605a),5,.35,-5,house);box(2.2,.18,1.2,mat(0x8b765e),5,.78,-5,house);
