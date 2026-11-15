@@ -798,3 +798,86 @@ html,body,#game{background:#243b46;color:#fff2d8}
 
 /* Free touch movement uses the gameplay canvas, not a fixed joystick widget. */
 .screen-touch-stick{display:none!important;pointer-events:none!important}
+
+
+/* Complete avatar-preview rebuild: smooth, front-facing Bitmoji-inspired silhouette. */
+.live-avatar-preview .boutique-stage{perspective:900px}
+.live-avatar-preview .preview-person{
+ width:150px;height:286px;transform:none;filter:drop-shadow(0 12px 10px #0005);
+ animation:preview-bob 3.8s ease-in-out infinite;
+}
+.live-avatar-preview .preview-face{
+ left:48px;top:17px;width:55px;height:64px;border-radius:47% 47% 45% 45%;
+ background:radial-gradient(ellipse at 34% 26%,#ffffff30,transparent 35%),var(--preview-skin);
+ box-shadow:inset -6px -5px 9px #0002,0 2px 3px #0002;z-index:5;
+}
+.live-avatar-preview .preview-face i{
+ top:27px;left:12px;width:7px;height:9px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#fff 0 15%,#4a2d25 18% 100%);
+ box-shadow:23px 0 0 -0px #4a2d25,23px 0 0 1px #ffffff22;
+}
+.live-avatar-preview .preview-face b{
+ left:20px;top:48px;width:16px;height:7px;border-bottom:2px solid #8b5148;
+ border-radius:0 0 50% 50%;background:transparent;
+}
+.live-avatar-preview .preview-hair{
+ left:44px;top:8px;width:64px;height:36px;border-radius:32px 32px 13px 13px;
+ background:linear-gradient(100deg,#160f0c,var(--preview-hair) 45%,#493020);
+ box-shadow:inset 5px 2px 5px #ffffff12,0 2px 3px #0004;z-index:7;
+}
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair{
+ height:35px;border-radius:34px 34px 13px 13px;
+ box-shadow:inset 5px 2px 5px #ffffff12,0 2px 3px #0004,
+ -14px 95px 0 -2px var(--preview-hair),14px 95px 0 -2px var(--preview-hair);
+}
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair:before,
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair:after{
+ content:"";position:absolute;top:25px;width:14px;height:153px;
+ border-radius:0 0 10px 10px;background:linear-gradient(90deg,#160f0c,var(--preview-hair) 55%,#493020);
+ box-shadow:inset 3px 0 3px #ffffff12;
+}
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair:before{left:1px}
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair:after{right:1px}
+.live-avatar-preview .preview-neck{left:68px;top:72px;width:16px;height:20px;border-radius:5px;background:var(--preview-skin)}
+.live-avatar-preview .preview-body{
+ left:38px;top:87px;width:78px;height:91px;border:0;border-radius:23px 23px 13px 13px;
+ background:linear-gradient(105deg,#c9c4ba 0%,var(--preview-shirt) 17%,var(--preview-shirt) 78%,#c8c2b7 100%);
+ box-shadow:inset 7px 0 8px #ffffff20,inset -7px 0 8px #00000012,0 3px 5px #0002;
+}
+.live-avatar-preview .preview-collar{display:none}
+.live-avatar-preview .preview-seam{
+ left:38px;top:8px;width:1px;height:78px;background:#ffffff80;
+}
+.live-avatar-preview .preview-arm{
+ top:96px;width:22px;height:78px;border:0;border-radius:13px;
+ background:linear-gradient(90deg,#b8b1a6,var(--preview-shirt) 24%,var(--preview-shirt) 78%,#b8b1a6);
+ box-shadow:inset 3px 0 4px #ffffff20;
+}
+.live-avatar-preview .preview-arm-left{left:22px;transform:rotate(7deg)}
+.live-avatar-preview .preview-arm-right{right:22px;transform:rotate(-7deg)}
+.live-avatar-preview .preview-arm i{
+ bottom:-10px;left:3px;width:15px;height:18px;border-radius:9px;
+ background:var(--preview-skin);box-shadow:inset -2px -2px 3px #0002;
+}
+.live-avatar-preview .preview-leg{
+ top:174px;width:35px;height:94px;border-radius:8px 8px 12px 12px;
+ background:linear-gradient(90deg,#aaa69f,#d2cec5 35%,#c5c1b8 78%,#a7a39b);
+ box-shadow:inset 3px 0 4px #ffffff40,inset -3px 0 4px #00000010;
+}
+.live-avatar-preview .preview-leg-left{left:42px}
+.live-avatar-preview .preview-leg-right{right:42px}
+.live-avatar-preview .preview-leg i{display:none}
+.live-avatar-preview .preview-shoe{
+ top:259px;width:39px;height:19px;border-radius:12px 13px 7px 7px;
+ background:linear-gradient(#fff,#e8e7e2);border:0;border-bottom:3px solid #d1d0cb;
+ box-shadow:0 3px 4px #0003;
+}
+.live-avatar-preview .preview-shoe-left{left:35px}
+.live-avatar-preview .preview-shoe-right{right:35px}
+.live-avatar-preview .preview-shadow{display:none}
+.live-avatar-preview .preview-accessory{z-index:8}
+.live-avatar-preview .preview-person[data-hair="long"] .preview-hair{clip-path:none}
+@media(max-width:620px){
+ .live-avatar-preview .boutique-stage{height:320px}
+ .live-avatar-preview .preview-person{transform:scale(.88);transform-origin:bottom center}
+}
