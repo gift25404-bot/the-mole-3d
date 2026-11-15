@@ -789,3 +789,8 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .mobile-pad{right:7px;bottom:8px;gap:4px}
  .mobile-pad .mobile-run,.mobile-pad .mobile-interact,.mobile-pad .mobile-jump{width:56px;height:40px;min-height:40px;font-size:7px}
 }
+
+@media (max-width:900px) and (orientation:landscape) and (max-height:520px){
+ .chat-panel{left:8px;right:auto;top:88px;bottom:auto;width:160px;max-width:30vw}
+ .chat-log{height:34px}
+}
