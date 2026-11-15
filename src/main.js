@@ -3,8 +3,8 @@ import { io } from 'socket.io-client';
 import './style.css';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x080f14);
-scene.fog = new THREE.FogExp2(0x0b1417, 0.026);
+scene.background = new THREE.Color(0x17120d);
+scene.fog = new THREE.FogExp2(0x21180f, 0.018);
 const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, .1, 180);
 // Detect phones/tablets early and select a lighter renderer profile.
 const isMobileDevice=matchMedia('(max-width: 800px), (pointer: coarse)').matches;
@@ -16,14 +16,14 @@ const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevi
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice||!lowPowerDevice,powerPreference:lowPowerDevice?'low-power':'high-performance',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
-renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.86;
+renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.02;
 document.querySelector('#game').appendChild(renderer.domElement);
 
-const moon=new THREE.DirectionalLight(0x8095a5,.78); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
-// Only weak pools of light reach the abandoned interior; the corners stay dark.
-const warm=new THREE.PointLight(0xffb35c,7,13); warm.position.set(0,3,0); scene.add(warm);
-const hallLight=new THREE.PointLight(0xffd18a,3.5,8); hallLight.position.set(0,3,-8); scene.add(hallLight);
-const houseAmbient=new THREE.HemisphereLight(0x758b96,0x090d0c,0.42); scene.add(houseAmbient);
+const moon=new THREE.DirectionalLight(0xc2a77f,.42); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
+// Warm amber lighting keeps the abandoned house readable while preserving its eerie night mood.
+const warm=new THREE.PointLight(0xffb85f,10,19); warm.position.set(0,3,0); scene.add(warm);
+const hallLight=new THREE.PointLight(0xffc77e,6.5,15); hallLight.position.set(0,3,-8); scene.add(hallLight);
+const houseAmbient=new THREE.HemisphereLight(0xffd5a5,0x382316,0.88); scene.add(houseAmbient);
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const floorMat=mat(0x302e29), wallMat=mat(0x555751), darkMat=mat(0x171d1c), wood=mat(0x45352a), trim=mat(0x292724), glass=new THREE.MeshStandardMaterial({color:0x263c43,transparent:true,opacity:.42,roughness:.35});
@@ -369,7 +369,7 @@ addMissionPickup('OLD MARKET TOKEN',-34,18,0xd69b55);
 updateCoins();
 
 // hanging lamps
-for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.3}));lamp.position.set(x,2.7,z);house.add(lamp);if(!isMobileDevice){const l=new THREE.PointLight(0xffb45e,2.2,4);l.position.set(x,2.5,z);house.add(l)}}
+for(const [x,z] of [[0,-4],[5,1],[-6,-2]]){box(.08,1,.08,trim,x,3.3,z,house);const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xffc16e,emissive:0xff9a32,emissiveIntensity:1.6}));lamp.position.set(x,2.7,z);house.add(lamp);const l=new THREE.PointLight(0xffb45e,isMobileDevice?1.25:2.2,6);l.position.set(x,2.5,z);house.add(l)}
 // exterior trees and fence-like silhouettes
 for(let i=0;i<22;i++){const a=i/22*Math.PI*2, r=14+Math.sin(i*4)*2,x=Math.cos(a)*r,z=Math.sin(a)*r;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.3,2.2,5),wood);trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.ConeGeometry(1.25,3.2,6),mat(0x263a35));crown.position.set(x,3.3,z);crown.castShadow=true;scene.add(crown)}
 // Fill the empty lots with overgrown trees and abandoned, weathered vehicles.
@@ -1252,8 +1252,8 @@ function animate(now=0){requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
  liftCabin.position.y=THREE.MathUtils.damp(liftCabin.position.y,liftTargetY,.9,dt);
  // Random short power failures: lights dim, then return with a generator flicker.
- if(!powerOutageActive&&elapsed>=nextPowerOutage){powerOutageActive=true;powerOutageRemaining=4.5+Math.random()*3.5;warm.userData.savedIntensity=7;hallLight.userData.savedIntensity=3.5;houseAmbient.userData.savedIntensity=.42;notice('POWER FAILURE • The generator has cut out. Stay alert.');playCue();}
- if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?.45:.08;warm.intensity=flicker;hallLight.intensity=flicker*.55;houseAmbient.intensity=.12;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=7;hallLight.intensity=3.5;houseAmbient.intensity=.42;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The lights are back on.');playCue();}}
+ if(!powerOutageActive&&elapsed>=nextPowerOutage){powerOutageActive=true;powerOutageRemaining=4.5+Math.random()*3.5;notice('POWER FAILURE • The lights flicker, but the house stays dimly lit.');playCue();}
+ if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?4.8:2.8;warm.intensity=flicker;hallLight.intensity=flicker*.58;houseAmbient.intensity=.62;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=10;hallLight.intensity=6.5;houseAmbient.intensity=.88;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The warm lights return.');playCue();}}
  // Slow drifting dust is deliberately lightweight for budget phones.
  const dustPos=dust.geometry.attributes.position;
  for(let i=0;i<dustCount;i++){
@@ -1331,7 +1331,7 @@ if(keys.w||keys.arrowup)dz-=1;if(keys.s||keys.arrowdown)dz+=1;if(keys.a||keys.ar
  // clue items hover gently until collected
  clueItems.forEach(c=>{if(!c.collected)c.group.position.y=c.baseY+Math.sin(elapsed*2+c.phase)*.09;});
  // flicker the old house lights
- warm.intensity=6.5+Math.sin(elapsed*8)*.65+(Math.sin(elapsed*23)>.985?-4.2:0);
+ if(!powerOutageActive)warm.intensity=9.5+Math.sin(elapsed*8)*.45+(Math.sin(elapsed*23)>.99?-1.8:0);
  // Send player movement at a modest rate when connected to an online room.
  if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
  // Cinematic arrival camera: bus approach, breakdown, then reveal Blackwood House.
