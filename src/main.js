@@ -1669,9 +1669,9 @@ const avatarPreviewScene=new THREE.Scene();avatarPreviewScene.background=new THR
 avatarPreviewScene.add(new THREE.HemisphereLight(0xf4e6d2,0x263b3b,2.0));
 const previewKey=new THREE.DirectionalLight(0xffe2bd,2.3);previewKey.position.set(-3,6,5);avatarPreviewScene.add(previewKey);
 const previewFill=new THREE.DirectionalLight(0xa8c8ff,1.0);previewFill.position.set(4,3,-4);avatarPreviewScene.add(previewFill);
-const avatarPreviewCamera=new THREE.PerspectiveCamera(31,1,.1,50);avatarPreviewCamera.position.set(2.15,2.0,7.1);avatarPreviewCamera.lookAt(0,1.36,0);
-const previewAvatar=makeAvatar('YOU',0xc96f62,0x9a674b,0x211b1a,0,0,false,avatarPreviewScene);
-previewAvatar.group.scale.setScalar(1.02);previewAvatar.group.rotation.y=-.12;
+const avatarPreviewCamera=new THREE.PerspectiveCamera(35,1,.1,50);avatarPreviewCamera.position.set(0,1.62,5.35);avatarPreviewCamera.lookAt(0,1.38,0);
+const previewAvatar=makeAvatar('YOU',0xe2d6c4,0x9a674b,0x302018,0,0,false,avatarPreviewScene);
+previewAvatar.group.scale.setScalar(1.02);previewAvatar.group.rotation.y=0;
 let avatarPreviewRenderer=null,avatarPreviewReady=false;
 try{
  avatarPreviewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:false,antialias:true,powerPreference:'low-power'});
