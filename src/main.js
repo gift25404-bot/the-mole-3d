@@ -219,6 +219,33 @@ for(const [x,z] of [[-9.7,7.5],[-8.9,-7.8],[9.4,7.4],[9.6,-7.5]]){
  }
 }
 
+// Dense, layered overgrowth hugs the abandoned house without blocking the front entrance.
+const houseBushMats=[mat(0x183522,.98),mat(0x24452a,.98),mat(0x315333,.98),mat(0x405b36,.98)];
+function addHouseBush(x,z,scale=1){
+ const shrub=new THREE.Group();shrub.position.set(x,0,z);shrub.scale.setScalar(scale);scene.add(shrub);
+ for(let i=0;i<5;i++){
+  const puff=new THREE.Mesh(new THREE.IcosahedronGeometry(.62+(i%3)*.12,1),houseBushMats[(i+Math.floor(Math.random()*3))%houseBushMats.length]);
+  puff.position.set((i-2)*.34,.48+(i%2)*.16,(i%2?-.24:.24));puff.scale.set(1.15,.78,.95);puff.castShadow=!lowPowerDevice;puff.receiveShadow=!lowPowerDevice;shrub.add(puff);
+ }
+ for(let i=0;i<3;i++){
+  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.19,.62,5),houseBushMats[(i+1)%houseBushMats.length]);
+  leaf.position.set((i-1)*.42,.82,.08);leaf.rotation.z=(i-1)*.3;shrub.add(leaf);
+ }
+}
+for(const [x,z,s] of [
+ [-10.5,-7.4,1.35],[-10.7,-4.1,1.25],[-10.8,-.3,1.4],[-10.7,3.8,1.2],[-10.4,7.2,1.35],
+ [10.6,-7.3,1.3],[10.7,-3.8,1.25],[10.7,.2,1.35],[10.6,4.1,1.3],[10.4,7.2,1.25],
+ [-8.8,-9.5,1.25],[-5.5,-9.7,1.15],[-1.7,-9.8,1.2],[2.2,-9.8,1.15],[6.2,-9.6,1.25],[9.1,-9.2,1.15],
+ [-9.1,9.35,1.1],[-7.1,9.55,.95],[7.1,9.55,.95],[9.1,9.35,1.1]
+]) addHouseBush(x,z,s);
+// Small ground-cover clusters fill the gaps between the larger shrubs.
+for(let i=0;i<24;i++){
+ const side=i%2?1:-1,z=-8.8+(i*1.47)%17.4;
+ const x=side*(10.3+((i%3)*.28));
+ if(Math.abs(z-8.5)<1.6)continue;
+ addHouseBush(x,z,.48+(i%4)*.08);
+}
+
 // furniture and room details
 box(4,.45,2,wood,-6,.5,-5,house);box(.15,1.1,.15,trim,-7.7,.25,-5,house);box(.15,1.1,.15,trim,-4.3,.25,-5,house);
 box(2,.7,1.1,mat(0x58605a),5,.35,-5,house);box(2.2,.18,1.2,mat(0x8b765e),5,.78,-5,house);
@@ -535,7 +562,41 @@ const bus=new THREE.Group();scene.add(bus);bus.position.set(-24,0,8);
 box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.05,0,bus);
 box(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
 for(const x of [-1.35,-.35,.65,1.55])box(.65,.58,.05,glass,x,2.05,1.06,bus);
-for(const x of [-1.5,1.5])for(const z of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.22,12),mat(0x151719));w.rotation.z=Math.PI/2;w.position.set(x,.45,z);bus.add(w)}
+for(const x of [-1.5,1.5])for(const z of [-1,1]){
+ const tyre=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.24,18),mat(0x111416,.99));tyre.rotation.z=Math.PI/2;tyre.position.set(x,.45,z);tyre.castShadow=true;bus.add(tyre);
+ const hub=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.255,14),mat(0x777a77,.62));hub.rotation.z=Math.PI/2;hub.position.set(x,.45,z*1.015);bus.add(hub);
+ const hubCap=new THREE.Mesh(new THREE.CylinderGeometry(.095,.095,.265,12),mat(0x252a2b,.55));hubCap.rotation.z=Math.PI/2;hubCap.position.set(x,.45,z*1.03);bus.add(hubCap);
+}
+// More convincing minibus front: broad windscreen, divided grille, bumpers, lamps and mirrors.
+const busGlass=new THREE.MeshStandardMaterial({color:0x182b31,roughness:.2,metalness:.18,transparent:true,opacity:.88});
+const busChrome=mat(0x85847b,.38),busRubber=mat(0x171b1d,.98);
+box(.055,.76,1.62,busGlass,2.255,2.04,0,bus);
+box(.075,.36,.78,busRubber,2.29,1.05,0,bus);
+for(let i=0;i<5;i++)box(.085,.035,.7,busChrome,2.34,.91+i*.065,0,bus);
+box(.12,.18,2.2,busRubber,2.28,.58,0,bus);
+box(.14,.13,2.16,busChrome,2.32,.49,0,bus);
+for(const side of [-1,1]){
+ const lamp=new THREE.MeshStandardMaterial({color:0xffe6b0,emissive:0xffc66b,emissiveIntensity:1.35});
+ box(.075,.31,.42,lamp,2.31,1.43,side*.72,bus);
+ const indicator=new THREE.MeshStandardMaterial({color:0xd87932,emissive:0x6b2608,emissiveIntensity:.55});
+ box(.08,.12,.2,indicator,2.32,1.12,side*.88,bus);
+ // Side windows and their rubber seals on both sides of the vehicle.
+ for(const wx of [-1.48,-.48,.52,1.42]){
+  box(.035,.61,.72,busGlass,wx,2.05,side*1.075,bus);
+  box(.045,.045,.78,busRubber,wx,2.38,side*1.08,bus);
+ }
+ // Wing mirrors on short metal arms.
+ const arm=box(.48,.055,.055,busChrome,1.82,1.78,side*1.2,bus);arm.rotation.y=side*.18;
+ box(.12,.24,.12,busRubber,2.02,1.78,side*1.43,bus);
+ box(.035,.18,.09,busGlass,2.04,1.79,side*1.49,bus);
+}
+// Roof luggage rail, destination board and realistic panel seams.
+box(3.45,.09,.12,busRubber,-.18,2.42,-.82,bus);
+box(3.45,.09,.12,busRubber,-.18,2.42,.82,bus);
+for(const x of [-1.65,-.55,.55,1.55])box(.08,.2,.1,busChrome,x,2.48,-.82,bus);
+box(.055,.3,.85,busRubber,-2.17,1.68,0,bus);
+box(.06,.2,.58,mat(0xc7a75d,.6),-2.21,1.7,0,bus);
+box(.045,.035,1.7,busChrome,-.1,1.49,1.09,bus);
 // Two additional full-size abandoned coaches surround the house.
 function addAbandonedCoach(x,z,rotation,color){
  const coach=new THREE.Group();coach.position.set(x,0,z);coach.rotation.y=rotation;scene.add(coach);
@@ -726,6 +787,23 @@ function setAmbience(on){
  tone(38,'sawtooth',.018,82);tone(72,'sine',.014,145);
  const len=audioCtx.sampleRate*3,buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*.18;
  const n=audioCtx.createBufferSource(),g=audioCtx.createGain(),q=audioCtx.createBiquadFilter();n.buffer=buf;n.loop=true;q.type='lowpass';q.frequency.value=620;g.gain.value=.052;n.connect(q);q.connect(g);g.connect(masterGain);n.start();ambienceNodes.push(n,g,q);
+}
+// Layered synthesized arrival: low diesel idle, rising engine rev, tyre rumble and compressed-air brakes.
+function playBusArrivalSound(){
+ if(!audioCtx||!masterGain)return;
+ const now=audioCtx.currentTime;
+ const engine=audioCtx.createOscillator(),engineGain=audioCtx.createGain(),engineFilter=audioCtx.createBiquadFilter();
+ engine.type='sawtooth';engine.frequency.setValueAtTime(38,now);engine.frequency.linearRampToValueAtTime(66,now+2.8);engine.frequency.linearRampToValueAtTime(48,now+6.4);
+ engineFilter.type='lowpass';engineFilter.frequency.value=155;engineGain.gain.setValueAtTime(.001,now);engineGain.gain.linearRampToValueAtTime(.095,now+.8);engineGain.gain.setValueAtTime(.085,now+4.8);engineGain.gain.exponentialRampToValueAtTime(.001,now+7.2);
+ engine.connect(engineFilter);engineFilter.connect(engineGain);engineGain.connect(masterGain);engine.start(now);engine.stop(now+7.25);
+ const rumble=audioCtx.createOscillator(),rumbleGain=audioCtx.createGain();rumble.type='triangle';rumble.frequency.setValueAtTime(24,now);rumble.frequency.linearRampToValueAtTime(39,now+2.5);rumble.frequency.exponentialRampToValueAtTime(22,now+6.8);rumbleGain.gain.setValueAtTime(.001,now);rumbleGain.gain.linearRampToValueAtTime(.075,now+1);rumbleGain.gain.exponentialRampToValueAtTime(.001,now+7);
+ rumble.connect(rumbleGain);rumbleGain.connect(masterGain);rumble.start(now);rumble.stop(now+7.05);
+ const length=Math.floor(audioCtx.sampleRate*1.35),buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate),samples=buffer.getChannelData(0);
+ for(let i=0;i<length;i++)samples[i]=(Math.random()*2-1)*.7;
+ const hiss=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),hissGain=audioCtx.createGain();
+ hiss.buffer=buffer;filter.type='bandpass';filter.frequency.value=1050;filter.Q.value=.55;
+ hissGain.gain.setValueAtTime(.001,now+5.2);hissGain.gain.linearRampToValueAtTime(.09,now+5.65);hissGain.gain.exponentialRampToValueAtTime(.001,now+6.45);
+ hiss.connect(filter);filter.connect(hissGain);hissGain.connect(masterGain);hiss.start(now+5.15);
 }
 function playSfx(kind){
  if(!ambienceOn||!audioCtx||!masterGain)return;
