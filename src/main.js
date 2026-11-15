@@ -555,22 +555,22 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  capsule(.105,.17,skinMat,0,1.57,0);
  capsule(.285,.48,shirtMat,0,1.20,0,1.34,1,.94);
  sphere(.31,shirtMat,0,1.48,0,1.12,.43,.90);
- const head=sphere(.49,skinMat,0,2.12,0,.94,1.04,.91,48);
+ const head=sphere(.455,skinMat,0,2.12,0,.96,1.06,.91,48);
  // Soft jaw shape, restrained ears and natural facial planes.
- sphere(.315,skinMat,0,1.96,.075,1,.63,.83,40);
+ sphere(.292,skinMat,0,1.96,.075,1,.62,.83,40);
  for(const side of [-1,1]){
   sphere(.072,skinMat,side*.414,2.08,0,.72,1.18,.72);
   sphere(.087,skinMat,side*.202,1.99,.338,1,.66,.32);
  }
  // Subtle nose bridge and tip, kept close to the face.
- sphere(.037,skinMat,0,2.075,.392,.8,1.45,.72);
- sphere(.055,skinMat,0,1.985,.423,1,.78,.78);
+ sphere(.03,skinMat,0,2.075,.392,.8,1.45,.72);
+ sphere(.045,skinMat,0,1.985,.423,1,.78,.78);
  // Smaller eyes with shaped upper lids, irises and natural brows.
  for(const ex of [-.155,.155]){
-  sphere(.112,skinMat,ex,2.155,.365,1.05,1.12,.42);
-  sphere(.087,white,ex,2.148,.397,1,.98,.42);
-  sphere(.045,iris,ex+.006,2.145,.431,.92,1,.48);
-  sphere(.022,dark,ex+.006,2.145,.448,1,1,.48);
+  sphere(.092,skinMat,ex,2.155,.365,1.05,1.1,.42);
+  sphere(.071,white,ex,2.148,.397,1,.98,.42);
+  sphere(.037,iris,ex+.006,2.145,.431,.92,1,.48);
+  sphere(.018,dark,ex+.006,2.145,.448,1,1,.48);
   sphere(.013,white,ex-.010,2.163,.462,1,1,.45);
   const brow=capsule(.017,.105,hairMat,ex,2.285,.345,1,1,.58);brow.rotation.z=ex<0?-.12:.12;
  }
@@ -580,9 +580,9 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   new THREE.Vector3(0,1.884,.437),new THREE.Vector3(.045,1.888,.433),
   new THREE.Vector3(.085,1.905,.414)
  ]);
- g.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.009,8,false),dark));
+ g.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.007,8,false),dark));
  // Hair cap and clean layered fringe; hairPieces remains compatible with the style selector.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.465,48,32,0,Math.PI*2,0,Math.PI*.42),hairMat);
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.445,48,32,0,Math.PI*2,0,Math.PI*.42),hairMat);
  cap.position.set(0,2.29,-.065);cap.castShadow=true;g.add(cap);
  const hairPieces=[cap];
  const fringe=[
@@ -1145,15 +1145,15 @@ document.addEventListener('keydown',e=>{const k=e.key.toLowerCase(),mapped=({arr
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
-// Drag anywhere on the left side of the gameplay screen to steer with a virtual joystick.
-const touchStick=document.createElement('div');touchStick.className='screen-touch-stick';touchStick.innerHTML='<span></span>';document.querySelector('#game').appendChild(touchStick);
+// Fixed, thumb-sized virtual joystick: stable position makes movement easier to learn.
+const touchStick=document.createElement('div');touchStick.className='screen-touch-stick';touchStick.setAttribute('role','application');touchStick.setAttribute('aria-label','Movement joystick');touchStick.innerHTML='<span></span>';document.querySelector('#game').appendChild(touchStick);
 let activeMovePointer=null,touchStartX=0,touchStartY=0;
-function resetScreenTouch(){activeMovePointer=null;['w','a','s','d'].forEach(k=>keys[k]=false);touchStick.classList.remove('active');touchStick.style.transform='translate(-50%,-50%)';const knob=touchStick.firstElementChild;if(knob)knob.style.transform='translate(0,0)';}
-function updateScreenTouch(e){const dx=e.clientX-touchStartX,dy=e.clientY-touchStartY,limit=48,dead=11;const x=THREE.MathUtils.clamp(dx/limit,-1,1),y=THREE.MathUtils.clamp(dy/limit,-1,1);keys.a=x<-.22;keys.d=x>.22;keys.w=y<-.22;keys.s=y>.22;const knob=touchStick.firstElementChild;if(knob)knob.style.transform=`translate(${THREE.MathUtils.clamp(dx,-limit,limit)}px,${THREE.MathUtils.clamp(dy,-limit,limit)}px)`;}
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||activeMovePointer!==null||e.clientX>innerWidth*.56||document.querySelector('#auth-screen:not(.hidden),#avatar-screen:not(.hidden),.modal:not(.hidden),.game-phone:not(.hidden),.cctv-panel:not(.hidden)'))return;activeMovePointer=e.pointerId;touchStartX=e.clientX;touchStartY=e.clientY;touchStick.style.left=touchStartX+'px';touchStick.style.top=touchStartY+'px';touchStick.classList.add('active');renderer.domElement.setPointerCapture?.(e.pointerId);e.preventDefault();});
-renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId===activeMovePointer){updateScreenTouch(e);e.preventDefault();}});
-['pointerup','pointercancel','lostpointercapture'].forEach(type=>renderer.domElement.addEventListener(type,e=>{if(e.pointerId===activeMovePointer)resetScreenTouch();}));
-document.querySelector('.mobile-jump')?.addEventListener('click',()=>{jumpQueued=true;});
+function resetScreenTouch(){activeMovePointer=null;['w','a','s','d'].forEach(k=>keys[k]=false);const knob=touchStick.firstElementChild;if(knob)knob.style.transform='translate(0,0)';}
+function updateScreenTouch(e){const dx=e.clientX-touchStartX,dy=e.clientY-touchStartY,limit=58,dead=9;const x=THREE.MathUtils.clamp(dx/limit,-1,1),y=THREE.MathUtils.clamp(dy/limit,-1,1);keys.a=x<-.16;keys.d=x>.16;keys.w=y<-.16;keys.s=y>.16;const knob=touchStick.firstElementChild;if(knob)knob.style.transform=`translate(${THREE.MathUtils.clamp(dx,-limit,limit)}px,${THREE.MathUtils.clamp(dy,-limit,limit)}px)`;}
+touchStick.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.pointerType!=='pen')return;if(activeMovePointer!==null||document.querySelector('#auth-screen:not(.hidden),#avatar-screen:not(.hidden),.modal:not(.hidden),.game-phone:not(.hidden),.cctv-panel:not(.hidden)'))return;const rect=touchStick.getBoundingClientRect();touchStartX=rect.left+rect.width/2;touchStartY=rect.top+rect.height/2;activeMovePointer=e.pointerId;touchStick.setPointerCapture(e.pointerId);updateScreenTouch(e);e.preventDefault();});
+touchStick.addEventListener('pointermove',e=>{if(e.pointerId===activeMovePointer){updateScreenTouch(e);e.preventDefault();}});
+['pointerup','pointercancel','lostpointercapture'].forEach(type=>touchStick.addEventListener(type,e=>{if(e.pointerId===activeMovePointer)resetScreenTouch();}));
+document.querySelector('.mobile-jump')?.addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true;});
 let cluesFound=0, exitUnlocked=false, hasBrassKey=false, secretRoomOpen=false, secretLedgerFound=false;
 function updateObjective(){
  const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
