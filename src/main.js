@@ -1052,7 +1052,7 @@ const arrivalStartBusX=-24,arrivalEndBusX=-13;
 const arrivalCaption=document.querySelector('#arrival-caption');
 const arrivalSkip=document.querySelector('#skip-arrival');
 function finishArrival(){
- arrivalActive=false;arrivalComplete=true;bus.position.x=arrivalEndBusX;
+ arrivalActive=false;arrivalComplete=true;document.querySelector('#bus-intro')?.classList.remove('cinematic-playing');bus.position.x=arrivalEndBusX;
  player.group.position.set(0,0,6.7);
  npcs.forEach((n,i)=>{const target=arrivalPassengerTargets[i];if(target)n.group.position.copy(target);});
  if(arrivalCaption)arrivalCaption.textContent='BLACKWOOD HOUSE. NO ONE KNOWS WHY THE BUS STOPPED HERE.';
@@ -1063,6 +1063,7 @@ function finishArrival(){
 function startArrival(){
  if(arrivalActive||arrivalComplete)return;
  arrivalActive=true;arrivalStartedAt=elapsed;
+ document.querySelector('#bus-intro')?.classList.add('cinematic-playing');
  arrivalPassengerTargets=npcs.map(n=>n.group.position.clone());
  npcs.forEach((n,i)=>n.group.position.set(arrivalStartBusX+(i-2)*.52,0,8));
  bus.position.set(arrivalStartBusX,0,8);
