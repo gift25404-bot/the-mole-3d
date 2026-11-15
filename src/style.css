@@ -794,3 +794,7 @@ html,body,#game{background:#243b46;color:#fff2d8}
  .chat-panel{left:8px;right:auto;top:88px;bottom:auto;width:160px;max-width:30vw}
  .chat-log{height:34px}
 }
+
+
+/* Free touch movement uses the gameplay canvas, not a fixed joystick widget. */
+.screen-touch-stick{display:none!important;pointer-events:none!important}
