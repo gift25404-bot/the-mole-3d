@@ -18,6 +18,7 @@ renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRati
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
+renderer.domElement.style.touchAction='none';
 
 const moon=new THREE.DirectionalLight(0xc2a77f,.42); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 // Warm amber lighting keeps the abandoned house readable while preserving its eerie night mood.
@@ -533,16 +534,17 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  ]);
  g.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.009,8,false),dark));
  // Hair cap and clean layered fringe; hairPieces remains compatible with the style selector.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.465,48,32,0,Math.PI*2,0,Math.PI*.56),hairMat);
- cap.position.set(0,2.255,-.035);cap.castShadow=true;g.add(cap);
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.465,48,32,0,Math.PI*2,0,Math.PI*.42),hairMat);
+ cap.position.set(0,2.29,-.065);cap.castShadow=true;g.add(cap);
  const hairPieces=[cap];
  const fringe=[
   [-.27,2.245,.292,.145],[-.13,2.285,.347,.145],[.015,2.295,.355,.145],[.16,2.275,.335,.15],[.29,2.235,.285,.14]
  ];
  for(const [hx,hy,hz,r] of fringe)hairPieces.push(sphere(r,hairMat,hx,hy,hz,1,.72,.72));
  for(const side of [-1,1]){
-  hairPieces.push(sphere(.135,hairMat,side*.397,2.075,-.012,.78,1.35,.88));
-  hairPieces.push(sphere(.105,hairMat,side*.365,1.965,-.025,.82,1.05,.85));
+  const temple=sphere(.115,hairMat,side*.405,2.105,-.075,.68,.92,.62);
+  const sideLock=sphere(.09,hairMat,side*.405,1.985,-.085,.68,.92,.62);
+  hairPieces.push(temple,sideLock);
  }
  // Tailored clothing, restrained seams and more proportional hands and shoes.
  const collar=new THREE.Mesh(new THREE.ConeGeometry(.105,.12,5),detail);collar.position.set(0,1.545,.18);collar.rotation.y=Math.PI/5;g.add(collar);
@@ -597,7 +599,7 @@ const npcs=[
 ];
 const all=[player,...npcs];
 let cameraMode=0;const modes=['ISOMETRIC','THIRD PERSON','FIRST PERSON'];
-const keys={};let noticeTimer,jumpOffset=0,jumpVelocity=0,jumpHeld=false;
+const keys={};let noticeTimer,jumpOffset=0,jumpVelocity=0,jumpHeld=false,jumpQueued=false;
 function addChat(name,message,isSystem=false){
  const log=document.querySelector('#chat-log');
  if(!log)return;
@@ -1095,6 +1097,15 @@ document.addEventListener('keydown',e=>{const k=e.key.toLowerCase(),mapped=({arr
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
+// Drag anywhere on the left side of the gameplay screen to steer with a virtual joystick.
+const touchStick=document.createElement('div');touchStick.className='screen-touch-stick';touchStick.innerHTML='<span></span>';document.querySelector('#game').appendChild(touchStick);
+let activeMovePointer=null,touchStartX=0,touchStartY=0;
+function resetScreenTouch(){activeMovePointer=null;['w','a','s','d'].forEach(k=>keys[k]=false);touchStick.classList.remove('active');touchStick.style.transform='translate(-50%,-50%)';const knob=touchStick.firstElementChild;if(knob)knob.style.transform='translate(0,0)';}
+function updateScreenTouch(e){const dx=e.clientX-touchStartX,dy=e.clientY-touchStartY,limit=48,dead=11;const x=THREE.MathUtils.clamp(dx/limit,-1,1),y=THREE.MathUtils.clamp(dy/limit,-1,1);keys.a=x<-.22;keys.d=x>.22;keys.w=y<-.22;keys.s=y>.22;const knob=touchStick.firstElementChild;if(knob)knob.style.transform=`translate(${THREE.MathUtils.clamp(dx,-limit,limit)}px,${THREE.MathUtils.clamp(dy,-limit,limit)}px)`;}
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||activeMovePointer!==null||e.clientX>innerWidth*.56||document.querySelector('#auth-screen:not(.hidden),#avatar-screen:not(.hidden),.modal:not(.hidden),.game-phone:not(.hidden),.cctv-panel:not(.hidden)'))return;activeMovePointer=e.pointerId;touchStartX=e.clientX;touchStartY=e.clientY;touchStick.style.left=touchStartX+'px';touchStick.style.top=touchStartY+'px';touchStick.classList.add('active');renderer.domElement.setPointerCapture?.(e.pointerId);e.preventDefault();});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId===activeMovePointer){updateScreenTouch(e);e.preventDefault();}});
+['pointerup','pointercancel','lostpointercapture'].forEach(type=>renderer.domElement.addEventListener(type,e=>{if(e.pointerId===activeMovePointer)resetScreenTouch();}));
+document.querySelector('.mobile-jump')?.addEventListener('click',()=>{jumpQueued=true;});
 let cluesFound=0, exitUnlocked=false, hasBrassKey=false, secretRoomOpen=false, secretLedgerFound=false;
 function updateObjective(){
  const count=document.querySelector('#clue-count'),objective=document.querySelector('#objective-text');
@@ -1315,8 +1326,8 @@ if(keys.w||keys.arrowup)dz-=1;if(keys.s||keys.arrowdown)dz+=1;if(keys.a||keys.ar
  }else{
   p.position.y=[0,7.8,11.6][currentFloor];
  }
- if(keys.space&&!jumpHeld&&!localPlayerDead&&jumpOffset===0){jumpVelocity=5.4;jumpHeld=true;playSfx('jump');}if(!keys.space)jumpHeld=false;
- if(jumpVelocity!==0||jumpOffset>0){jumpVelocity-=14*dt;jumpOffset=Math.max(0,jumpOffset+jumpVelocity*dt);if(jumpOffset===0){jumpVelocity=0;playSfx('land');}}
+ if((keys.space||jumpQueued)&&!jumpHeld&&!localPlayerDead&&jumpOffset===0){jumpVelocity=6.4;jumpHeld=true;playSfx('jump');}jumpQueued=false;if(!keys.space)jumpHeld=false;
+ if(jumpVelocity!==0||jumpOffset>0){jumpVelocity-=12.5*dt;jumpOffset=Math.max(0,jumpOffset+jumpVelocity*dt);if(jumpOffset===0){jumpVelocity=0;playSfx('land');}}
  p.position.y+=jumpOffset;
  if(moving&&ambienceOn){footstepClock-=dt;if(footstepClock<=0){playSfx('step');footstepClock=keys.shift?.29:.43;}}else footstepClock=0;
  // Animate the cursed marks and resolve local practice-round trap hits.
@@ -1647,10 +1658,11 @@ function setHairStyle(style){
   parts.forEach((part,i)=>{part.visible=style!=='curly'&&style!=='braids'&&style!=='locs'&&style!=='bun'&&style!=='ponytail'||i===0;});
   parts[0].scale.set(1,style==='short'||style==='fade'?.76:style==='long'?1.05:1.12,style==='short'||style==='fade'?.9:1.06);
   parts[1].visible=style==='long';parts[2].visible=style==='long';parts[3].visible=style==='long';
-  // Keep the temple/side pieces short: stretching them with the long style
-  // made the hair colour cover the cheeks and lower half of the face.
-  parts[4].scale.y=1;
-  parts[5].scale.y=1;
+  // Keep the front fringe above the eyes and move side locks behind the temples.
+  parts[1].scale.set(.9,.58,.62);parts[2].scale.set(.9,.58,.62);parts[3].scale.set(.9,.58,.62);
+  parts[4].scale.set(.86,.55,.6);parts[5].scale.set(.82,.52,.58);
+  parts[6].scale.set(.68,style==='long'?1.25:.9,.62);parts[7].scale.set(.68,style==='long'?1.25:.9,.62);
+  parts[8].scale.set(.68,style==='long'?1.2:.9,.62);parts[9].scale.set(.68,style==='long'?1.2:.9,.62);
  }
  Object.values(hairstyleMeshes).forEach(bucket=>Object.entries(bucket).forEach(([key,meshes])=>meshes.forEach(mesh=>mesh.visible=key===style)));
  refreshAvatarPreview();
