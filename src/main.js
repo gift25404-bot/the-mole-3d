@@ -638,9 +638,9 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
-const player=makeAvatar('ALEX',0x477c8c,0x9a674b,0x211b1a,-10,8,true);
+const player=makeAvatar('ALEX',0xf1eee8,0x9a674b,0x302018,-10,8,true);
 const avatarLooks={
- sunset:{name:'Sunset',skin:0x9a674b,hair:0x211b1a,shirt:0xc96f62,pants:0x30343b},
+ sunset:{name:'Reference',skin:0x9a674b,hair:0x302018,shirt:0xf1eee8,pants:0xbdbbb8},
  midnight:{name:'Midnight',skin:0x603b2d,hair:0x101315,shirt:0x477caa,pants:0x252b35},
  cocoa:{name:'Cocoa',skin:0x815238,hair:0x39251d,shirt:0x527b5c,pants:0x35343b},
  golden:{name:'Golden',skin:0xd49b76,hair:0x743d27,shirt:0x8064a6,pants:0x343044},
