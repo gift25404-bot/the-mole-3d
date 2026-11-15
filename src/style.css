@@ -753,3 +753,39 @@ html,body,#game{background:#243b46;color:#fff2d8}
 .screen-touch-stick{display:none;position:fixed;z-index:13;width:112px;height:112px;margin:0;border:2px solid rgba(229,197,145,.62);border-radius:50%;background:rgba(16,27,30,.34);pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 0 22px #0005;}
 .screen-touch-stick.active{display:block;}
 .screen-touch-stick span{position:absolute;left:50%;top:50%;width:43px;height:43px;margin:-21.5px;border:1px solid rgba(255,239,211,.8);border-radius:50%;background:rgba(194,151,89,.72);box-shadow:0 2px 10px #0008;}
+
+
+/* Cleaner mobile controls: a fixed analog thumbstick on the left and large actions on the right. */
+@media (max-width:900px),(pointer:coarse){
+ .mobile-pad{left:auto;right:12px;bottom:14px;gap:8px;align-items:flex-end}
+ .mobile-move-grid{display:none!important}
+ .mobile-action-stack{display:flex;gap:8px;align-items:flex-end}
+ .mobile-pad .mobile-run,.mobile-pad .mobile-interact,.mobile-pad .mobile-jump{
+   width:72px;height:48px;min-height:48px;border-radius:15px;font-size:9px;
+   letter-spacing:.04em;box-shadow:0 5px 16px #0009;border:1px solid rgba(232,203,158,.7);
+ }
+ .mobile-pad .mobile-run{background:rgba(28,54,61,.96)}
+ .mobile-pad .mobile-interact{background:linear-gradient(145deg,#a8793e,#6f4b2b);color:#fff8e9}
+ .mobile-pad .mobile-jump{background:linear-gradient(145deg,#3d6267,#233b43);font-size:10px}
+ .screen-touch-stick{display:block;position:fixed;z-index:14;left:22px;bottom:22px;top:auto;width:142px;height:142px;margin:0;
+   border:2px solid rgba(230,204,160,.72);border-radius:50%;background:radial-gradient(circle,rgba(47,65,64,.55),rgba(11,20,23,.74));
+   pointer-events:auto;touch-action:none;transform:none;box-shadow:0 8px 24px #0009,inset 0 0 20px #d5b77a18}
+ .screen-touch-stick span{width:62px;height:62px;margin:-31px;border:2px solid rgba(255,241,215,.86);
+   background:radial-gradient(circle at 35% 30%,#c9a66f,#80613f);box-shadow:0 5px 14px #0009}
+ .screen-touch-stick:after{content:"MOVE";position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#e6d3b3;
+   font:700 8px 'DM Mono',monospace;letter-spacing:2px;pointer-events:none}
+}
+@media (max-width:900px) and (orientation:landscape) and (max-height:520px){
+ .screen-touch-stick{left:16px;bottom:12px;width:116px;height:116px}
+ .screen-touch-stick span{width:50px;height:50px;margin:-25px}
+ .screen-touch-stick:after{bottom:8px;font-size:7px}
+ .mobile-pad{right:9px;bottom:9px;gap:5px}
+ .mobile-action-stack{gap:5px}
+ .mobile-pad .mobile-run,.mobile-pad .mobile-interact,.mobile-pad .mobile-jump{width:61px;height:42px;min-height:42px;font-size:8px}
+}
+@media(max-width:380px){
+ .screen-touch-stick{left:12px;bottom:14px;width:122px;height:122px}
+ .screen-touch-stick span{width:52px;height:52px;margin:-26px}
+ .mobile-pad{right:7px;bottom:8px;gap:4px}
+ .mobile-pad .mobile-run,.mobile-pad .mobile-interact,.mobile-pad .mobile-jump{width:56px;height:40px;min-height:40px;font-size:7px}
+}
