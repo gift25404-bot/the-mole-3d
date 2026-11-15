@@ -536,84 +536,108 @@ box(4.5,1.8,2.1,mat(0xe4b52f),0,1,0,bus);box(3.6,.65,2.08,mat(0xf0d77d),-.15,2.0
 box(4.55,.22,2.14,mat(0x202426),0,1.48,0,bus); // classic yellow-and-black minibus stripe
 for(const x of [-1.35,-.35,.65,1.55])box(.65,.58,.05,glass,x,2.05,1.06,bus);
 for(const x of [-1.5,1.5])for(const z of [-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.22,12),mat(0x151719));w.rotation.z=Math.PI/2;w.position.set(x,.45,z);bus.add(w)}
+// Two additional full-size abandoned coaches surround the house.
+function addAbandonedCoach(x,z,rotation,color){
+ const coach=new THREE.Group();coach.position.set(x,0,z);coach.rotation.y=rotation;scene.add(coach);
+ const bodyMat=mat(color,.9),roofMat=mat(0x3d4140,.95),rubber=mat(0x111416,.98),rim=mat(0x77756d,.7),windowMat=new THREE.MeshStandardMaterial({color:0x17282c,roughness:.28,metalness:.15});
+ box(9.2,2.45,3.15,bodyMat,0,1.55,0,coach);
+ box(9.25,.24,3.2,roofMat,0,2.9,0,coach);
+ box(9.28,.18,3.2,mat(0x252a29),0,.38,0,coach);
+ for(const side of [-1,1]){
+  box(8.2,1.05,.045,windowMat,0,2.12,side*1.59,coach);
+  for(let i=0;i<7;i++)box(.055,1.12,.07,roofMat,-3.55+i*1.18,2.12,side*1.62,coach);
+  box(8.5,.12,.08,mat(0x8d6c3c),0,1.34,side*1.61,coach);
+  for(const wx of [-3.15,-1.05,1.05,3.15]){
+   const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.53,.53,.24,16),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(wx,.53,side*1.47);wheel.castShadow=true;coach.add(wheel);
+   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.25,12),rim);hub.rotation.z=Math.PI/2;hub.position.set(wx,.53,side*1.48);coach.add(hub);
+  }
+ }
+ box(1.45,1.45,.06,windowMat,3.83,2.02,1.61,coach);
+ box(.12,1.5,.12,roofMat,3.05,1.95,1.64,coach);
+ for(const side of [-1,1])for(const px of [-4.45,4.45])box(.28,.2,.08,mat(0x9c4d32),px,1.05,side*1.64,coach);
+ const grime=mat(0x343a37,.98);
+ for(let i=0;i<9;i++){const stain=box(.24,.45,.025,grime,-3.8+i*.9,1.2,1.59,coach);stain.rotation.z=(i%2?-.08:.08);}
+ return coach;
+}
+addAbandonedCoach(24,8,Math.PI*.92,0x77746b);
+addAbandonedCoach(-1,27,Math.PI,0x6c716e);
 // doors are hinged panels
 const doorPivot=new THREE.Group();doorPivot.position.set(0,0,8.32);house.add(doorPivot);const door=box(1.65,2.9,.16,wood,.82,1.45,0,doorPivot);
 let doorOpen=false;
-// Original polished 3D Bitmoji-inspired avatars with more natural proportions.
+// Redesigned rounded 3D Bitmoji-inspired avatar, guided by the supplied reference.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  const g=new THREE.Group();g.position.set(x,0,z);targetScene.add(g);
- const skinMat=mat(skin,.78),hairMat=mat(hair,.92),shirtMat=mat(shirt,.82),pantsMat=mat(0x30343b,.86),shoeMat=mat(0x17191c,.72);
- const dark=mat(0x211916,.72),white=mat(0xf7f3ec,.35),iris=mat(0x49352c,.68),detail=mat(0xd8d0c5,.82);
+ const skinMat=mat(skin,.72),hairMat=mat(hair,.88),shirtMat=mat(shirt,.78),pantsMat=mat(0xaaa9a4,.9),shoeMat=mat(0xf3f1eb,.48);
+ const dark=mat(0x241b19,.7),white=mat(0xfffdf8,.3),iris=mat(0x49352c,.55),detail=mat(0xe7e2d9,.72);
  const sphere=(radius,material,px,py,pz,sx=1,sy=1,sz=1,segments=32)=>{
   const mesh=new THREE.Mesh(new THREE.SphereGeometry(radius,segments,24),material);
   mesh.position.set(px,py,pz);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);return mesh;
  };
  const capsule=(r,len,material,px,py,pz,sx=1,sy=1,sz=1)=>{
-  const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,20),material);m.position.set(px,py,pz);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
+  const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,24),material);m.position.set(px,py,pz);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
  };
- // Slightly taller silhouette, narrower head and more human-like shoulders and limbs.
- capsule(.105,.17,skinMat,0,1.57,0);
- capsule(.285,.48,shirtMat,0,1.20,0,1.34,1,.94);
- sphere(.31,shirtMat,0,1.48,0,1.12,.43,.90);
- const head=sphere(.455,skinMat,0,2.12,0,.96,1.06,.91,48);
- // Soft jaw shape, restrained ears and natural facial planes.
- sphere(.292,skinMat,0,1.96,.075,1,.62,.83,40);
+ // Larger rounded head and softly tapered chin, with a friendly stylized silhouette.
+ capsule(.12,.2,skinMat,0,1.56,0);
+ capsule(.34,.54,shirtMat,0,1.17,0,1.42,1,.96);
+ sphere(.37,shirtMat,0,1.46,0,1.12,.48,.94);
+ // Hood and hood opening make the top look like a soft sweatshirt.
+ sphere(.39,shirtMat,0,1.49,-.105,1.02,.94,.78);
+ const head=sphere(.535,skinMat,0,2.17,.015,1,1.04,.91,48);
+ sphere(.34,skinMat,0,1.99,.09,1,.64,.82,40);
  for(const side of [-1,1]){
-  sphere(.072,skinMat,side*.414,2.08,0,.72,1.18,.72);
-  sphere(.087,skinMat,side*.202,1.99,.338,1,.66,.32);
+  sphere(.075,skinMat,side*.51,2.12,0,.72,1.15,.72);
+  sphere(.105,skinMat,side*.235,2.035,.445,1,.7,.35);
  }
- // Subtle nose bridge and tip, kept close to the face.
- sphere(.03,skinMat,0,2.075,.392,.8,1.45,.72);
- sphere(.045,skinMat,0,1.985,.423,1,.78,.78);
- // Smaller eyes with shaped upper lids, irises and natural brows.
- for(const ex of [-.155,.155]){
-  sphere(.092,skinMat,ex,2.155,.365,1.05,1.1,.42);
-  sphere(.071,white,ex,2.148,.397,1,.98,.42);
-  sphere(.037,iris,ex+.006,2.145,.431,.92,1,.48);
-  sphere(.018,dark,ex+.006,2.145,.448,1,1,.48);
-  sphere(.013,white,ex-.010,2.163,.462,1,1,.45);
-  const brow=capsule(.017,.105,hairMat,ex,2.285,.345,1,1,.58);brow.rotation.z=ex<0?-.12:.12;
+ // Big clear eyes, rounded irises, subtle brows and a small nose.
+ for(const ex of [-.205,.205]){
+  sphere(.112,white,ex,2.22,.462,1.02,1.12,.36);
+  sphere(.058,iris,ex+.008,2.215,.495,1,1,.4);
+  sphere(.027,dark,ex+.008,2.215,.515,1,1,.4);
+  sphere(.016,white,ex-.012,2.238,.531,1,1,.4);
+  const brow=capsule(.021,.12,hairMat,ex,2.385,.425,1,1,.55);brow.rotation.z=ex<0?-.1:.1;
  }
- // Small, understated smile instead of an exaggerated cartoon grin.
+ sphere(.038,skinMat,0,2.095,.49,.9,1.3,.85);
+ sphere(.052,skinMat,0,2.035,.51,1,.78,.7);
  const smileCurve=new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-.085,1.905,.414),new THREE.Vector3(-.045,1.888,.433),
-  new THREE.Vector3(0,1.884,.437),new THREE.Vector3(.045,1.888,.433),
-  new THREE.Vector3(.085,1.905,.414)
+  new THREE.Vector3(-.105,1.955,.486),new THREE.Vector3(-.055,1.925,.51),
+  new THREE.Vector3(0,1.92,.515),new THREE.Vector3(.055,1.925,.51),
+  new THREE.Vector3(.105,1.955,.486)
  ]);
- g.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.007,8,false),dark));
- // Hair cap and clean layered fringe; hairPieces remains compatible with the style selector.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.445,48,32,0,Math.PI*2,0,Math.PI*.42),hairMat);
- cap.position.set(0,2.29,-.065);cap.castShadow=true;g.add(cap);
+ g.add(new THREE.Mesh(new THREE.TubeGeometry(smileCurve,20,.009,8,false),dark));
+ // Hair cap plus long smooth side sections falling to the chest.
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.535,48,32,0,Math.PI*2,0,Math.PI*.47),hairMat);
+ cap.position.set(0,2.34,-.075);cap.castShadow=true;g.add(cap);
  const hairPieces=[cap];
- const fringe=[
-  [-.27,2.245,.292,.145],[-.13,2.285,.347,.145],[.015,2.295,.355,.145],[.16,2.275,.335,.15],[.29,2.235,.285,.14]
- ];
- for(const [hx,hy,hz,r] of fringe)hairPieces.push(sphere(r,hairMat,hx,hy,hz,1,.72,.72));
  for(const side of [-1,1]){
-  const temple=sphere(.115,hairMat,side*.405,2.105,-.075,.68,.92,.62);
-  const sideLock=sphere(.09,hairMat,side*.405,1.985,-.085,.68,.92,.62);
-  hairPieces.push(temple,sideLock);
+  const sideHair=capsule(.145,.62,hairMat,side*.43,1.82,-.09,.95,1.55,.9);
+  sideHair.rotation.z=side*.035;hairPieces.push(sideHair);
+  const longHair=capsule(.13,.52,hairMat,side*.42,1.29,-.07,.95,1.45,.9);
+  longHair.rotation.z=side*.06;hairPieces.push(longHair);
+  const frontLock=sphere(.13,hairMat,side*.36,2.18,.34,1,.9,.8);hairPieces.push(frontLock);
  }
- // Tailored clothing, restrained seams and more proportional hands and shoes.
- const collar=new THREE.Mesh(new THREE.ConeGeometry(.105,.12,5),detail);collar.position.set(0,1.545,.18);collar.rotation.y=Math.PI/5;g.add(collar);
- capsule(.012,.20,detail,0,1.23,.235,.8,1,.5);
+ for(const [hx,hy,hz,rx] of [[-.31,2.31,.37,.15],[-.16,2.37,.43,.15],[0,2.39,.45,.15],[.16,2.37,.43,.15],[.31,2.31,.37,.15]]){
+  hairPieces.push(sphere(rx,hairMat,hx,hy,hz,1,.75,.72));
+ }
+ // Relaxed arms, rounded hands and individual fingers.
  const limbs=[];
  for(const side of [-1,1]){
-  const limb=new THREE.Group();limb.position.set(side*.355,1.43,0);limbs.push(limb);
-  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.34,8,18),shirtMat);sleeve.position.y=-.14;sleeve.rotation.z=-side*.08;sleeve.castShadow=true;limb.add(sleeve);
-  const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.094,.094,.04,20),detail);cuff.position.y=-.325;limb.add(cuff);
-  const hand=new THREE.Mesh(new THREE.SphereGeometry(.088,24,18),skinMat);hand.position.set(-side*.014,-.405,.035);hand.scale.set(1.08,.88,.78);limb.add(hand);
-  for(let f=0;f<4;f++){const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.016,.055,5,10),skinMat);finger.position.set(-side*.014+(f-1.5)*.031,-.468,.055);finger.rotation.z=(f-1.5)*-.08;limb.add(finger);}
-  const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.018,.045,5,10),skinMat);thumb.position.set(-side*.085,-.425,.035);thumb.rotation.z=side*.7;limb.add(thumb);
-  g.add(limb);
-  const leg=new THREE.Group();leg.position.set(side*.145,.66,0);
-  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.125,.47,8,18),pantsMat);trouser.position.y=-.235;trouser.castShadow=true;leg.add(trouser);
-  const knee=new THREE.Mesh(new THREE.SphereGeometry(.105,18,14),pantsMat);knee.position.set(0,-.405,.008);leg.add(knee);
-  const shoe=new THREE.Mesh(new THREE.CapsuleGeometry(.09,.15,7,16),shoeMat);shoe.scale.set(1,.68,1.42);shoe.position.set(0,-.535,.075);shoe.castShadow=true;leg.add(shoe);
-  const sole=new THREE.Mesh(new THREE.CapsuleGeometry(.093,.16,7,16),detail);sole.scale.set(1,.20,1.42);sole.position.set(0,-.58,.08);leg.add(sole);
+  const arm=new THREE.Group();arm.position.set(side*.43,1.43,0);limbs.push(arm);
+  const sleeve=new THREE.Mesh(new THREE.CapsuleGeometry(.115,.37,8,20),shirtMat);sleeve.position.set(side*.025,-.16,0);sleeve.rotation.z=-side*.13;sleeve.castShadow=true;arm.add(sleeve);
+  const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.045,20),detail);cuff.position.y=-.36;arm.add(cuff);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.095,24,18),skinMat);hand.position.set(side*.02,-.455,.035);hand.scale.set(1.05,.9,.8);arm.add(hand);
+  for(let f=0;f<4;f++){const finger=new THREE.Mesh(new THREE.CapsuleGeometry(.017,.06,5,10),skinMat);finger.position.set(side*.02+(f-1.5)*.034,-.51,.055);finger.rotation.z=(f-1.5)*-.08;arm.add(finger);}
+  const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.019,.05,5,10),skinMat);thumb.position.set(-side*.075,-.47,.035);thumb.rotation.z=side*.65;arm.add(thumb);
+  g.add(arm);
+  const leg=new THREE.Group();leg.position.set(side*.17,.68,0);
+  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.145,.5,8,20),pantsMat);trouser.position.y=-.245;trouser.castShadow=true;leg.add(trouser);
+  const knee=new THREE.Mesh(new THREE.SphereGeometry(.12,20,16),pantsMat);knee.position.set(0,-.42,.008);leg.add(knee);
+  const shoe=new THREE.Mesh(new THREE.SphereGeometry(.14,24,16),shoeMat);shoe.scale.set(1,.64,1.5);shoe.position.set(0,-.55,.105);shoe.castShadow=true;leg.add(shoe);
+  const sole=new THREE.Mesh(new THREE.SphereGeometry(.14,24,16),detail);sole.scale.set(1,.18,1.5);sole.position.set(0,-.61,.105);leg.add(sole);
   g.add(leg);limbs.push(leg);
  }
- const label=makeLabel(name);label.position.set(0,2.88,0);g.add(label);
+ const hoodCord=mat(0xe9e5dc,.8);
+ for(const side of [-1,1])capsule(.012,.15,hoodCord,side*.105,1.49,.345,.8,1,.8);
+ const label=makeLabel(name);label.position.set(0,2.98,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
@@ -1145,14 +1169,24 @@ document.addEventListener('keydown',e=>{const k=e.key.toLowerCase(),mapped=({arr
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k===' '?'space':k]=false;});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;if(b.setPointerCapture)b.setPointerCapture(e.pointerId)});['pointerup','pointerleave','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
 document.querySelector('[data-action="interact"]')?.addEventListener('pointerdown',e=>{e.preventDefault();interact()});
-// Fixed, thumb-sized virtual joystick: stable position makes movement easier to learn.
-const touchStick=document.createElement('div');touchStick.className='screen-touch-stick';touchStick.setAttribute('role','application');touchStick.setAttribute('aria-label','Movement joystick');touchStick.innerHTML='<span></span>';document.querySelector('#game').appendChild(touchStick);
+// Touch-and-drag movement: start anywhere on the left half of the gameplay canvas.
+const touchStick=document.createElement('div');touchStick.className='screen-touch-stick';touchStick.setAttribute('aria-hidden','true');touchStick.innerHTML='<span></span>';document.querySelector('#game').appendChild(touchStick);
 let activeMovePointer=null,touchStartX=0,touchStartY=0;
-function resetScreenTouch(){activeMovePointer=null;['w','a','s','d'].forEach(k=>keys[k]=false);const knob=touchStick.firstElementChild;if(knob)knob.style.transform='translate(0,0)';}
-function updateScreenTouch(e){const dx=e.clientX-touchStartX,dy=e.clientY-touchStartY,limit=58,dead=9;const x=THREE.MathUtils.clamp(dx/limit,-1,1),y=THREE.MathUtils.clamp(dy/limit,-1,1);keys.a=x<-.16;keys.d=x>.16;keys.w=y<-.16;keys.s=y>.16;const knob=touchStick.firstElementChild;if(knob)knob.style.transform=`translate(${THREE.MathUtils.clamp(dx,-limit,limit)}px,${THREE.MathUtils.clamp(dy,-limit,limit)}px)`;}
-touchStick.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'&&e.pointerType!=='pen')return;if(activeMovePointer!==null||document.querySelector('#auth-screen:not(.hidden),#avatar-screen:not(.hidden),.modal:not(.hidden),.game-phone:not(.hidden),.cctv-panel:not(.hidden)'))return;const rect=touchStick.getBoundingClientRect();touchStartX=rect.left+rect.width/2;touchStartY=rect.top+rect.height/2;activeMovePointer=e.pointerId;touchStick.setPointerCapture(e.pointerId);updateScreenTouch(e);e.preventDefault();});
-touchStick.addEventListener('pointermove',e=>{if(e.pointerId===activeMovePointer){updateScreenTouch(e);e.preventDefault();}});
-['pointerup','pointercancel','lostpointercapture'].forEach(type=>touchStick.addEventListener(type,e=>{if(e.pointerId===activeMovePointer)resetScreenTouch();}));
+function resetScreenTouch(){activeMovePointer=null;['w','a','s','d'].forEach(k=>keys[k]=false);}
+function updateScreenTouch(e){
+ const dx=e.clientX-touchStartX,dy=e.clientY-touchStartY,limit=76;
+ const x=THREE.MathUtils.clamp(dx/limit,-1,1),y=THREE.MathUtils.clamp(dy/limit,-1,1);
+ keys.a=x<-.16;keys.d=x>.16;keys.w=y<-.16;keys.s=y>.16;
+}
+renderer.domElement.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='touch'&&e.pointerType!=='pen')return;
+ if(e.clientX>innerWidth*.55||activeMovePointer!==null)return;
+ if(document.querySelector('#auth-screen:not(.hidden),#avatar-screen:not(.hidden),.modal:not(.hidden),.game-phone:not(.hidden),.cctv-panel:not(.hidden)'))return;
+ activeMovePointer=e.pointerId;touchStartX=e.clientX;touchStartY=e.clientY;
+ renderer.domElement.setPointerCapture(e.pointerId);updateScreenTouch(e);e.preventDefault();
+},{passive:false});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId===activeMovePointer){updateScreenTouch(e);e.preventDefault();}},{passive:false});
+['pointerup','pointercancel','lostpointercapture'].forEach(type=>renderer.domElement.addEventListener(type,e=>{if(e.pointerId===activeMovePointer)resetScreenTouch();}));
 document.querySelector('.mobile-jump')?.addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true;});
 let cluesFound=0, exitUnlocked=false, hasBrassKey=false, secretRoomOpen=false, secretLedgerFound=false;
 function updateObjective(){
