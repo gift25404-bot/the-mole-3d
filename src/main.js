@@ -589,16 +589,16 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  };
  const tube=(parent,points,radius,material)=>{const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));return add(parent,new THREE.TubeGeometry(curve,40,radius,10,false),material,[0,0,0]);};
  // Smooth fitted jacket with gently sloped shoulders, a defined waist and rounded hem.
- loft(g,shirtMat,[[.99,.16,.098],[1.015,.178,.105],[1.07,.19,.112],[1.16,.202,.118],[1.28,.215,.125],[1.42,.222,.128],[1.55,.215,.123],[1.64,.19,.112],[1.70,.15,.095],[1.73,.12,.082]],64);
+ loft(g,shirtMat,[[.91,.155,.10],[.96,.18,.112],[1.04,.19,.12],[1.15,.205,.128],[1.30,.225,.135],[1.45,.242,.14],[1.58,.238,.135],[1.68,.205,.12],[1.75,.155,.095],[1.78,.12,.08]],64);
  const zipLine=add(g,new THREE.BoxGeometry(.006,.58,.006),zipMat,[0,1.37,.129]);
- ell(g,shirtMat,[0,1.69,.015],[.145,.055,.105]);
- ell(g,skinMat,[0,1.79,0],[.071,.12,.07]);
+ ell(g,shirtMat,[0,1.72,.015],[.15,.055,.105]);
+ ell(g,skinMat,[0,1.83,0],[.071,.12,.07]);
  const lapelMat=new THREE.MeshStandardMaterial({color:0xfaf7f0,roughness:.82});
  for(const side of [-1,1]){
-  add(g,new THREE.BoxGeometry(.052,.16,.012),lapelMat,[side*.041,1.63,.125],[1,1,1],[0,0,side*-.12]);
+  add(g,new THREE.BoxGeometry(.052,.16,.012),lapelMat,[side*.041,1.67,.137],[1,1,1],[0,0,side*-.12]);
   // Arms rest naturally at the sides with hands visible from the front.
-  const arm=new THREE.Group();arm.position.set(side*.205,1.55,.018);
-  loft(arm,shirtMat,[[-.015,.038,.043],[-.07,.048,.05],[-.18,.052,.052],[-.30,.047,.048],[-.39,.038,.04]],40);
+  const arm=new THREE.Group();arm.position.set(side*.235,1.59,.018);
+  loft(arm,shirtMat,[[-.015,.042,.046],[-.07,.052,.054],[-.18,.058,.058],[-.30,.052,.052],[-.39,.041,.044]],48);
   tube(arm,[[side*.005,-.34,.025],[side*.008,-.42,.075],[side*.008,-.49,.095]],.031,skinMat);
   ell(arm,skinMat,[side*.008,-.515,.10],[.041,.063,.028]);
   for(let f=0;f<4;f++){const fx=(f-1.5)*.018;tube(arm,[[side*.008+fx,-.54,.115],[side*.008+fx*1.05,-.585,.12],[side*.008+fx,-.615,.112]],.008,skinMat);}
@@ -606,10 +606,10 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   g.add(arm);limbs.push(arm);
  }
  // Wide-leg trousers are continuous tapered lofts with a natural waist and soft cuffs.
- loft(g,pantsMat,[[.79,.145,.095],[.86,.16,.10],[.94,.17,.105],[1.02,.16,.10]],64);
+ loft(g,pantsMat,[[.78,.15,.10],[.84,.17,.11],[.91,.18,.115],[.98,.17,.108]],64);
  for(const side of [-1,1]){
-  const leg=new THREE.Group();leg.position.set(side*.105,.84,0);
-  loft(leg,pantsMat,[[ -.02,.092,.09],[-.12,.098,.10],[-.34,.105,.105],[-.58,.115,.11],[-.82,.112,.105],[-.90,.108,.10]],40);
+  const leg=new THREE.Group();leg.position.set(side*.105,.82,0);
+  loft(leg,pantsMat,[[ -.01,.098,.095],[-.10,.105,.105],[-.24,.112,.11],[-.40,.118,.115],[-.58,.12,.112],[-.76,.115,.105],[-.88,.108,.10],[-.92,.105,.098]],56);
   // Fabric crease lines at the hem.
   const foldMat=new THREE.MeshStandardMaterial({color:0xa9a69f,roughness:1});
   tube(leg,[[-.085,-.78,.085],[0,-.80,.10],[.085,-.78,.085]],.004,foldMat);
@@ -621,7 +621,7 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   g.add(leg);limbs.push(leg);
  }
  // Custom tapered face mesh with cheek width and a softly narrowing jaw.
- const head=new THREE.Group();head.position.set(0,2.02,.012);head.scale.setScalar(.88);g.add(head);
+ const head=new THREE.Group();head.position.set(0,2.08,.012);head.scale.setScalar(.70);g.add(head);
  const faceGeo=new THREE.SphereGeometry(1,64,48);
  const pa=faceGeo.attributes.position;
  for(let i=0;i<pa.count;i++){const y=pa.getY(i),factor=.84+.16*Math.max(0,y);pa.setX(i,pa.getX(i)*.335*factor);pa.setY(i,pa.getY(i)*.425);pa.setZ(i,pa.getZ(i)*.285);}
@@ -633,9 +633,9 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  }
  // Eyes sit on the face surface, with eyelids, irises, pupils and catchlights.
  for(const side of [-1,1]){
-  const ex=side*.112;
-  ell(head,skinMat,[ex,.058,.224],[.073,.055,.024]);
-  ell(head,eyeMat,[ex,.048,.244],[.050,.029,.014]);
+  const ex=side*.108;
+  ell(head,skinMat,[ex,.058,.224],[.067,.050,.023]);
+  ell(head,eyeMat,[ex,.048,.244],[.047,.027,.014]);
   ell(head,irisMat,[ex,.048,.258],[.023,.026,.011]);
   ell(head,pupilMat,[ex,.047,.267],[.012,.018,.007]);
   ell(head,eyeMat,[ex-.009,.061,.274],[.007,.008,.004]);
