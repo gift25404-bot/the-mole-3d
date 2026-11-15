@@ -567,74 +567,103 @@ let doorOpen=false;
 // Redesigned rounded 3D Bitmoji-inspired avatar, guided by the supplied reference.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  const g=new THREE.Group();g.position.set(x,0,z);targetScene.add(g);
- const skinMat=mat(skin,.82),hairMat=mat(hair,.94),shirtMat=mat(shirt,.9),pantsMat=mat(0xbdbbb8,.98),shoeMat=mat(0xfaf9f6,.38);
- const dark=mat(0x241b19,.52),eyeWhite=mat(0xfffaf5,.18),iris=mat(0x38251f,.28),lip=mat(0x95635a,.8),zipMat=mat(0xd9d5ce,.5);
- const sphere=(parent,r,material,x,y,z,sx=1,sy=1,sz=1,segments=40)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,32),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
- const capsule=(parent,r,len,material,x,y,z,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,32),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
- // Soft tailored silhouette: fitted zip jacket, relaxed wide-leg trousers and natural shoes.
- const torso=sphere(g,.255,shirtMat,0,1.34,0,.91,1.72,.66,48);
- const inner=sphere(g,.205,mat(0xf8f6f1,.9),0,1.36,.035,.86,1.55,.66,40);
- // Narrow centre opening and subtle jacket seams, kept flush to the clothing.
- const zip=new THREE.Mesh(new THREE.BoxGeometry(.009,.66,.008),zipMat);zip.position.set(0,1.37,.174);g.add(zip);
+ const skinMat=new THREE.MeshStandardMaterial({color:skin,roughness:.72});
+ const hairMat=new THREE.MeshStandardMaterial({color:hair,roughness:.42,metalness:.02});
+ const shirtMat=new THREE.MeshStandardMaterial({color:shirt,roughness:.78});
+ const pantsMat=new THREE.MeshStandardMaterial({color:0xbdbbb8,roughness:.94});
+ const shoeMat=new THREE.MeshStandardMaterial({color:0xfaf9f6,roughness:.58});
+ const zipMat=new THREE.MeshStandardMaterial({color:0xd7d1c6,roughness:.5,metalness:.12});
+ const eyeMat=new THREE.MeshStandardMaterial({color:0xfffaf4,roughness:.25});
+ const irisMat=new THREE.MeshStandardMaterial({color:0x38251f,roughness:.25});
+ const pupilMat=new THREE.MeshStandardMaterial({color:0x120e0d,roughness:.18});
+ const lipMat=new THREE.MeshStandardMaterial({color:0x955b55,roughness:.72});
+ const limbs=[],hairPieces=[];
+ const add=(parent,geo,material,pos,scale,rot)=>{const m=new THREE.Mesh(geo,material);m.position.set(...pos);if(scale)m.scale.set(...scale);if(rot)m.rotation.set(...rot);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
+ const ell=(parent,material,pos,scale)=>add(parent,new THREE.SphereGeometry(1,48,36),material,pos,scale);
+ // Smooth custom loft: a continuous tailored surface rather than stacked primitive balls.
+ const loft=(parent,material,profile,segments=48)=>{
+  const verts=[],uv=[],indices=[];
+  profile.forEach(([y,w,d],ri)=>{for(let j=0;j<=segments;j++){const t=j/segments*Math.PI*2;verts.push(Math.cos(t)*w,y,Math.sin(t)*d);uv.push(j/segments,ri/(profile.length-1));}});
+  for(let r=0;r<profile.length-1;r++)for(let j=0;j<segments;j++){const p=r*(segments+1)+j,q=p+segments+1;indices.push(p,q,p+1,p+1,q,q+1);}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();return add(parent,geo,material,[0,0,0]);
+ };
+ const tube=(parent,points,radius,material)=>{const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));return add(parent,new THREE.TubeGeometry(curve,40,radius,10,false),material,[0,0,0]);};
+ // Tailored torso and waist, with gently shaped shoulders and a defined jacket hem.
+ loft(g,shirtMat,[[.98,.18,.105],[1.04,.205,.12],[1.16,.225,.125],[1.38,.255,.135],[1.57,.245,.13],[1.69,.205,.115],[1.76,.145,.095]]);
+ // Inner shirt visible only as a narrow collar inset.
+ loft(g,new THREE.MeshStandardMaterial({color:0xf8f5ef,roughness:.9}),[[1.56,.13,.095],[1.62,.14,.10],[1.69,.115,.085]],40);
+ // Neck, natural shoulders and jacket lapels.
+ ell(g,skinMat,[0,1.79,0],[.082,.13,.078]);
+ const lapelMat=new THREE.MeshStandardMaterial({color:0xfaf7f0,roughness:.8});
  for(const side of [-1,1]){
-  const panel=sphere(g,.018,shirtMat,side*.105,1.38,.16,.75,17,.35,24);panel.rotation.z=side*.08;
- }
- const neck=sphere(g,.105,skinMat,0,1.76,0,.86,.95,.82);
- const limbs=[];
- // Arms are relaxed behind the back, as in the reference pose.
- for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.205,1.54,-.015);
-  const upper=capsule(arm,.064,.29,shirtMat,side*.015,-.16,-.045,1,1.08,.92);upper.rotation.z=-side*.16;
-  const fore=capsule(arm,.045,.25,skinMat,-side*.015,-.39,-.145,1,1.05,.9);fore.rotation.z=side*.10;
-  sphere(arm,.044,skinMat,-side*.015,-.53,-.205,.9,.75,.8);
+  const lapel=add(g,new THREE.BoxGeometry(.075,.24,.018),lapelMat,[side*.055,1.60,.116],[1,1,1],[0,0,side*-.18]);
+  // Sculpted sleeves, bent gently backwards to hold hands behind the back.
+  const arm=new THREE.Group();arm.position.set(side*.225,1.58,-.005);
+  loft(arm,shirtMat,[[ -.03,.045,.05],[-.10,.055,.06],[-.23,.064,.064],[-.38,.052,.052],[-.47,.042,.045]],32);
+  tube(arm,[[side*.01,-.40,-.025],[side*.012,-.47,-.105],[0,-.53,-.16]],.038,skinMat);
+  ell(arm,skinMat,[0,-.545,-.17],[.046,.065,.032]);
+  // Individual subtle fingers, tucked together behind the waist.
+  for(let f=0;f<4;f++)tube(arm,[[((f-1.5)*.014),-.55,-.19],[((f-1.5)*.016),-.59,-.205],[((f-1.5)*.015),-.62,-.20]],.009,skinMat);
   g.add(arm);limbs.push(arm);
  }
- const waist=sphere(g,.205,pantsMat,0,.91,0,1,.52,.72);
+ // Wide-leg trousers are continuous tapered lofts with a natural waist and soft cuffs.
+ loft(g,pantsMat,[[.79,.17,.105],[.86,.20,.115],[.94,.205,.12],[1.02,.19,.11]],48);
  for(const side of [-1,1]){
-  const leg=new THREE.Group();leg.position.set(side*.105,.91,0);
-  const trouser=capsule(leg,.116,.69,pantsMat,0,-.405,0,1.05,1.12,.98);
-  // Soft folds at the ankle give the loose trousers a fabric-like finish.
-  sphere(leg,.119,pantsMat,0,-.78,-.006,1.03,.34,1.02);
-  const shoe=sphere(leg,.105,shoeMat,0,-.85,.075,1.03,.57,1.55);
-  sphere(leg,.108,zipMat,0,-.895,.078,1.02,.13,1.53);
+  const leg=new THREE.Group();leg.position.set(side*.105,.84,0);
+  loft(leg,pantsMat,[[ -.02,.092,.09],[-.12,.098,.10],[-.34,.105,.105],[-.58,.115,.11],[-.82,.112,.105],[-.90,.108,.10]],40);
+  // Fabric crease lines at the hem.
+  const foldMat=new THREE.MeshStandardMaterial({color:0xa9a69f,roughness:1});
+  tube(leg,[[-.085,-.78,.085],[0,-.80,.10],[.085,-.78,.085]],.004,foldMat);
+  // Rounded sneaker upper, sole and laces.
+  ell(leg,shoeMat,[0,-.94,.055],[.105,.075,.17]);
+  add(leg,new THREE.CylinderGeometry(.098,.098,.025,40),zipMat,[0,-.995,.055],[1,1,1]);
+  const laceMat=new THREE.MeshStandardMaterial({color:0xd1cdc5,roughness:.8});
+  for(let n=0;n<3;n++)tube(leg,[[-.035,-.91,.17+n*.012],[0,-.90,.18+n*.012],[.035,-.91,.17+n*.012]],.0045,laceMat);
   g.add(leg);limbs.push(leg);
  }
- const head=new THREE.Group();head.position.set(0,2.12,.005);head.scale.setScalar(.73);g.add(head);
- const f=(r,material,x,y,z,sx=1,sy=1,sz=1)=>sphere(head,r,material,x,y,z,sx,sy,sz,48);
- const fc=(r,len,material,x,y,z,sx=1,sy=1,sz=1)=>capsule(head,r,len,material,x,y,z,sx,sy,sz);
- // Smooth oval face with a softly tapered chin and subtle cheeks.
- f(.385,skinMat,0,0,.005,.83,1.03,.82);
- f(.205,skinMat,0,-.19,.085,.92,.53,.68);
+ // Custom tapered face mesh with cheek width and a softly narrowing jaw.
+ const head=new THREE.Group();head.position.set(0,2.02,.012);head.scale.setScalar(.78);g.add(head);
+ const faceGeo=new THREE.SphereGeometry(1,64,48);
+ const pa=faceGeo.attributes.position;
+ for(let i=0;i<pa.count;i++){const y=pa.getY(i),factor=.84+.16*Math.max(0,y);pa.setX(i,pa.getX(i)*.315*factor);pa.setY(i,pa.getY(i)*.405);pa.setZ(i,pa.getZ(i)*.275);}
+ faceGeo.computeVertexNormals();add(head,faceGeo,skinMat,[0,0,0]);
+ // Cheeks blend softly into the face; ears are small and close to the head.
  for(const side of [-1,1]){
-  f(.052,skinMat,side*.31,-.035,.015,.78,1,.7);
-  f(.045,mat(0xb97870,.9),side*.19,-.17,.275,1,.45,.16);
+  ell(head,skinMat,[side*.286,-.035,.005],[.047,.075,.052]);
+  ell(head,new THREE.MeshStandardMaterial({color:0xb97770,roughness:.9}),[side*.155,-.12,.225],[.058,.027,.012]);
  }
- // Smaller, inset eyes; no protruding oversized eyeballs.
- for(const ex of [-.132,.132]){
-  f(.043,eyeWhite,ex,.045,.311,1.22,.69,.22);
-  f(.024,iris,ex,.043,.328,.92,1,.24);
-  f(.011,dark,ex,.043,.338,1,1,.22);
-  f(.006,eyeWhite,ex-.009,.055,.345,1,1,.18);
-  const brow=fc(.009,.064,hairMat,ex,.132,.30);brow.rotation.z=ex<0?-.08:.08;
- }
- // Delicate nose and natural closed smile.
- f(.014,skinMat,0,-.035,.344,.72,1.25,.8);
- f(.019,skinMat,0,-.087,.345,.92,.58,.62);
- f(.026,lip,0,-.178,.307,1,.23,.18);
- f(.022,skinMat,0,-.158,.319,1,.17,.15);
- // Long, centre-parted straight hair with a smooth crown and two face-framing lengths.
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.405,48,32,0,Math.PI*2,0,Math.PI*.54),hairMat);cap.position.set(0,.105,-.045);cap.castShadow=true;head.add(cap);
- const hairPieces=[cap];
- hairPieces.push(fc(.245,.70,hairMat,0,-.405,-.155,1.04,1.08,.58));
+ // Eyes sit on the face surface, with eyelids, irises, pupils and catchlights.
  for(const side of [-1,1]){
-  const longPanel=fc(.073,1.02,hairMat,side*.245,-.66,.005,.98,1.05,.84);
-  longPanel.rotation.z=side*.025;hairPieces.push(longPanel);
-  const faceFrame=fc(.045,.36,hairMat,side*.205,-.10,.265,.9,1.12,.72);
-  faceFrame.rotation.z=side*.06;hairPieces.push(faceFrame);
+  const ex=side*.112;
+  ell(head,skinMat,[ex,.058,.224],[.073,.055,.024]);
+  ell(head,eyeMat,[ex,.048,.244],[.057,.033,.016]);
+  ell(head,irisMat,[ex,.048,.258],[.026,.029,.012]);
+  ell(head,pupilMat,[ex,.047,.267],[.014,.020,.008]);
+  ell(head,eyeMat,[ex-.009,.061,.274],[.007,.008,.004]);
+  tube(head,[[ex-.055,.093,.239],[ex,.108,.25],[ex+.052,.091,.239]],.008,hairMat);
+  tube(head,[[ex-.05,.119,.216],[ex,.135,.224],[ex+.05,.119,.216]],.009,hairMat);
  }
- // A fine centre part and two narrow strands, leaving the eyes and cheeks clear.
- hairPieces.push(fc(.018,.17,mat(0x65402c,.95),-.012,.185,.30,.7,1,.45));
- const label=makeLabel(name);label.position.set(0,2.75,0);g.add(label);
+ // A subtle bridge and rounded nose tip, then a soft closed smile.
+ ell(head,skinMat,[0,-.015,.255],[.022,.055,.027]);
+ ell(head,skinMat,[0,-.055,.272],[.031,.021,.024]);
+ tube(head,[[-.043,-.145,.231],[0,-.157,.239],[.043,-.145,.231]],.008,lipMat);
+ ell(head,lipMat,[0,-.143,.235],[.018,.008,.006]);
+ // Hair cap and thick, smooth face-framing lengths. Parted precisely at centre.
+ const capGeo=new THREE.SphereGeometry(1,64,40,0,Math.PI*2,0,Math.PI*.56);
+ const cap=add(head,capGeo,hairMat,[0,.105,-.035],[.342,.385,.30]);hairPieces.push(cap);
+ // Back curtain of hair behind the shoulders.
+ loft(head,hairMat,[[-.80,.30,.075],[-.55,.32,.09],[-.25,.31,.12],[.02,.29,.16],[.20,.25,.19]],48);
+ for(const side of [-1,1]){
+  // Long, tapered front locks extend to the waist; finer strand curves add definition.
+  const lock=loft(head,hairMat,[[-.78,.055,.06],[-.58,.064,.07],[-.30,.066,.075],[-.04,.067,.07],[.20,.058,.06],[.38,.045,.05]],32);
+  lock.position.x=side*.235;lock.position.z=.025;
+  tube(head,[[side*.20,.39,.235],[side*.235,.16,.23],[side*.245,-.12,.225],[side*.25,-.42,.21],[side*.24,-.76,.16]],.004,new THREE.MeshStandardMaterial({color:hair,roughness:.6}));
+  // Side sweep and centre part are deliberately clear of the eyes.
+  tube(head,[[0,.43,.24],[side*.07,.39,.235],[side*.15,.31,.22]],.012,hairMat);
+ }
+ // Tiny centre part highlight.
+ tube(head,[[0,.47,.205],[0,.40,.245],[0,.34,.25]],.006,new THREE.MeshStandardMaterial({color:0x76513b,roughness:.55}));
+ const label=makeLabel(name);label.position.set(0,2.72,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
 function makeLabel(t){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='rgba(9,14,18,.75)';ctx.fillRect(0,0,256,64);ctx.fillStyle='#f2e7d2';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText(t,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.scale.set(1.35,.34,1);return s}
