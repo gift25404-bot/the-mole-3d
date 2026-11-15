@@ -884,3 +884,80 @@ html,body,#game{background:#243b46;color:#fff2d8}
 
 .live-avatar-preview .preview-body:before,.live-avatar-preview .preview-body:after,.live-avatar-preview .preview-seam:before,.live-avatar-preview .preview-seam:after{content:none!important;display:none!important}
 .live-avatar-preview .preview-body i{display:none!important}
+
+
+/* Spacious, cinematic presentation: keep the 3D world as the main focus. */
+.topbar{height:64px;padding:10px 28px;background:linear-gradient(180deg,rgba(5,10,13,.72),transparent)}
+.brand .sigil{border-radius:10px}
+.hud-left,.hud-right,.objective{background:rgba(10,17,19,.48);border-color:rgba(213,173,107,.32);box-shadow:none;backdrop-filter:blur(5px)}
+.hud-left,.hud-right{top:82px;padding:9px 12px}
+.objective{top:auto;left:22px;bottom:86px;min-width:0;padding:9px 12px}
+.prompt{bottom:78px}
+.bottom{padding:10px 22px;background:linear-gradient(0deg,rgba(5,10,13,.72),transparent)}
+.actions{gap:7px}
+.actions button{padding:9px 12px;border-radius:9px;background:rgba(17,27,29,.72);box-shadow:none}
+.game-phone-button{box-shadow:none}
+.social-tools{top:76px}
+.chat-panel{box-shadow:none}
+@media(min-width:901px){
+ .hud-left,.hud-right{top:88px}
+ .objective{bottom:84px}
+ .bottom{left:auto;right:18px;width:auto;justify-content:flex-end}
+ .controls{display:none}
+}
+@media(max-width:900px),(pointer:coarse){
+ .topbar{height:48px;padding:7px 12px}
+ .brand{gap:7px}
+ .brand .sigil{width:28px;height:28px;font-size:14px}
+ .brand b{font-size:11px;letter-spacing:1.5px}
+ .brand small{font-size:7px;letter-spacing:1px}
+ .status{font-size:7px}
+ .hud-left,.hud-right{top:54px;padding:6px 8px;max-width:34vw}
+ .hud-left b,.hud-right b{font-size:9px}
+ .hud-left small,.hud-right small,.tag{font-size:7px}
+ .objective{left:10px;bottom:70px;max-width:34vw;padding:7px 9px}
+ .objective b{font-size:8px}
+ .objective small{font-size:7px}
+ .bottom{left:auto;right:8px;bottom:7px;width:auto;padding:5px;background:none}
+ .actions{gap:4px;flex-wrap:nowrap}
+ .actions button{padding:8px 9px;font-size:7px;white-space:nowrap}
+ .prompt{bottom:62px;max-width:52vw;font-size:8px;padding:6px 8px}
+ .social-tools{top:52px;right:9px;gap:4px}
+ .social-tools button{padding:6px 8px;font-size:7px}
+}
+@media(max-width:900px) and (orientation:landscape) and (max-height:520px){
+ .hud-left,.hud-right{top:46px}
+ .objective{bottom:60px}
+ .prompt{bottom:54px}
+ .bottom{bottom:4px}
+ .game-phone-button{right:8px;top:50%;bottom:auto}
+}
+@media(max-width:520px) and (orientation:portrait){
+ .hud-left,.hud-right,.objective,.prompt{display:none}
+ .bottom{right:6px;left:6px;justify-content:center}
+ .actions{justify-content:center;flex-wrap:wrap}
+ .actions button{font-size:7px;padding:7px}
+}
+
+/* While the arrival is playing, remove every interface panel and show only the scene. */
+.bus-intro.cinematic-playing{padding:0;background:transparent}
+.cinematic-playing .arrival-card{
+ position:absolute;left:0;right:0;bottom:clamp(18px,5vh,54px);
+ width:100%;max-width:none;padding:0 20px;margin:0;
+ background:transparent;border:0;box-shadow:none;backdrop-filter:none;
+ animation:none;pointer-events:none;
+}
+.cinematic-playing .arrival-card>.eyebrow,
+.cinematic-playing .arrival-card h1,
+.cinematic-playing .arrival-card .arrival-actions{display:none}
+.cinematic-playing #arrival-caption{
+ min-height:0;margin:0 auto;max-width:min(760px,90vw);
+ padding:12px 20px;border-radius:10px;
+ background:linear-gradient(90deg,transparent,rgba(4,9,12,.78),transparent);
+ color:#fff0d2;font:clamp(10px,1.5vw,14px)/1.7 'DM Mono',monospace;
+ letter-spacing:2px;text-shadow:0 2px 12px #000;text-align:center;
+}
+@media(max-width:800px){
+ .cinematic-playing .arrival-card{bottom:18px}
+ .cinematic-playing #arrival-caption{font-size:10px;letter-spacing:1px}
+}
