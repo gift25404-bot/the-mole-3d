@@ -567,71 +567,73 @@ let doorOpen=false;
 // Redesigned rounded 3D Bitmoji-inspired avatar, guided by the supplied reference.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  const g=new THREE.Group();g.position.set(x,0,z);targetScene.add(g);
- const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0xc6c4c0,.94),shoeMat=mat(0xf8f7f3,.42);
- const dark=mat(0x302522,.58),white=mat(0xfffdf8,.2),iris=mat(0x49352c,.42),detail=mat(0xe7e2d9,.72),innerMat=mat(0xfaf9f6,.88);
- const addSphere=(parent,r,material,x,y,z,sx=1,sy=1,sz=1,segments=32)=>{
-  const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,24),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
- };
- const addCapsule=(parent,r,len,material,x,y,z,sx=1,sy=1,sz=1)=>{
-  const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,24),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
- };
- // Natural, balanced full-body proportions with a narrow waist and long relaxed legs.
- const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.205,.43,8,32),innerMat);torso.position.set(0,1.25,0);torso.scale.set(1,.94,.78);torso.castShadow=true;g.add(torso);
- const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.245,.43,8,32),shirtMat);jacket.position.set(0,1.26,-.008);jacket.scale.set(1.02,.96,.82);jacket.castShadow=true;g.add(jacket);
- // No raised chest orb: use a flat, tailored inner shirt under the open jacket.
- const shirtFront=new THREE.Mesh(new THREE.BoxGeometry(.16,.34,.025),innerMat);shirtFront.position.set(0,1.34,.205);g.add(shirtFront);
- const lapelL=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelL.position.set(-.075,1.34,.205);lapelL.rotation.z=-.16;g.add(lapelL);
- const lapelR=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelR.position.set(.075,1.34,.205);lapelR.rotation.z=.16;g.add(lapelR);
- for(let y=1.2;y<=1.4;y+=.1)addSphere(g,.009,detail,0,y,.224,.8,.8,.5);
- const limbs=[];
+ const skinMat=mat(skin,.82),hairMat=mat(hair,.94),shirtMat=mat(shirt,.9),pantsMat=mat(0xbdbbb8,.98),shoeMat=mat(0xfaf9f6,.38);
+ const dark=mat(0x241b19,.52),eyeWhite=mat(0xfffaf5,.18),iris=mat(0x38251f,.28),lip=mat(0x95635a,.8),zipMat=mat(0xd9d5ce,.5);
+ const sphere=(parent,r,material,x,y,z,sx=1,sy=1,sz=1,segments=40)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,32),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
+ const capsule=(parent,r,len,material,x,y,z,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,32),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
+ // Soft tailored silhouette: fitted zip jacket, relaxed wide-leg trousers and natural shoes.
+ const torso=sphere(g,.255,shirtMat,0,1.34,0,.91,1.72,.66,48);
+ const inner=sphere(g,.205,mat(0xf8f6f1,.9),0,1.36,.035,.86,1.55,.66,40);
+ // Narrow centre opening and subtle jacket seams, kept flush to the clothing.
+ const zip=new THREE.Mesh(new THREE.BoxGeometry(.009,.66,.008),zipMat);zip.position.set(0,1.37,.174);g.add(zip);
  for(const side of [-1,1]){
-  const arm=new THREE.Group();arm.position.set(side*.235,1.43,-.12);
-  const sleeve=addCapsule(arm,.072,.28,shirtMat,side*.025,-.16,-.025,1,1.05,.95);sleeve.rotation.z=-side*.28;
-  const fore=addCapsule(arm,.048,.23,skinMat,-side*.055,-.35,-.13);fore.rotation.z=side*.22;
-  addSphere(arm,.043,skinMat,-side*.095,-.45,-.27,.95,.85,.85);
+  const panel=sphere(g,.018,shirtMat,side*.105,1.38,.16,.75,17,.35,24);panel.rotation.z=side*.08;
+ }
+ const neck=sphere(g,.105,skinMat,0,1.76,0,.86,.95,.82);
+ const limbs=[];
+ // Arms are relaxed behind the back, as in the reference pose.
+ for(const side of [-1,1]){
+  const arm=new THREE.Group();arm.position.set(side*.205,1.54,-.015);
+  const upper=capsule(arm,.064,.29,shirtMat,side*.015,-.16,-.045,1,1.08,.92);upper.rotation.z=-side*.16;
+  const fore=capsule(arm,.045,.25,skinMat,-side*.015,-.39,-.145,1,1.05,.9);fore.rotation.z=side*.10;
+  sphere(arm,.044,skinMat,-side*.015,-.53,-.205,.9,.75,.8);
   g.add(arm);limbs.push(arm);
  }
- addSphere(g,.045,skinMat,0,.88,-.34,1.25,.8,.6);
- const waistband=new THREE.Mesh(new THREE.CylinderGeometry(.19,.205,.12,32),pantsMat);waistband.position.set(0,.96,0);waistband.castShadow=true;g.add(waistband);
+ const waist=sphere(g,.205,pantsMat,0,.91,0,1,.52,.72);
  for(const side of [-1,1]){
-  const leg=new THREE.Group();leg.position.set(side*.112,.91,0);
-  const trouser=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.66,8,24),pantsMat);trouser.position.set(0,-.39,0);trouser.scale.set(1,.98,.92);trouser.castShadow=true;leg.add(trouser);
-  const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.108,.105,.055,24),pantsMat);cuff.position.set(0,-.755,0);leg.add(cuff);
-  const shoe=new THREE.Mesh(new THREE.SphereGeometry(.105,24,16),shoeMat);shoe.scale.set(1,.58,1.48);shoe.position.set(0,-.82,.095);shoe.castShadow=true;leg.add(shoe);
-  const sole=new THREE.Mesh(new THREE.SphereGeometry(.107,24,16),detail);sole.scale.set(1,.14,1.48);sole.position.set(0,-.865,.095);leg.add(sole);
+  const leg=new THREE.Group();leg.position.set(side*.105,.91,0);
+  const trouser=capsule(leg,.116,.69,pantsMat,0,-.405,0,1.05,1.12,.98);
+  // Soft folds at the ankle give the loose trousers a fabric-like finish.
+  sphere(leg,.119,pantsMat,0,-.78,-.006,1.03,.34,1.02);
+  const shoe=sphere(leg,.105,shoeMat,0,-.85,.075,1.03,.57,1.55);
+  sphere(leg,.108,zipMat,0,-.895,.078,1.02,.13,1.53);
   g.add(leg);limbs.push(leg);
  }
- const headGroup=new THREE.Group();headGroup.position.set(0,2.12,0);headGroup.scale.setScalar(.60);g.add(headGroup);
- const face=(r,material,x,y,z,sx=1,sy=1,sz=1)=>addSphere(headGroup,r,material,x,y,z,sx,sy,sz,40);
- const faceCapsule=(r,len,material,x,y,z,sx=1,sy=1,sz=1)=>addCapsule(headGroup,r,len,material,x,y,z,sx,sy,sz);
- face(.43,skinMat,0,0,.015,.9,1.05,.88);
- face(.22,skinMat,0,-.15,.11,1,.55,.7);
+ const head=new THREE.Group();head.position.set(0,2.12,.005);head.scale.setScalar(.73);g.add(head);
+ const f=(r,material,x,y,z,sx=1,sy=1,sz=1)=>sphere(head,r,material,x,y,z,sx,sy,sz,48);
+ const fc=(r,len,material,x,y,z,sx=1,sy=1,sz=1)=>capsule(head,r,len,material,x,y,z,sx,sy,sz);
+ // Smooth oval face with a softly tapered chin and subtle cheeks.
+ f(.385,skinMat,0,0,.005,.83,1.03,.82);
+ f(.205,skinMat,0,-.19,.085,.92,.53,.68);
  for(const side of [-1,1]){
-  face(.06,skinMat,side*.385,-.025,.005,.8,1,.7);
-  face(.048,skinMat,side*.18,-.13,.345,1,.48,.2);
-  face(.024,mat(0xc9877e,.88),side*.24,-.18,.32,1,.45,.16);
+  f(.052,skinMat,side*.31,-.035,.015,.78,1,.7);
+  f(.045,mat(0xb97870,.9),side*.19,-.17,.275,1,.45,.16);
  }
- for(const ex of [-.155,.155]){
-  face(.05,white,ex,.055,.365,1.18,.72,.24);
-  face(.027,iris,ex+.003,.052,.385,1,1,.28);
-  face(.013,dark,ex+.003,.052,.398,1,1,.28);
-  face(.008,white,ex-.01,.066,.407,1,1,.28);
-  const brow=faceCapsule(.01,.075,hairMat,ex,.15,.35);brow.rotation.z=ex<0?-.06:.06;
+ // Smaller, inset eyes; no protruding oversized eyeballs.
+ for(const ex of [-.132,.132]){
+  f(.043,eyeWhite,ex,.045,.311,1.22,.69,.22);
+  f(.024,iris,ex,.043,.328,.92,1,.24);
+  f(.011,dark,ex,.043,.338,1,1,.22);
+  f(.006,eyeWhite,ex-.009,.055,.345,1,1,.18);
+  const brow=fc(.009,.064,hairMat,ex,.132,.30);brow.rotation.z=ex<0?-.08:.08;
  }
- face(.015,skinMat,0,-.035,.405,.8,1.1,.8);
- face(.022,skinMat,0,-.075,.412,1,.7,.65);
- const mouthMat=mat(0x8b514d,.72);face(.028,mouthMat,0,-.17,.38,1,.16,.14);face(.026,skinMat,0,-.155,.392,1,.12,.12);
- const cap=new THREE.Mesh(new THREE.SphereGeometry(.45,48,32,0,Math.PI*2,0,Math.PI*.52),hairMat);cap.position.set(0,.14,-.07);cap.castShadow=true;headGroup.add(cap);
+ // Delicate nose and natural closed smile.
+ f(.014,skinMat,0,-.035,.344,.72,1.25,.8);
+ f(.019,skinMat,0,-.087,.345,.92,.58,.62);
+ f(.026,lip,0,-.178,.307,1,.23,.18);
+ f(.022,skinMat,0,-.158,.319,1,.17,.15);
+ // Long, centre-parted straight hair with a smooth crown and two face-framing lengths.
+ const cap=new THREE.Mesh(new THREE.SphereGeometry(.405,48,32,0,Math.PI*2,0,Math.PI*.54),hairMat);cap.position.set(0,.105,-.045);cap.castShadow=true;head.add(cap);
  const hairPieces=[cap];
- hairPieces.push(faceCapsule(.29,.72,hairMat,0,-.37,-.15,1,.98,.48)); // 1: back hair
+ hairPieces.push(fc(.245,.70,hairMat,0,-.405,-.155,1.04,1.08,.58));
  for(const side of [-1,1]){
-  hairPieces.push(faceCapsule(.09,.5,hairMat,side*.33,-.31,-.055,.92,1.65,.8)); // upper side panel
-  hairPieces.push(faceCapsule(.085,.42,hairMat,side*.335,-.69,-.055,.9,1.45,.82)); // lower side panel
-  const frame=faceCapsule(.055,.34,hairMat,side*.26,-.07,.265,.92,1.2,.7);frame.rotation.z=side*.1;hairPieces.push(frame); // face frame
+  const longPanel=fc(.073,1.02,hairMat,side*.245,-.66,.005,.98,1.05,.84);
+  longPanel.rotation.z=side*.025;hairPieces.push(longPanel);
+  const faceFrame=fc(.045,.36,hairMat,side*.205,-.10,.265,.9,1.12,.72);
+  faceFrame.rotation.z=side*.06;hairPieces.push(faceFrame);
  }
- // Two soft front strands make the centre part visible without covering the eyes.
- hairPieces.push(faceCapsule(.045,.25,hairMat,-.09,.02,.34,.9,1.15,.65));
- hairPieces.push(faceCapsule(.045,.25,hairMat,.09,.02,.34,.9,1.15,.65));
+ // A fine centre part and two narrow strands, leaving the eyes and cheeks clear.
+ hairPieces.push(fc(.018,.17,mat(0x65402c,.95),-.012,.185,.30,.7,1,.45));
  const label=makeLabel(name);label.position.set(0,2.75,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
