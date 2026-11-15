@@ -588,26 +588,25 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();return add(parent,geo,material,[0,0,0]);
  };
  const tube=(parent,points,radius,material)=>{const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));return add(parent,new THREE.TubeGeometry(curve,40,radius,10,false),material,[0,0,0]);};
- // Tailored torso and waist, with gently shaped shoulders and a defined jacket hem.
- loft(g,shirtMat,[[.98,.18,.105],[1.04,.205,.12],[1.16,.225,.125],[1.38,.255,.135],[1.57,.245,.13],[1.69,.205,.115],[1.76,.145,.095]]);
- // Inner shirt visible only as a narrow collar inset.
- loft(g,new THREE.MeshStandardMaterial({color:0xf8f5ef,roughness:.9}),[[1.56,.13,.095],[1.62,.14,.10],[1.69,.115,.085]],40);
- // Neck, natural shoulders and jacket lapels.
- ell(g,skinMat,[0,1.79,0],[.082,.13,.078]);
- const lapelMat=new THREE.MeshStandardMaterial({color:0xfaf7f0,roughness:.8});
+ // Smooth fitted jacket with gently sloped shoulders, a defined waist and rounded hem.
+ loft(g,shirtMat,[[.99,.16,.098],[1.015,.178,.105],[1.07,.19,.112],[1.16,.202,.118],[1.28,.215,.125],[1.42,.222,.128],[1.55,.215,.123],[1.64,.19,.112],[1.70,.15,.095],[1.73,.12,.082]],64);
+ const zipLine=add(g,new THREE.BoxGeometry(.006,.58,.006),zipMat,[0,1.37,.129]);
+ ell(g,shirtMat,[0,1.69,.015],[.145,.055,.105]);
+ ell(g,skinMat,[0,1.79,0],[.071,.12,.07]);
+ const lapelMat=new THREE.MeshStandardMaterial({color:0xfaf7f0,roughness:.82});
  for(const side of [-1,1]){
-  const lapel=add(g,new THREE.BoxGeometry(.075,.24,.018),lapelMat,[side*.055,1.60,.116],[1,1,1],[0,0,side*-.18]);
-  // Sculpted sleeves, bent gently backwards to hold hands behind the back.
-  const arm=new THREE.Group();arm.position.set(side*.225,1.58,-.005);
-  loft(arm,shirtMat,[[ -.03,.045,.05],[-.10,.055,.06],[-.23,.064,.064],[-.38,.052,.052],[-.47,.042,.045]],32);
-  tube(arm,[[side*.01,-.40,-.025],[side*.012,-.47,-.105],[0,-.53,-.16]],.038,skinMat);
-  ell(arm,skinMat,[0,-.545,-.17],[.046,.065,.032]);
-  // Individual subtle fingers, tucked together behind the waist.
-  for(let f=0;f<4;f++)tube(arm,[[((f-1.5)*.014),-.55,-.19],[((f-1.5)*.016),-.59,-.205],[((f-1.5)*.015),-.62,-.20]],.009,skinMat);
+  add(g,new THREE.BoxGeometry(.052,.16,.012),lapelMat,[side*.041,1.63,.125],[1,1,1],[0,0,side*-.12]);
+  // Arms rest naturally at the sides with hands visible from the front.
+  const arm=new THREE.Group();arm.position.set(side*.205,1.55,.018);
+  loft(arm,shirtMat,[[-.015,.038,.043],[-.07,.048,.05],[-.18,.052,.052],[-.30,.047,.048],[-.39,.038,.04]],40);
+  tube(arm,[[side*.005,-.34,.025],[side*.008,-.42,.075],[side*.008,-.49,.095]],.031,skinMat);
+  ell(arm,skinMat,[side*.008,-.515,.10],[.041,.063,.028]);
+  for(let f=0;f<4;f++){const fx=(f-1.5)*.018;tube(arm,[[side*.008+fx,-.54,.115],[side*.008+fx*1.05,-.585,.12],[side*.008+fx,-.615,.112]],.008,skinMat);}
+  tube(arm,[[side*.045,-.51,.10],[side*.065,-.55,.13],[side*.055,-.58,.13]],.010,skinMat);
   g.add(arm);limbs.push(arm);
  }
  // Wide-leg trousers are continuous tapered lofts with a natural waist and soft cuffs.
- loft(g,pantsMat,[[.79,.17,.105],[.86,.20,.115],[.94,.205,.12],[1.02,.19,.11]],48);
+ loft(g,pantsMat,[[.79,.145,.095],[.86,.16,.10],[.94,.17,.105],[1.02,.16,.10]],64);
  for(const side of [-1,1]){
   const leg=new THREE.Group();leg.position.set(side*.105,.84,0);
   loft(leg,pantsMat,[[ -.02,.092,.09],[-.12,.098,.10],[-.34,.105,.105],[-.58,.115,.11],[-.82,.112,.105],[-.90,.108,.10]],40);
@@ -622,23 +621,23 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   g.add(leg);limbs.push(leg);
  }
  // Custom tapered face mesh with cheek width and a softly narrowing jaw.
- const head=new THREE.Group();head.position.set(0,2.02,.012);head.scale.setScalar(.78);g.add(head);
+ const head=new THREE.Group();head.position.set(0,2.02,.012);head.scale.setScalar(.88);g.add(head);
  const faceGeo=new THREE.SphereGeometry(1,64,48);
  const pa=faceGeo.attributes.position;
- for(let i=0;i<pa.count;i++){const y=pa.getY(i),factor=.84+.16*Math.max(0,y);pa.setX(i,pa.getX(i)*.315*factor);pa.setY(i,pa.getY(i)*.405);pa.setZ(i,pa.getZ(i)*.275);}
+ for(let i=0;i<pa.count;i++){const y=pa.getY(i),factor=.84+.16*Math.max(0,y);pa.setX(i,pa.getX(i)*.335*factor);pa.setY(i,pa.getY(i)*.425);pa.setZ(i,pa.getZ(i)*.285);}
  faceGeo.computeVertexNormals();add(head,faceGeo,skinMat,[0,0,0]);
  // Cheeks blend softly into the face; ears are small and close to the head.
  for(const side of [-1,1]){
   ell(head,skinMat,[side*.286,-.035,.005],[.047,.075,.052]);
-  ell(head,new THREE.MeshStandardMaterial({color:0xb97770,roughness:.9}),[side*.155,-.12,.225],[.058,.027,.012]);
+  ell(head,new THREE.MeshStandardMaterial({color:0xb97770,roughness:.9}),[side*.155,-.12,.225],[.043,.018,.009]);
  }
  // Eyes sit on the face surface, with eyelids, irises, pupils and catchlights.
  for(const side of [-1,1]){
   const ex=side*.112;
   ell(head,skinMat,[ex,.058,.224],[.073,.055,.024]);
-  ell(head,eyeMat,[ex,.048,.244],[.057,.033,.016]);
-  ell(head,irisMat,[ex,.048,.258],[.026,.029,.012]);
-  ell(head,pupilMat,[ex,.047,.267],[.014,.020,.008]);
+  ell(head,eyeMat,[ex,.048,.244],[.050,.029,.014]);
+  ell(head,irisMat,[ex,.048,.258],[.023,.026,.011]);
+  ell(head,pupilMat,[ex,.047,.267],[.012,.018,.007]);
   ell(head,eyeMat,[ex-.009,.061,.274],[.007,.008,.004]);
   tube(head,[[ex-.055,.093,.239],[ex,.108,.25],[ex+.052,.091,.239]],.008,hairMat);
   tube(head,[[ex-.05,.119,.216],[ex,.135,.224],[ex+.05,.119,.216]],.009,hairMat);
@@ -650,7 +649,7 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  ell(head,lipMat,[0,-.143,.235],[.018,.008,.006]);
  // Hair cap and thick, smooth face-framing lengths. Parted precisely at centre.
  const capGeo=new THREE.SphereGeometry(1,64,40,0,Math.PI*2,0,Math.PI*.56);
- const cap=add(head,capGeo,hairMat,[0,.105,-.035],[.342,.385,.30]);hairPieces.push(cap);
+ const cap=add(head,capGeo,hairMat,[0,.145,-.035],[.345,.355,.30]);hairPieces.push(cap);
  // Back curtain of hair behind the shoulders.
  loft(head,hairMat,[[-.80,.30,.075],[-.55,.32,.09],[-.25,.31,.12],[.02,.29,.16],[.20,.25,.19]],48);
  for(const side of [-1,1]){
