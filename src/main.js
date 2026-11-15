@@ -567,24 +567,22 @@ let doorOpen=false;
 // Redesigned rounded 3D Bitmoji-inspired avatar, guided by the supplied reference.
 function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  const g=new THREE.Group();g.position.set(x,0,z);targetScene.add(g);
- const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0xb9b8b5,.94),shoeMat=mat(0xf5f3ef,.42);
- const dark=mat(0x302522,.58),white=mat(0xfffdf8,.2),iris=mat(0x49352c,.42),detail=mat(0xe7e2d9,.72),innerMat=mat(0xf7f5f0,.88);
+ const skinMat=mat(skin,.72),hairMat=mat(hair,.9),shirtMat=mat(shirt,.78),pantsMat=mat(0xc6c4c0,.94),shoeMat=mat(0xf8f7f3,.42);
+ const dark=mat(0x302522,.58),white=mat(0xfffdf8,.2),iris=mat(0x49352c,.42),detail=mat(0xe7e2d9,.72),innerMat=mat(0xfaf9f6,.88);
  const addSphere=(parent,r,material,x,y,z,sx=1,sy=1,sz=1,segments=32)=>{
   const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,24),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
  };
  const addCapsule=(parent,r,len,material,x,y,z,sx=1,sy=1,sz=1)=>{
   const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,8,24),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
  };
- // Natural adult-like Bitmoji proportions: small head, slim shoulders and long legs.
+ // Natural, balanced full-body proportions with a narrow waist and long relaxed legs.
  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.205,.43,8,32),innerMat);torso.position.set(0,1.25,0);torso.scale.set(1,.94,.78);torso.castShadow=true;g.add(torso);
  const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.245,.43,8,32),shirtMat);jacket.position.set(0,1.26,-.008);jacket.scale.set(1.02,.96,.82);jacket.castShadow=true;g.add(jacket);
- // Open jacket front and narrow inner top.
  addSphere(g,.155,innerMat,0,1.36,.192,1,.98,.36);
  const lapelL=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelL.position.set(-.075,1.34,.205);lapelL.rotation.z=-.16;g.add(lapelL);
  const lapelR=new THREE.Mesh(new THREE.BoxGeometry(.065,.31,.035),innerMat);lapelR.position.set(.075,1.34,.205);lapelR.rotation.z=.16;g.add(lapelR);
  for(let y=1.2;y<=1.4;y+=.1)addSphere(g,.009,detail,0,y,.224,.8,.8,.5);
  const limbs=[];
- // Sleeves and forearms angle behind the torso; small hands rest together behind the back.
  for(const side of [-1,1]){
   const arm=new THREE.Group();arm.position.set(side*.235,1.43,-.015);
   const sleeve=addCapsule(arm,.072,.28,shirtMat,side*.025,-.16,-.025,1,1.05,.95);sleeve.rotation.z=-side*.28;
@@ -592,8 +590,7 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   addSphere(arm,.047,skinMat,-side*.095,-.45,-.18,.95,.85,.85);
   g.add(arm);limbs.push(arm);
  }
- const handsTogether=addSphere(g,.055,skinMat,0,.88,-.235,1.4,.8,.65);
- // Slim, long straight-leg trousers.
+ addSphere(g,.055,skinMat,0,.88,-.235,1.4,.8,.65);
  const waistband=new THREE.Mesh(new THREE.CylinderGeometry(.19,.205,.12,32),pantsMat);waistband.position.set(0,.96,0);waistband.castShadow=true;g.add(waistband);
  for(const side of [-1,1]){
   const leg=new THREE.Group();leg.position.set(side*.112,.91,0);
@@ -603,7 +600,6 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
   const sole=new THREE.Mesh(new THREE.SphereGeometry(.107,24,16),detail);sole.scale.set(1,.14,1.48);sole.position.set(0,-.865,.095);leg.add(sole);
   g.add(leg);limbs.push(leg);
  }
- // Keep all facial parts in one scaled head group to get the reference's smaller head-to-body ratio.
  const headGroup=new THREE.Group();headGroup.position.set(0,2.12,0);headGroup.scale.setScalar(.70);g.add(headGroup);
  const face=(r,material,x,y,z,sx=1,sy=1,sz=1)=>addSphere(headGroup,r,material,x,y,z,sx,sy,sz,40);
  const faceCapsule=(r,len,material,x,y,z,sx=1,sy=1,sz=1)=>addCapsule(headGroup,r,len,material,x,y,z,sx,sy,sz);
@@ -624,15 +620,17 @@ function makeAvatar(name,shirt,skin,hair,x,z,isPlayer=false,targetScene=scene){
  face(.02,skinMat,0,-.035,.425,.8,1.1,.8);
  face(.028,skinMat,0,-.075,.435,1,.7,.65);
  const mouthMat=mat(0x8b514d,.72);face(.036,mouthMat,0,-.17,.399,1,.18,.16);face(.032,skinMat,0,-.155,.411,1,.14,.13);
- // Smooth center-parted long hair, with narrow face-framing strands and straight side lengths.
  const cap=new THREE.Mesh(new THREE.SphereGeometry(.45,48,32,0,Math.PI*2,0,Math.PI*.52),hairMat);cap.position.set(0,.14,-.07);cap.castShadow=true;headGroup.add(cap);
  const hairPieces=[cap];
- const backHair=faceCapsule(.29,.72,hairMat,0,-.37,-.15,1,.98,.48);hairPieces.push(backHair);
+ hairPieces.push(faceCapsule(.29,.72,hairMat,0,-.37,-.15,1,.98,.48)); // 1: back hair
  for(const side of [-1,1]){
-  const sidePanel=faceCapsule(.09,.5,hairMat,side*.33,-.31,-.055,.92,1.65,.8);hairPieces.push(sidePanel);
-  const lowerPanel=faceCapsule(.085,.42,hairMat,side*.335,-.69,-.055,.9,1.45,.82);hairPieces.push(lowerPanel);
-  const faceFrame=faceCapsule(.055,.34,hairMat,side*.26,-.07,.265,.92,1.2,.7);faceFrame.rotation.z=side*.1;hairPieces.push(faceFrame);
+  hairPieces.push(faceCapsule(.09,.5,hairMat,side*.33,-.31,-.055,.92,1.65,.8)); // upper side panel
+  hairPieces.push(faceCapsule(.085,.42,hairMat,side*.335,-.69,-.055,.9,1.45,.82)); // lower side panel
+  const frame=faceCapsule(.055,.34,hairMat,side*.26,-.07,.265,.92,1.2,.7);frame.rotation.z=side*.1;hairPieces.push(frame); // face frame
  }
+ // Two soft front strands make the centre part visible without covering the eyes.
+ hairPieces.push(faceCapsule(.045,.25,hairMat,-.09,.02,.34,.9,1.15,.65));
+ hairPieces.push(faceCapsule(.045,.25,hairMat,.09,.02,.34,.9,1.15,.65));
  const label=makeLabel(name);label.position.set(0,2.75,0);g.add(label);
  return {group:g,limbs,name,isPlayer,phase:Math.random()*6,appearance:{skinMat,hairMat,shirtMat,pantsMat,shoeMat,hairPieces}};
 }
@@ -1746,7 +1744,7 @@ function setHairStyle(style){
  refreshAvatarPreview();
 }
 document.querySelector('#hair-style')?.addEventListener('change',e=>setHairStyle(e.target.value));
-setHairStyle('curly');
+setHairStyle('long');
 refreshAvatarPreview();
 document.querySelector('#outfit-choice')?.addEventListener('change',e=>player.appearance.shirtMat.color.setHex(parseInt(e.target.value,16)));
 let headAccessory=null,previewHeadAccessory=null;
