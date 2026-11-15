@@ -16,14 +16,19 @@ const renderPixelRatio=Math.min(devicePixelRatio||1,isMobileDevice?(lowPowerDevi
 const renderer = new THREE.WebGLRenderer({antialias:!isMobileDevice||!lowPowerDevice,powerPreference:lowPowerDevice?'low-power':'high-performance',stencil:false});
 renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(renderPixelRatio);
 renderer.shadowMap.enabled=!isMobileDevice; renderer.shadowMap.type=THREE.PCFShadowMap;
-renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.02;
+renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.18;
 document.querySelector('#game').appendChild(renderer.domElement);
 
 const moon=new THREE.DirectionalLight(0xc2a77f,.42); moon.position.set(-9,18,8); moon.castShadow=!isMobileDevice; moon.shadow.mapSize.set(isMobileDevice?512:1024,isMobileDevice?512:1024); scene.add(moon);
 // Warm amber lighting keeps the abandoned house readable while preserving its eerie night mood.
-const warm=new THREE.PointLight(0xffb85f,10,19); warm.position.set(0,3,0); scene.add(warm);
-const hallLight=new THREE.PointLight(0xffc77e,6.5,15); hallLight.position.set(0,3,-8); scene.add(hallLight);
-const houseAmbient=new THREE.HemisphereLight(0xffd5a5,0x382316,0.88); scene.add(houseAmbient);
+const warm=new THREE.PointLight(0xffb85f,20,28); warm.position.set(0,3,0); scene.add(warm);
+const hallLight=new THREE.PointLight(0xffc77e,13,23); hallLight.position.set(0,3,-8); scene.add(hallLight);
+const houseAmbient=new THREE.HemisphereLight(0xffdfb8,0x60432c,1.55); scene.add(houseAmbient);
+// Broad warm fill lights keep every playable room and floor readable, including on phones.
+const roomFillLights=[];
+for(const [x,y,z] of [[-6,3,-3],[6,3,-3],[-6,3,5],[6,3,5],[13,3,0],[-6,7.9,-2],[5,7.9,2],[13,7.9,0],[-6,11.7,-2],[5,11.7,2],[13,11.7,0]]){
+ const fill=new THREE.PointLight(0xffc477,5.5,15);fill.position.set(x,y,z);scene.add(fill);roomFillLights.push(fill);
+}
 
 const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
 const floorMat=mat(0x302e29), wallMat=mat(0x555751), darkMat=mat(0x171d1c), wood=mat(0x45352a), trim=mat(0x292724), glass=new THREE.MeshStandardMaterial({color:0x263c43,transparent:true,opacity:.42,roughness:.35});
@@ -1253,7 +1258,7 @@ function animate(now=0){requestAnimationFrame(animate);
  liftCabin.position.y=THREE.MathUtils.damp(liftCabin.position.y,liftTargetY,.9,dt);
  // Random short power failures: lights dim, then return with a generator flicker.
  if(!powerOutageActive&&elapsed>=nextPowerOutage){powerOutageActive=true;powerOutageRemaining=4.5+Math.random()*3.5;notice('POWER FAILURE • The lights flicker, but the house stays dimly lit.');playCue();}
- if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?4.8:2.8;warm.intensity=flicker;hallLight.intensity=flicker*.58;houseAmbient.intensity=.62;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=10;hallLight.intensity=6.5;houseAmbient.intensity=.88;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The warm lights return.');playCue();}}
+ if(powerOutageActive){powerOutageRemaining-=dt;const flicker=Math.random()>.72?4.8:2.8;warm.intensity=flicker+4;hallLight.intensity=flicker*.8+3;houseAmbient.intensity=1.05;if(powerOutageRemaining<=0){powerOutageActive=false;warm.intensity=20;hallLight.intensity=13;houseAmbient.intensity=1.55;nextPowerOutage=elapsed+45+Math.random()*55;notice('GENERATOR RESTORED • The warm lights return.');playCue();}}
  // Slow drifting dust is deliberately lightweight for budget phones.
  const dustPos=dust.geometry.attributes.position;
  for(let i=0;i<dustCount;i++){
@@ -1331,7 +1336,7 @@ if(keys.w||keys.arrowup)dz-=1;if(keys.s||keys.arrowdown)dz+=1;if(keys.a||keys.ar
  // clue items hover gently until collected
  clueItems.forEach(c=>{if(!c.collected)c.group.position.y=c.baseY+Math.sin(elapsed*2+c.phase)*.09;});
  // flicker the old house lights
- if(!powerOutageActive)warm.intensity=9.5+Math.sin(elapsed*8)*.45+(Math.sin(elapsed*23)>.99?-1.8:0);
+ if(!powerOutageActive)warm.intensity=19.5+Math.sin(elapsed*8)*.35+(Math.sin(elapsed*23)>.99?-1.0:0);
  // Send player movement at a modest rate when connected to an online room.
  if(onlineRoom&&socket.connected&&elapsed-lastNetworkMove>.09){socket.emit('player:move',{x:p.position.x,y:p.position.y,z:p.position.z,rotation:p.rotation.y});lastNetworkMove=elapsed;}
  // Cinematic arrival camera: bus approach, breakdown, then reveal Blackwood House.
