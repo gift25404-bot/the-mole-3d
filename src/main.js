@@ -751,11 +751,12 @@ function applyPlayerLook(key){
  const feedback=document.querySelector('#look-feedback');if(feedback)feedback.textContent='Selected: '+look.name;
 }
 const npcs=[
- makeAvatar('MAYA',0x9b5c6e,0xc88b67,0x30201b,-14,5),
- makeAvatar('TUNDE',0x4c755a,0x70452f,0x111315,-11,11),
- makeAvatar('ZARA',0x7560a0,0xd49b76,0x241b18,-8,5),
- makeAvatar('KAI',0xb17b3f,0x9c6a4c,0x211b1a,-15,10),
- makeAvatar('NOAH',0x52728d,0xd1a17b,0x493327,-10,12)
+ // Keep every passenger inside a reachable room rather than stranded outside the house.
+ makeAvatar('MAYA',0x9b5c6e,0xc88b67,0x30201b,-7,2),
+ makeAvatar('TUNDE',0x4c755a,0x70452f,0x111315,-5,-2),
+ makeAvatar('ZARA',0x7560a0,0xd49b76,0x241b18,4,-3),
+ makeAvatar('KAI',0xb17b3f,0x9c6a4c,0x211b1a,7,4),
+ makeAvatar('NOAH',0x52728d,0xd1a17b,0x493327,14,5)
 ];
 const all=[player,...npcs];
 let cameraMode=0;const modes=['ISOMETRIC','THIRD PERSON','FIRST PERSON'];
@@ -1177,10 +1178,21 @@ for (let i=roleDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r
 roster.forEach((a,i)=>a.role=roleDeck[i]);
 let roundPhase='DAY', eliminated=[], protectedName=null, investigatedName=null, localPlayerDead=false;
 let playerRole=player.role;
+let localDay=1;
+const npcInterviewed=new Map();
+const npcStories={MAYA:{where:'I was in the common room. I heard someone moving near the library.',detail:'The old photograph was already on the table before the lights went out.',lie:'I stayed by the front entrance all night.'},TUNDE:{where:'I checked the storage room because the generator sounded wrong.',detail:'I heard a music box playing from the east wing.',lie:'I never went anywhere near the east wing.'},ZARA:{where:'I was reading in the library until the storm got louder.',detail:'Someone had been through the diary pages. One page was missing.',lie:'I was alone in the cafeteria the entire time.'},KAI:{where:'I was in the cafeteria. The lights went out while I was there.',detail:'I saw muddy footprints leading toward the east staircase.',lie:'I was asleep upstairs before the storm started.'},NOAH:{where:'I was checking the east staircase. I thought I heard a door move.',detail:'There is a draft coming from behind the old bookshelf.',lie:'I never left the ground-floor hallway.'}};
+function talkToNpc(npc){
+ const story=npcStories[npc.name]||{where:'I was looking around the house.',detail:'I heard something, but I could not tell where it came from.',lie:'I do not remember where I was.'};
+ const asked=npcInterviewed.get(npc.name)||new Set(),whereLine=npc.role==='MAFIA'?story.lie:story.where,detailLine=npc.role==='MAFIA'?'I already told you everything. Stop asking questions.':story.detail;
+ modal('QUESTION '+npc.name,'Listen carefully. Compare their answers with the evidence you find.', '<div class="evidence-entry"><b>'+npc.name+'</b><p>'+(asked.has('where')?phoneEscape(whereLine):'Their whereabouts have not been recorded yet.')+'</p></div><button class="vote-option" id="ask-where" '+(asked.has('where')?'disabled':'')+'>'+(asked.has('where')?'ALIBI RECORDED':'ASK WHERE THEY WERE')+'</button><button class="vote-option" id="ask-detail" '+(asked.has('detail')?'disabled':'')+'>'+(asked.has('detail')?'DETAIL RECORDED':'ASK WHAT THEY NOTICED')+'</button><button class="vote-option" id="finish-interview">END CONVERSATION</button>');
+ document.querySelector('#ask-where')?.addEventListener('click',()=>{asked.add('where');npcInterviewed.set(npc.name,asked);evidenceLog.unshift({name:npc.name+' — ALIBI',description:whereLine,time:new Date().toLocaleTimeString()});talkToNpc(npc);});
+ document.querySelector('#ask-detail')?.addEventListener('click',()=>{asked.add('detail');npcInterviewed.set(npc.name,asked);evidenceLog.unshift({name:npc.name+' — WITNESS STATEMENT',description:detailLine,time:new Date().toLocaleTimeString()});talkToNpc(npc);});
+ document.querySelector('#finish-interview')?.addEventListener('click',()=>{closeModal();notice('You finished questioning '+npc.name+'. Compare their answers on the evidence board.');});
+}
 document.querySelector('#role-label').textContent=playerRole==='MAFIA'?'THE MOLE':playerRole;
 document.querySelector('#phase').textContent='DAY 1';
 function living(){return roster.filter(a=>!eliminated.includes(a.name))}
-function updateStatus(){document.querySelector('#house-status').textContent=`PASSENGERS: ${living().length} • POWER: UNSTABLE`;}
+function updateStatus(){document.querySelector('#house-status').textContent='PASSENGERS: '+living().length+' • POWER: UNSTABLE';}
 function roleDescription(){
  if(playerRole==='MAFIA') return 'You are the one hidden Mole in this round. Blend in, misdirect the others and avoid being voted out.';
  if(playerRole==='DETECTIVE') return 'You are the Detective. Use your ability at night to check one passenger. The result is private.';
@@ -1195,16 +1207,19 @@ function voteMeeting(){
  document.querySelectorAll('[data-vote]').forEach(b=>b.onclick=()=>{
    const target=b.dataset.vote;eliminated.push(target);closeModal();updateStatus();
    const removed=roster.find(a=>a.name===target);
-   notice(`${target} was voted out. Their role was ${removed.role}.`);
-   checkWin();
+   notice(target+' was voted out. Their role was '+removed.role+'.');
+   if(!checkWin()){
+    modal('VOTE RESULT',target+' was removed from the round. Their role was '+removed.role+'.','<button class="vote-option" id="continue-night">CONTINUE TO NIGHT</button>');
+    document.querySelector('#continue-night').onclick=()=>{closeModal();localDay++;nightPhase();};
+   }
  });
- document.querySelector('#skip-vote').onclick=()=>{closeModal();notice('The group decided not to vote anyone out.');nightPhase();};
+ document.querySelector('#skip-vote').onclick=()=>{closeModal();notice('No one was voted out. Night is falling again.');localDay++;nightPhase();};
 }
 function checkWin(){
- const alive=living(), moleAlive=alive.some(a=>a.role==='MAFIA');
- if(!moleAlive){modal('PASSENGERS WIN','The Mole has been found. The group survives this round.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');}
- else if(alive.filter(a=>a.role!=='MAFIA').length<=1){modal('THE MOLE WINS','The Mole has outlasted the other passengers.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');}
- const r=document.querySelector('#restart');if(r)r.onclick=()=>location.reload();
+ const alive=living(),moleAlive=alive.some(a=>a.role==='MAFIA');let ended=false;
+ if(!moleAlive){modal('PASSENGERS WIN','The Mole has been found. The passengers solved the mystery.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');ended=true;}
+ else if(alive.filter(a=>a.role!=='MAFIA').length<=1){modal('THE MOLE WINS','The Mole has outlasted the other passengers.','<button class="vote-option" id="restart">PLAY ANOTHER ROUND</button>');ended=true;}
+ const r=document.querySelector('#restart');if(r)r.onclick=()=>location.reload();return ended;
 }
 function chooseTarget(title,copy,callback){
  const candidates=living().filter(a=>a!==player);
@@ -1232,12 +1247,12 @@ function resolveNight(protectedTarget=null){
  }
  investigatedName=null;updateStatus();
  if(checkWin())return;
- roundPhase='DAY';document.querySelector('#phase').textContent='DAY 2';
- modal('MORNING AT BLACKWOOD','The house is quiet. Compare what everyone says, then call a meeting.', '<button class="vote-option" id="morning-meeting">CALL A MEETING</button>');
+ roundPhase='DAY';document.querySelector('#phase').textContent='DAY '+localDay;
+ modal('DAY '+localDay+' AT BLACKWOOD','The house is quiet. Question the passengers, compare your evidence, then call a meeting.', '<button class="vote-option" id="morning-meeting">CALL A MEETING</button>');
  document.querySelector('#morning-meeting').onclick=()=>{closeModal();voteMeeting();};
 }
 function nightPhase(){
- roundPhase='NIGHT';document.querySelector('#phase').textContent='NIGHT 1';
+ roundPhase='NIGHT';document.querySelector('#phase').textContent='NIGHT '+localDay;
  notice('Night falls over Blackwood House…');
  if(playerRole==='MAFIA'){
   chooseTarget('MOLE: SECRET MOVE','Choose a passenger to secretly remove from the next round.',name=>{
@@ -1357,7 +1372,7 @@ function interact(){
   return;
  }
  let closest=null,dist=3.1;for(const n of npcs){const d=p.distanceTo(n.group.position);if(d<dist){dist=d;closest=n}}
- if(closest){addChat?.(closest.name,'I saw something strange in the rooms. Have you found any clues?');notice(`${closest.name}: “We need to find a way out of here.”`);return}
+ if(closest){talkToNpc(closest);return}
  if(p.distanceTo(bus.position)<4){notice('The bus has broken down. The passengers are gathering outside.');return}
  notice('Nothing to interact with here.');
 }
