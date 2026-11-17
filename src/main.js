@@ -1201,6 +1201,7 @@ function roleDescription(){
 }
 function showRole(){modal(`YOUR ROLE: ${playerRole==='MAFIA'?'THE MOLE':playerRole}`,roleDescription(),'<button class="vote-option" id="role-ready">I UNDERSTAND</button>');document.querySelector('#role-ready').onclick=closeModal;}
 function voteMeeting(){
+ if(localPlayerDead){modal('SPECTATOR MODE','You have been eliminated. You can watch the remaining passengers, but you cannot vote.');return;}
  const candidates=living().filter(a=>a!==player);
  if(!candidates.length){notice('There is nobody else to question.');return;}
  modal('EMERGENCY MEETING','Talk it through, then vote for the passenger you suspect. This is a local practice round.',candidates.map(n=>`<button class="vote-option" data-vote="${n.name}">VOTE: ${n.name}</button>`).join('')+'<button class="vote-option" id="skip-vote">SKIP THIS VOTE</button>');
@@ -1240,7 +1241,8 @@ function resolveNight(protectedTarget=null){
    const attack=possible[Math.floor(Math.random()*possible.length)];
    if(attack && attack.name!==protectedTarget){
      eliminated.push(attack.name);
-     notice(`${attack.name} was missing at breakfast. Their role was ${attack.role}.`);
+     if(attack===player){localPlayerDead=true;playerRole='GHOST';document.querySelector('#role-label').textContent='ELIMINATED';notice('You were found during the night. You can now spectate.');}
+     else notice(`${attack.name} was missing at breakfast. Their role was ${attack.role}.`);
    }else if(attack){
      notice('Someone was protected during the night. Everyone made it to breakfast.');
    }
